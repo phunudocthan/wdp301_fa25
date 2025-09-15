@@ -1,4 +1,4 @@
-Tạo cái .env như dưới mới chạy được, port muốn nhiêu cũng được
+Tạo cái .env như dưới, port muốn nhiêu cũng được
 
 PORT=5000
 NODE_ENV=development
