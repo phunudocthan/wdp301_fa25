@@ -4,52 +4,54 @@
 
 ```
 WDP310_FA25/
-├── client/                 # Frontend - ReactJS + TypeScript
+├── client/                
 │   ├── src/
-│   │   ├── components/     # React components (tạo khi cần)
-│   │   ├── pages/          # Các trang chính (tạo khi cần)
+│   │   ├── components/     
+│   │   ├── pages/          
 │   │   ├── services/       # API calls (tạo khi cần)
 │   │   ├── utils/          # Helper functions (tạo khi cần)
-│   │   ├── App.tsx         # Component chính ✅
-│   │   ├── App.css         # CSS cho App ✅
-│   │   ├── main.tsx        # Entry point ✅
-│   │   └── index.css       # Global styles ✅
-│   ├── public/             # Static files (tạo khi cần)
-│   ├── index.html          # HTML template ✅
-│   ├── package.json        # Dependencies ✅
-│   ├── tsconfig.json       # TypeScript config ✅
-│   └── vite.config.ts      # Vite config ✅
+│   │   ├── App.tsx         
+│   │   ├── App.css         
+│   │   ├── main.tsx       
+│   │   └── index.css       
+│   ├── public/             
+│   ├── index.html          
+│   ├── package.json        
+│   ├── tsconfig.json      
+│   └── vite.config.ts      
 │
-├── server/                 # Backend - ExpressJS + MongoDB
-│   ├── controllers/        # Business logic (tạo khi cần)
-│   ├── routes/             # API routes (tạo khi cần)
-│   ├── middleware/         # Express middleware (tạo khi cần)
-│   ├── services/           # Business services (tạo khi cần)
-│   ├── utils/              # Helper functions (tạo khi cần)
-│   ├── config/             # App configuration (tạo khi cần)
-│   ├── models/             # Mongoose models ✅
-│   │   ├── User.js         # ✅
-│   │   ├── Lego.js         # ✅
-│   │   ├── Order.js        # ✅
-│   │   └── Theme.js        # ✅
-│   ├── index.js            # Entry point ✅
-│   ├── package.json        # Dependencies ✅
-│   └── .env                # Environment variables ✅
+├── server/                
+│   ├── controllers/       
+│   ├── routes/             
+│   ├── middleware/         
+│   ├── services/          
+│   ├── utils/              
+│   ├── config/             
+│   ├── models/            
+│   │   ├── User.js        
+│   │   ├── Lego.js                 
+│   │   ├── Order.js        
+│   │   └── Theme.js        
+│   ├── index.js            
+│   ├── package.json        
+│   └── .env                
 │
-├── .gitignore              # Git ignore ✅
-├── README.md               # Hướng dẫn dự án ✅
-└── PROJECT_STRUCTURE.md    # File này ✅
+├── .gitignore              
+├── README.md              
+
 ```
 
 ## 📋 Quy tắc đặt tên
 
 ### **Frontend (client/)**
+
 - **Components:** PascalCase - `UserProfile.tsx`, `LegoCard.tsx`
-- **Pages:** PascalCase - `LoginPage.tsx`, `HomePage.tsx`  
+- **Pages:** PascalCase - `LoginPage.tsx`, `HomePage.tsx`
 - **Services:** camelCase - `authService.ts`, `legoService.ts`
 - **Utils:** camelCase - `validation.ts`, `formatters.ts`
 
 ### **Backend (server/)**
+
 - **Controllers:** camelCase + Controller - `authController.js`, `legoController.js`
 - **Routes:** camelCase + Routes - `authRoutes.js`, `legoRoutes.js`
 - **Models:** PascalCase - `User.js`, `Lego.js`
@@ -59,6 +61,7 @@ WDP310_FA25/
 ## 🚀 Khi nào tạo thư mục/file mới?
 
 ### **Tạo ngay khi cần:**
+
 ```bash
 # Ví dụ Dev 1 làm Authentication:
 server/
@@ -86,6 +89,7 @@ client/
 ### **Ví dụ các dev khác:**
 
 **Dev 2 - LEGO Management:**
+
 ```
 server/controllers/legoController.js
 server/routes/legoRoutes.js
@@ -95,9 +99,10 @@ client/src/services/legoService.ts
 ```
 
 **Dev 3 - Orders:**
+
 ```
 server/controllers/orderController.js
-server/routes/orderRoutes.js  
+server/routes/orderRoutes.js
 client/src/components/CartItem.tsx
 client/src/pages/CheckoutPage.tsx
 client/src/services/orderService.ts
