@@ -68,6 +68,78 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// Import models for testing
+const User = require('./models/User');
+const Theme = require('./models/Theme');
+const AgeRange = require('./models/AgeRange');
+const Difficulty = require('./models/Difficulty');
+const Lego = require('./models/Lego');
+const Order = require('./models/Order');
+const Review = require('./models/Review');
+const Voucher = require('./models/Voucher');
+
+// Database test endpoints
+app.get('/api/database/stats', async (req, res) => {
+  try {
+    const stats = {
+      users: await User.countDocuments(),
+      themes: await Theme.countDocuments(),
+      ageRanges: await AgeRange.countDocuments(),
+      difficulties: await Difficulty.countDocuments(),
+      legos: await Lego.countDocuments(),
+      orders: await Order.countDocuments(),
+      reviews: await Review.countDocuments(),
+      vouchers: await Voucher.countDocuments(),
+      collections: await mongoose.connection.db.listCollections().toArray()
+    };
+    
+    res.json({
+      message: 'Database statistics',
+      database: mongoose.connection.db.databaseName,
+      stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/database/legos', async (req, res) => {
+  try {
+    const legos = await Lego.find({ status: 'active' })
+      .populate('themeId', 'name description')
+      .populate('ageRangeId', 'label minAge maxAge')
+      .populate('difficultyId', 'label description')
+      .populate('sellerId', 'name email role')
+      .limit(10)
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      message: 'Sample LEGO products',
+      count: legos.length,
+      legos
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/database/users', async (req, res) => {
+  try {
+    const users = await User.find({}, '-password') // Exclude password
+      .limit(10)
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      message: 'Sample users',
+      count: users.length,
+      users
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Routes placeholder
 app.use("/api/auth", (req, res) =>
   res.json({ message: "Auth routes coming soon..." })
