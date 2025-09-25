@@ -30,6 +30,29 @@ const UserSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  address: {
+    street: {
+      type: String,
+      trim: true
+    },
+    city: {
+      type: String,
+      trim: true
+    },
+    state: {
+      type: String,
+      trim: true
+    },
+    postalCode: {
+      type: String,
+      trim: true
+    },
+    country: {
+      type: String,
+      trim: true,
+      default: 'Vietnam'
+    }
+  },
   status: {
     type: String,
     enum: ['active', 'inactive', 'locked'],

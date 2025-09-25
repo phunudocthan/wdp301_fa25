@@ -39,6 +39,13 @@ const seedDatabase = async () => {
         password: hashedPassword,
         role: 'admin',
         phone: '+84901234567',
+        address: {
+          street: '123 Nguyen Trai Street',
+          city: 'Ho Chi Minh City',
+          state: 'Ho Chi Minh',
+          postalCode: '700000',
+          country: 'Vietnam'
+        },
         status: 'active'
       },
       {
@@ -47,6 +54,13 @@ const seedDatabase = async () => {
         password: hashedPassword,
         role: 'seller',
         phone: '+84907654321',
+        address: {
+          street: '456 Le Loi Boulevard',
+          city: 'Ho Chi Minh City',
+          state: 'Ho Chi Minh',
+          postalCode: '700000',
+          country: 'Vietnam'
+        },
         status: 'active'
       },
       {
@@ -55,6 +69,13 @@ const seedDatabase = async () => {
         password: hashedPassword,
         role: 'customer',
         phone: '+84912345678',
+        address: {
+          street: '789 Dong Khoi Street',
+          city: 'Ho Chi Minh City',
+          state: 'Ho Chi Minh',
+          postalCode: '700000',
+          country: 'Vietnam'
+        },
         status: 'active'
       }
     ]);
