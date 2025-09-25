@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -23,16 +23,16 @@ const UserSchema = new mongoose.Schema({
     enum: ['customer', 'seller', 'admin'],
     default: 'customer'
   },
+  avatar: {
+    type: String
+  },
   phone: {
     type: String,
     trim: true
   },
-  avatar: {
-    type: String // URL
-  },
   status: {
     type: String,
-    enum: ['active', 'blocked'],
+    enum: ['active', 'inactive', 'locked'],
     default: 'active'
   },
   lastLogin: {
@@ -42,10 +42,6 @@ const UserSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes
-UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ role: 1 });
-UserSchema.index({ status: 1 });
-UserSchema.index({ lastLogin: 1 });
 
 module.exports = mongoose.model('User', UserSchema);

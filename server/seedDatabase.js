@@ -1,7 +1,8 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Import all models
+const bcrypt = require('bcryptjs');
+
 const User = require('./models/User');
 const Theme = require('./models/Theme');
 const AgeRange = require('./models/AgeRange');
@@ -13,39 +14,24 @@ const Gallery = require('./models/Gallery');
 const Voucher = require('./models/Voucher');
 const Cart = require('./models/Cart');
 const ActivityLog = require('./models/ActivityLog');
-
-const bcrypt = require('bcryptjs');
+const Notification = require('./models/Notification');
+const Banner = require('./models/Banner');
+const Wishlist = require('./models/Wishlist');
+const RecentlyViewed = require('./models/RecentlyViewed');
+const Setting = require('./models/Setting');
+const ChatLog = require('./models/ChatLog');
 
 const seedDatabase = async () => {
   try {
-    console.log('🌱 Starting database seeding...');
-    
-    // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       dbName: process.env.DB_NAME || 'lego_ecommerce'
     });
-    console.log('✅ Connected to MongoDB Atlas');
 
-    // Clear existing data (optional - comment out if you want to keep existing data)
-    console.log('🗑️  Clearing existing data...');
-    await Promise.all([
-      User.deleteMany({}),
-      Theme.deleteMany({}),
-      AgeRange.deleteMany({}),
-      Difficulty.deleteMany({}),
-      Lego.deleteMany({}),
-      Order.deleteMany({}),
-      Review.deleteMany({}),
-      Gallery.deleteMany({}),
-      Voucher.deleteMany({}),
-      Cart.deleteMany({}),
-      ActivityLog.deleteMany({})
-    ]);
+    console.log('Resetting database...');
+    await mongoose.connection.db.dropDatabase();
 
-    // 1. Seed Users
-    console.log('👥 Seeding users...');
     const hashedPassword = await bcrypt.hash('123456', 12);
-    
+
     const users = await User.insertMany([
       {
         name: 'Admin User',
@@ -70,266 +56,237 @@ const seedDatabase = async () => {
         role: 'customer',
         phone: '+84912345678',
         status: 'active'
-      },
-      {
-        name: 'Test User 1',
-        email: 'test1@lego.com',
-        password: hashedPassword,
-        role: 'customer',
-        status: 'active'
-      },
-      {
-        name: 'Test User 2',
-        email: 'test2@lego.com',
-        password: hashedPassword,
-        role: 'customer',
-        status: 'active'
       }
     ]);
-    console.log(`✅ Created ${users.length} users`);
 
-    // 2. Seed Themes
-    console.log('🎨 Seeding themes...');
+    const [admin, seller, customer] = users;
+
     const themes = await Theme.insertMany([
       { name: 'Star Wars', description: 'A galaxy far, far away...' },
       { name: 'City', description: 'Build your own metropolis' },
-      { name: 'Technic', description: 'Advanced building for older builders' },
-      { name: 'Creator', description: 'Express your creativity' },
-      { name: 'Friends', description: 'Friendship and adventure' },
-      { name: 'Ninjago', description: 'Masters of Spinjitzu' },
-      { name: 'Harry Potter', description: 'The magical world of Hogwarts' },
-      { name: 'Architecture', description: 'Famous buildings and landmarks' }
+      { name: 'Technic', description: 'Advanced engineering builds' }
     ]);
-    console.log(`✅ Created ${themes.length} themes`);
 
-    // 3. Seed Age Ranges
-    console.log('👶 Seeding age ranges...');
     const ageRanges = await AgeRange.insertMany([
-      { label: '4-7', minAge: 4, maxAge: 7, description: 'Perfect for young builders' },
-      { label: '6-12', minAge: 6, maxAge: 12, description: 'Great for developing builders' },
-      { label: '8-14', minAge: 8, maxAge: 14, description: 'For experienced young builders' },
-      { label: '10-16', minAge: 10, maxAge: 16, description: 'Advanced building challenges' },
-      { label: '12+', minAge: 12, maxAge: 99, description: 'For teens and adults' },
-      { label: '16+', minAge: 16, maxAge: 99, description: 'Expert level building' },
-      { label: '18+', minAge: 18, maxAge: 99, description: 'Adult collectors series' }
+      { rangeLabel: '4-7', minAge: 4, maxAge: 7 },
+      { rangeLabel: '6-12', minAge: 6, maxAge: 12 },
+      { rangeLabel: '12+', minAge: 12, maxAge: 99 }
     ]);
-    console.log(`✅ Created ${ageRanges.length} age ranges`);
 
-    // 4. Seed Difficulties
-    console.log('⚡ Seeding difficulties...');
     const difficulties = await Difficulty.insertMany([
-      { label: 'Easy', description: 'Simple builds for beginners' },
-      { label: 'Medium', description: 'Moderate complexity' },
-      { label: 'Hard', description: 'Challenging builds' },
-      { label: 'Expert', description: 'Master builder level' }
+      { label: 'Beginner', level: 1 },
+      { label: 'Intermediate', level: 3 },
+      { label: 'Expert', level: 5 }
     ]);
-    console.log(`✅ Created ${difficulties.length} difficulties`);
 
-    // 5. Seed LEGO Products
-    console.log('🧱 Seeding LEGO products...');
-    const seller = users.find(u => u.role === 'seller');
-    const admin = users.find(u => u.role === 'admin');
-    
     const legos = await Lego.insertMany([
       {
         name: 'Millennium Falcon',
-        slug: 'millennium-falcon',
-        description: 'The fastest ship in the galaxy',
         themeId: themes.find(t => t.name === 'Star Wars')._id,
-        ageRangeId: ageRanges.find(a => a.label === '16+')._id,
-        difficultyId: difficulties.find(d => d.label === 'Expert')._id,
+        ageRangeId: ageRanges.find(r => r.rangeLabel === '12+')._id,
+        difficultyId: difficulties.find(d => d.level === 5)._id,
         pieces: 7541,
         price: 799.99,
         stock: 5,
-        images: ['https://example.com/falcon1.jpg', 'https://example.com/falcon2.jpg'],
-        sellerId: seller._id,
-        status: 'active'
+        status: 'active',
+        images: ['https://example.com/millennium-falcon.jpg'],
+        createdBy: seller._id
       },
       {
-        name: 'Fire Station',
-        slug: 'fire-station',
-        description: 'Emergency services headquarters',
+        name: 'Downtown Fire Station',
         themeId: themes.find(t => t.name === 'City')._id,
-        ageRangeId: ageRanges.find(a => a.label === '6-12')._id,
-        difficultyId: difficulties.find(d => d.label === 'Medium')._id,
-        pieces: 509,
-        price: 89.99,
-        stock: 15,
-        images: ['https://example.com/firestation1.jpg'],
-        sellerId: seller._id,
-        status: 'active'
+        ageRangeId: ageRanges.find(r => r.rangeLabel === '6-12')._id,
+        difficultyId: difficulties.find(d => d.level === 3)._id,
+        pieces: 908,
+        price: 99.99,
+        stock: 25,
+        status: 'active',
+        images: ['https://example.com/fire-station.jpg'],
+        createdBy: seller._id
       },
       {
-        name: 'Bugatti Chiron',
-        slug: 'bugatti-chiron',
-        description: 'Legendary supercar in LEGO form',
+        name: 'Technic Bugatti Chiron',
         themeId: themes.find(t => t.name === 'Technic')._id,
-        ageRangeId: ageRanges.find(a => a.label === '16+')._id,
-        difficultyId: difficulties.find(d => d.label === 'Expert')._id,
+        ageRangeId: ageRanges.find(r => r.rangeLabel === '12+')._id,
+        difficultyId: difficulties.find(d => d.level === 3)._id,
         pieces: 3599,
         price: 349.99,
-        stock: 8,
-        images: ['https://example.com/bugatti1.jpg', 'https://example.com/bugatti2.jpg'],
-        sellerId: admin._id,
-        status: 'active'
-      },
-      {
-        name: 'Hogwarts Castle',
-        slug: 'hogwarts-castle',
-        description: 'The magic castle from Harry Potter',
-        themeId: themes.find(t => t.name === 'Harry Potter')._id,
-        ageRangeId: ageRanges.find(a => a.label === '16+')._id,
-        difficultyId: difficulties.find(d => d.label === 'Expert')._id,
-        pieces: 6020,
-        price: 469.99,
-        stock: 3,
-        images: ['https://example.com/hogwarts1.jpg'],
-        sellerId: seller._id,
-        status: 'active'
-      },
-      {
-        name: 'Creator Car',
-        slug: 'creator-car',
-        description: '3-in-1 sports car',
-        themeId: themes.find(t => t.name === 'Creator')._id,
-        ageRangeId: ageRanges.find(a => a.label === '8-14')._id,
-        difficultyId: difficulties.find(d => d.label === 'Medium')._id,
-        pieces: 285,
-        price: 29.99,
-        stock: 25,
-        images: ['https://example.com/creator1.jpg'],
-        sellerId: seller._id,
-        status: 'active'
+        stock: 10,
+        status: 'pending',
+        images: ['https://example.com/bugatti-chiron.jpg'],
+        createdBy: seller._id
       }
     ]);
-    console.log(`✅ Created ${legos.length} LEGO products`);
 
-    // 6. Seed Vouchers
-    console.log('🎫 Seeding vouchers...');
+    await Cart.create({
+      userId: customer._id,
+      items: [
+        {
+          legoId: legos[1]._id,
+          quantity: 2,
+          price: legos[1].price
+        }
+      ]
+    });
+
     const vouchers = await Voucher.insertMany([
       {
         code: 'WELCOME10',
-        description: 'Welcome discount for new customers',
         discountPercent: 10,
-        minOrderValue: 50,
-        validFrom: new Date(),
-        validTo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         usageLimit: 100,
-        usedCount: 5,
-        status: 'active',
-        createdBy: admin._id
+        status: 'active'
       },
       {
-        code: 'BIGORDER20',
-        description: '20% off for orders over $200',
-        discountPercent: 20,
-        minOrderValue: 200,
-        validFrom: new Date(),
-        validTo: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
+        code: 'SUMMER15',
+        discountPercent: 15,
+        expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
         usageLimit: 50,
-        usedCount: 2,
-        status: 'active',
-        createdBy: admin._id
+        status: 'active'
       }
     ]);
-    console.log(`✅ Created ${vouchers.length} vouchers`);
 
-    // 7. Seed Sample Order
-    console.log('📦 Seeding sample order...');
-    const customer = users.find(u => u.role === 'customer');
-    const millennium = legos.find(l => l.slug === 'millennium-falcon');
-    
-    const orders = await Order.insertMany([
-      {
-        customerId: customer._id,
-        items: [{
-          legoId: millennium._id,
-          title: millennium.name,
+    const order = await Order.create({
+      userId: customer._id,
+      items: [
+        {
+          legoId: legos[0]._id,
           quantity: 1,
-          unitPrice: millennium.price,
-          subtotal: millennium.price
-        }],
-        shippingAddress: {
-          name: 'Jane Customer',
-          phone: '+84912345678',
-          addressLine1: '123 LEGO Street',
-          addressLine2: 'Building Block District',
-          city: 'Ho Chi Minh City',
-          postcode: '70000',
-          country: 'Vietnam'
-        },
-        totalPrice: millennium.price + 20, // +20 shipping
-        shippingFee: 20,
-        paymentMethod: 'COD',
-        status: 'pending',
-        sellerId: seller._id
-      }
-    ]);
-    console.log(`✅ Created ${orders.length} orders`);
+          price: legos[0].price
+        }
+      ],
+      total: legos[0].price,
+      status: 'confirmed',
+      shippingAddress: {
+        name: 'Jane Customer',
+        phone: '+84912345678',
+        address: '123 LEGO Street',
+        city: 'Ho Chi Minh City',
+        postalCode: '70000',
+        country: 'Vietnam'
+      },
+      paymentMethod: 'COD',
+      paymentStatus: 'unpaid',
+      voucherId: vouchers[0]._id
+    });
 
-    // 8. Seed Reviews
-    console.log('⭐ Seeding reviews...');
     const reviews = await Review.insertMany([
       {
-        legoId: millennium._id,
+        legoId: legos[0]._id,
         userId: customer._id,
         rating: 5,
-        title: 'Amazing build!',
-        comment: 'This is the best LEGO set I have ever built. Highly detailed and fun!',
+        comment: 'Incredible build quality and attention to detail.',
+        status: 'visible'
+      },
+      {
+        legoId: legos[1]._id,
+        userId: admin._id,
+        rating: 4,
+        comment: 'Great set for younger builders.',
+        status: 'visible'
+      }
+    ]);
+
+    await Gallery.insertMany([
+      {
+        userId: seller._id,
+        legoId: legos[0]._id,
+        imageUrl: 'https://example.com/gallery-falcon.jpg',
+        caption: 'Ultimate collector series display',
+        likes: [customer._id],
+        status: 'visible'
+      }
+    ]);
+
+    await Notification.insertMany([
+      {
+        userId: customer._id,
+        message: `Order ${order.orderNumber} confirmed`,
+        type: 'order',
+        status: 'unread'
+      },
+      {
+        userId: seller._id,
+        message: 'New product pending approval',
+        type: 'system',
+        status: 'read'
+      }
+    ]);
+
+    await Banner.insertMany([
+      {
+        title: 'New Arrivals',
+        imageUrl: 'https://example.com/banner-new-arrivals.jpg',
+        link: '/collections/new',
         status: 'active'
       },
       {
-        legoId: legos.find(l => l.slug === 'fire-station')._id,
-        userId: users.find(u => u.email === 'test1@lego.com')._id,
-        rating: 4,
-        title: 'Great for kids',
-        comment: 'My son loves this set. Good quality and reasonable price.',
-        status: 'active'
+        title: 'Star Wars Sale',
+        imageUrl: 'https://example.com/banner-star-wars.jpg',
+        link: '/collections/star-wars',
+        status: 'inactive'
       }
     ]);
-    console.log(`✅ Created ${reviews.length} reviews`);
 
-    // 9. Create database indexes
-    console.log('📇 Creating database indexes...');
-    await User.createIndexes();
-    await Theme.createIndexes();
-    await AgeRange.createIndexes();
-    await Difficulty.createIndexes();
-    await Lego.createIndexes();
-    await Order.createIndexes();
-    await Review.createIndexes();
-    await Gallery.createIndexes();
-    await Voucher.createIndexes();
-    await Cart.createIndexes();
-    await ActivityLog.createIndexes();
-    console.log('✅ Database indexes created');
+    await Wishlist.create({
+      userId: customer._id,
+      legoIds: [legos[0]._id, legos[2]._id]
+    });
 
-    console.log('\n🎉 Database seeding completed successfully!');
-    console.log('\n📊 Summary:');
-    console.log(`👥 Users: ${users.length}`);
-    console.log(`🎨 Themes: ${themes.length}`);
-    console.log(`👶 Age Ranges: ${ageRanges.length}`);
-    console.log(`⚡ Difficulties: ${difficulties.length}`);
-    console.log(`🧱 LEGO Products: ${legos.length}`);
-    console.log(`🎫 Vouchers: ${vouchers.length}`);
-    console.log(`📦 Orders: ${orders.length}`);
-    console.log(`⭐ Reviews: ${reviews.length}`);
-    
-    console.log('\n🔐 Test Accounts:');
-    console.log('Admin: admin@lego.com / 123456');
-    console.log('Seller: seller@lego.com / 123456');
-    console.log('Customer: customer@lego.com / 123456');
+    await RecentlyViewed.create({
+      userId: customer._id,
+      legoIds: [legos[1]._id, legos[0]._id]
+    });
 
+    await Setting.insertMany([
+      { key: 'siteName', value: 'LEGO Marketplace', updatedAt: new Date() },
+      { key: 'supportEmail', value: 'support@lego.com', updatedAt: new Date() }
+    ]);
+
+    await ChatLog.create({
+      userId: customer._id,
+      messages: [
+        { sender: 'user', text: 'Hi, I need help with my order.', timestamp: new Date() },
+        { sender: 'support', text: 'Sure, what can we assist you with?', timestamp: new Date() }
+      ]
+    });
+
+    await ActivityLog.create({
+      userId: customer._id,
+      action: 'Order created',
+      ip: '192.168.1.10',
+      device: 'Chrome on Windows'
+    });
+
+    await Promise.all([
+      User.createIndexes(),
+      Theme.createIndexes(),
+      AgeRange.createIndexes(),
+      Difficulty.createIndexes(),
+      Lego.createIndexes(),
+      Order.createIndexes(),
+      Review.createIndexes(),
+      Gallery.createIndexes(),
+      Voucher.createIndexes(),
+      Cart.createIndexes(),
+      ActivityLog.createIndexes(),
+      Notification.createIndexes(),
+      Banner.createIndexes(),
+      Wishlist.createIndexes(),
+      RecentlyViewed.createIndexes(),
+      Setting.createIndexes(),
+      ChatLog.createIndexes()
+    ]);
+
+    console.log('Database seeded successfully');
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error('Error seeding database:', error);
   } finally {
     await mongoose.connection.close();
-    console.log('🔌 Database connection closed');
     process.exit(0);
   }
 };
 
-// Run the seeder
 if (require.main === module) {
   seedDatabase();
 }

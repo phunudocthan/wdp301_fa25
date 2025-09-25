@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
@@ -22,10 +22,10 @@ const connectDB = async () => {
     await mongoose.connect(process.env.MONGODB_URI, {
       dbName: process.env.DB_NAME || "lego_ecommerce",
     });
-    console.log("✅ MongoDB Atlas connected successfully");
-    console.log(`📦 Database: ${mongoose.connection.db.databaseName}`);
+    console.log("âœ… MongoDB Atlas connected successfully");
+    console.log(`ðŸ“¦ Database: ${mongoose.connection.db.databaseName}`);
   } catch (error) {
-    console.error("❌ MongoDB connection error:", error.message);
+    console.error("âŒ MongoDB connection error:", error.message);
     process.exit(1);
   }
 };
@@ -108,9 +108,9 @@ app.get('/api/database/legos', async (req, res) => {
   try {
     const legos = await Lego.find({ status: 'active' })
       .populate('themeId', 'name description')
-      .populate('ageRangeId', 'label minAge maxAge')
-      .populate('difficultyId', 'label description')
-      .populate('sellerId', 'name email role')
+      .populate('ageRangeId', 'rangeLabel minAge maxAge')
+      .populate('difficultyId', 'label level')
+      .populate('createdBy', 'name email role')
       .limit(10)
       .sort({ createdAt: -1 });
     
@@ -176,10 +176,10 @@ const startServer = async () => {
   try {
     await connectDB();
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🌐 API URL: http://localhost:${PORT}/api`);
-      console.log(`🔍 Test endpoint: http://localhost:${PORT}/api/test`);
-      console.log(`💚 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`ðŸš€ Server running on port ${PORT}`);
+      console.log(`ðŸŒ API URL: http://localhost:${PORT}/api`);
+      console.log(`ðŸ” Test endpoint: http://localhost:${PORT}/api/test`);
+      console.log(`ðŸ’š Health check: http://localhost:${PORT}/api/health`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

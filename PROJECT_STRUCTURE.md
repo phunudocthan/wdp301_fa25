@@ -1,128 +1,128 @@
-# 📂 Cấu trúc thư mục dự án LEGO E-commerce
+﻿# Cau truc thu muc du an LEGO E-commerce
 
-## 🏗️ Cấu trúc hiện tại
+## 1. Cau truc hien tai
 
 ```
 WDP310_FA25/
-├── client/                
-│   ├── src/
-│   │   ├── components/     
-│   │   ├── pages/          
-│   │   ├── services/       # API calls (tạo khi cần)
-│   │   ├── utils/          # Helper functions (tạo khi cần)
-│   │   ├── App.tsx         
-│   │   ├── App.css         
-│   │   ├── main.tsx       
-│   │   └── index.css       
-│   ├── public/             
-│   ├── index.html          
-│   ├── package.json        
-│   ├── tsconfig.json      
-│   └── vite.config.ts      
-│
-├── server/                
-│   ├── controllers/       
-│   ├── routes/             
-│   ├── middleware/         
-│   ├── services/          
-│   ├── utils/              
-│   ├── config/             
-│   ├── models/            
-│   │   ├── User.js        
-│   │   ├── Lego.js                 
-│   │   ├── Order.js        
-│   │   └── Theme.js        
-│   ├── index.js            
-│   ├── package.json        
-│   └── .env                
-│
-├── .gitignore              
-├── README.md              
-
+|- client/
+|  |- public/
+|  |- src/
+|  |  |- components/
+|  |  |  `- .gitkeep
+|  |  |- pages/
+|  |  |  `- .gitkeep
+|  |  |- services/
+|  |  |  `- .gitkeep
+|  |  |- utils/
+|  |  |  `- .gitkeep
+|  |  |- App.tsx
+|  |  |- App.css
+|  |  |- index.css
+|  |  `- main.tsx
+|  |- index.html
+|  |- package.json
+|  |- package-lock.json
+|  |- tsconfig.json
+|  |- tsconfig.node.json
+|  `- vite.config.ts
+|
+|- server/
+|  |- config/
+|  |  `- .gitkeep
+|  |- controllers/
+|  |  `- .gitkeep
+|  |- middleware/
+|  |  `- .gitkeep
+|  |- models/
+|  |- routes/
+|  |- services/
+|  |  `- .gitkeep
+|  |- utils/
+|  |  `- .gitkeep
+|  |- index.js
+|  |- package.json
+|  |- package-lock.json
+|  |- seedDatabase.js
+|  `- .env
+|
+|- LEGOs_Project_Plan_Four_Sprint.markdown
+|- PROJECT_STRUCTURE.md
+|- README.md
+`- .gitignore
 ```
 
-## 📋 Quy tắc đặt tên
+(Luu y: bo qua `node_modules/` de giu tai lieu gon gang.)
 
-### **Frontend (client/)**
+## 2. Quy tac dat ten
 
+### Frontend (`client/`)
 - **Components:** PascalCase - `UserProfile.tsx`, `LegoCard.tsx`
 - **Pages:** PascalCase - `LoginPage.tsx`, `HomePage.tsx`
 - **Services:** camelCase - `authService.ts`, `legoService.ts`
 - **Utils:** camelCase - `validation.ts`, `formatters.ts`
+- **Hooks/Context (neu co):** camelCase + hau to phu hop - `useAuth.ts`, `cartContext.ts`
 
-### **Backend (server/)**
-
-- **Controllers:** camelCase + Controller - `authController.js`, `legoController.js`
-- **Routes:** camelCase + Routes - `authRoutes.js`, `legoRoutes.js`
+### Backend (`server/`)
+- **Controllers:** camelCase + `Controller` - `authController.js`, `legoController.js`
+- **Routes:** camelCase + `Routes` - `authRoutes.js`, `legoRoutes.js`
 - **Models:** PascalCase - `User.js`, `Lego.js`
-- **Services:** camelCase + Service - `emailService.js`, `paymentService.js`
+- **Services:** camelCase + `Service` - `emailService.js`, `paymentService.js`
 - **Middleware:** camelCase - `auth.js`, `validation.js`
+- **Utils:** camelCase - `generateOtp.js`, `encrypt.js`
+- **Seeder/Script:** camelCase - `seedDatabase.js`
 
-## 🚀 Khi nào tạo thư mục/file mới?
+## 3. Khi nao tao thu muc/file moi?
 
-### **Tạo ngay khi cần:**
-
+### Tao ngay khi can
 ```bash
-# Ví dụ Dev 1 làm Authentication:
+# Vi du Dev 1 lam Authentication
 server/
-├── controllers/
-│   └── authController.js    # Logic đăng ký/đăng nhập
-├── routes/
-│   └── authRoutes.js        # API endpoints
-├── middleware/
-│   └── auth.js              # JWT middleware
-└── services/
-    └── emailService.js      # Gửi email verification
+|- controllers/
+|  `- authController.js      # Logic dang ky/dang nhap
+|- routes/
+|  `- authRoutes.js          # API endpoints
+|- middleware/
+|  `- auth.js                # JWT middleware
+|- services/
+|  `- emailService.js        # Goi email verification
 
 client/
-├── src/
-│   ├── components/
-│   │   ├── LoginForm.tsx    # Form đăng nhập
-│   │   └── RegisterForm.tsx # Form đăng ký
-│   ├── pages/
-│   │   ├── LoginPage.tsx    # Trang đăng nhập
-│   │   └── RegisterPage.tsx # Trang đăng ký
-│   └── services/
-       └── authService.ts    # API calls cho auth
+|- src/
+|  |- components/
+|  |  `- LoginForm.tsx       # Form dang nhap
+|  |- pages/
+|  |  `- LoginPage.tsx       # Trang dang nhap
+|  `- services/
+|     `- authService.ts      # API calls cho auth
 ```
 
-### **Ví dụ các dev khác:**
+### Vi du cac dev khac
+- **Dev 2 - LEGO Management**
+  - `server/controllers/legoController.js`
+  - `server/routes/legoRoutes.js`
+  - `client/src/components/LegoCard.tsx`
+  - `client/src/pages/LegoListPage.tsx`
+  - `client/src/services/legoService.ts`
+- **Dev 3 - Orders**
+  - `server/controllers/orderController.js`
+  - `server/routes/orderRoutes.js`
+  - `client/src/components/CartItem.tsx`
+  - `client/src/pages/CheckoutPage.tsx`
+  - `client/src/services/orderService.ts`
 
-**Dev 2 - LEGO Management:**
+## 4. Luu y quan trong
+1. **Khong tao truoc:** Chi tao file/folder khi thuc su can, nhung giu san thu muc rong bang `.gitkeep` de dong bo git.
+2. **Dat ten nhat quan:** Theo conventions o tren.
+3. **Import/Export dung:** Su dung ES6 modules, tranh default export khong can thiet.
+4. **Comment code:** Chi comment cac doan logic phuc tap.
+5. **Git branch:** Moi feature mot branch rieng, nho rebase/squash truoc khi merge.
 
-```
-server/controllers/legoController.js
-server/routes/legoRoutes.js
-client/src/components/LegoCard.tsx
-client/src/pages/LegoListPage.tsx
-client/src/services/legoService.ts
-```
-
-**Dev 3 - Orders:**
-
-```
-server/controllers/orderController.js
-server/routes/orderRoutes.js
-client/src/components/CartItem.tsx
-client/src/pages/CheckoutPage.tsx
-client/src/services/orderService.ts
-```
-
-## 📝 Lưu ý quan trọng
-
-1. **Không tạo trước:** Chỉ tạo file/folder khi thực sự cần
-2. **Đặt tên nhất quán:** Theo convention đã định
-3. **Import/Export đúng:** Sử dụng ES6 modules
-4. **Comment code:** Giải thích logic phức tạp
-5. **Git branch:** Mỗi feature một branch riêng
-
-## 🎯 Mục tiêu
-
-- **Dễ tìm kiếm:** Biết file nằm ở đâu
-- **Dễ bảo trì:** Cấu trúc rõ ràng
-- **Dễ mở rộng:** Thêm feature mới dễ dàng
-- **Team work:** Mọi người làm theo cùng chuẩn
+## 5. Muc tieu
+- **De tim kiem:** Ai cung biet file nam o dau.
+- **De bao tri:** Cau truc ro rang, tranh xao tron logic.
+- **De mo rong:** Co san thu muc cho cac module lon, de feature moi dua vao nhanh.
+- **Team work:** Moi thanh vien theo cung mot khuon mau.
 
 ---
 
-**Lưu ý:** File này sẽ được cập nhật khi có thay đổi lớn về cấu trúc!
+**Note:** Cap nhat file nay ngay khi cau truc thay doi lon hoac co folder quan trong moi.

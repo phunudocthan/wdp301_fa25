@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const ReviewSchema = new mongoose.Schema({
   legoId: {
@@ -17,27 +17,24 @@ const ReviewSchema = new mongoose.Schema({
     min: 1,
     max: 5
   },
-  title: {
-    type: String,
-    trim: true
-  },
   comment: {
     type: String,
     trim: true
   },
-  images: [String], // Array of image URLs
+  images: [{
+    type: String,
+    trim: true
+  }],
   status: {
     type: String,
-    enum: ['active', 'reported', 'hidden'],
-    default: 'active'
+    enum: ['visible', 'hidden', 'reported'],
+    default: 'visible'
   }
 }, {
   timestamps: true
 });
 
-// Prevent duplicate reviews per user per product
 ReviewSchema.index({ legoId: 1, userId: 1 }, { unique: true });
-// Index for aggregation
 ReviewSchema.index({ legoId: 1, rating: 1 });
 ReviewSchema.index({ status: 1 });
 

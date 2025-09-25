@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const AgeRangeSchema = new mongoose.Schema({
-  label: {
+  rangeLabel: {
     type: String,
     required: [true, 'Age range label is required'],
     trim: true
@@ -13,16 +13,11 @@ const AgeRangeSchema = new mongoose.Schema({
   maxAge: {
     type: Number,
     min: 0
-  },
-  description: {
-    type: String,
-    trim: true
   }
 }, {
   timestamps: true
 });
 
-// Index for efficient querying
-AgeRangeSchema.index({ minAge: 1, maxAge: 1 });
+AgeRangeSchema.index({ rangeLabel: 1 }, { unique: true });
 
 module.exports = mongoose.model('AgeRange', AgeRangeSchema);

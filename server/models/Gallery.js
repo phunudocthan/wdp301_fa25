@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const GallerySchema = new mongoose.Schema({
   userId: {
@@ -9,7 +9,6 @@ const GallerySchema = new mongoose.Schema({
   legoId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Lego'
-    // Optional - gallery item may be general LEGO creation
   },
   imageUrl: {
     type: String,
@@ -19,29 +18,21 @@ const GallerySchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  likesCount: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  commentsCount: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   status: {
     type: String,
-    enum: ['active', 'hidden'],
-    default: 'active'
+    enum: ['visible', 'hidden', 'reported'],
+    default: 'visible'
   }
 }, {
   timestamps: true
 });
 
-// Indexes for efficient querying
 GallerySchema.index({ userId: 1 });
 GallerySchema.index({ legoId: 1 });
 GallerySchema.index({ status: 1, createdAt: -1 });
-GallerySchema.index({ likesCount: -1 }); // For sorting by most liked
 
 module.exports = mongoose.model('Gallery', GallerySchema);

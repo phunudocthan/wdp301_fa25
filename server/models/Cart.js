@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const CartSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    default: null // null for guest carts
+    required: true
   },
   items: [{
     legoId: {
@@ -17,7 +17,7 @@ const CartSchema = new mongoose.Schema({
       required: true,
       min: 1
     },
-    priceAtAdd: {
+    price: {
       type: Number,
       required: true,
       min: 0
@@ -27,8 +27,7 @@ const CartSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for efficient cart lookups
-CartSchema.index({ userId: 1 });
+CartSchema.index({ userId: 1 }, { unique: true });
 CartSchema.index({ 'items.legoId': 1 });
 
 module.exports = mongoose.model('Cart', CartSchema);

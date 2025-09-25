@@ -1,31 +1,27 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
-const LegoSchema = new mongoose.Schema({
+const { Schema } = mongoose;
+
+const LegoSchema = new Schema({
   name: {
     type: String,
     required: [true, 'Name is required'],
     trim: true
   },
-  slug: {
-    type: String,
-    unique: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    trim: true
-  },
   themeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Theme'
+    type: Schema.Types.ObjectId,
+    ref: 'Theme',
+    required: true
   },
   ageRangeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'AgeRange'
+    type: Schema.Types.ObjectId,
+    ref: 'AgeRange',
+    required: true
   },
   difficultyId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Difficulty'
+    type: Schema.Types.ObjectId,
+    ref: 'Difficulty',
+    required: true
   },
   pieces: {
     type: Number,
@@ -42,37 +38,26 @@ const LegoSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
-  images: [String], // Array of image URLs
-  sellerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'archived'],
-    default: 'active'
+    enum: ['pending', 'active', 'inactive'],
+    default: 'pending'
   },
-  averageRating: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 5
-  },
-  reviewCount: {
-    type: Number,
-    default: 0,
-    min: 0
+  images: [{
+    type: String,
+    trim: true
+  }],
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
 }, {
   timestamps: true
 });
 
-// Text index for search
-LegoSchema.index({ name: 'text', description: 'text' });
-// Compound indexes
-LegoSchema.index({ themeId: 1, price: 1 });
-LegoSchema.index({ sellerId: 1, status: 1 });
-LegoSchema.index({ status: 1, createdAt: -1 });
+LegoSchema.index({ name: 'text' });
+LegoSchema.index({ themeId: 1 });
+LegoSchema.index({ price: 1 });
 
 module.exports = mongoose.model('Lego', LegoSchema);
