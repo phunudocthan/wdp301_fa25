@@ -23,19 +23,55 @@ const UserSchema = new mongoose.Schema({
     enum: ['customer', 'seller', 'admin'],
     default: 'customer'
   },
+  avatar: {
+    type: String // URL to avatar image
+  },
   phone: {
     type: String,
     trim: true
   },
-  avatar: {
-    type: String // URL
+  address: {
+    street: {
+      type: String,
+      trim: true
+    },
+    city: {
+      type: String,
+      trim: true
+    },
+    state: {
+      type: String,
+      trim: true
+    },
+    postalCode: {
+      type: String,
+      trim: true
+    },
+    country: {
+      type: String,
+      trim: true,
+      default: 'Vietnam'
+    }
   },
   status: {
     type: String,
-    enum: ['active', 'blocked'],
+    enum: ['active', 'inactive', 'locked'], // updated to include 'inactive' and 'locked'
     default: 'active'
   },
   lastLogin: {
+    type: Date
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationToken: {
+    type: String
+  },
+  emailVerificationExpires: {
+    type: Date
+  },
+  lastVerificationEmailSentAt: {
     type: Date
   }
 }, {
