@@ -69,17 +69,17 @@ app.get("/api/health", async (req, res) => {
 });
 
 // Import models for testing
-const User = require('./models/User');
-const Theme = require('./models/Theme');
-const AgeRange = require('./models/AgeRange');
-const Difficulty = require('./models/Difficulty');
-const Lego = require('./models/Lego');
-const Order = require('./models/Order');
-const Review = require('./models/Review');
-const Voucher = require('./models/Voucher');
+const User = require("./models/User");
+const Theme = require("./models/Theme");
+const AgeRange = require("./models/AgeRange");
+const Difficulty = require("./models/Difficulty");
+const Lego = require("./models/Lego");
+const Order = require("./models/Order");
+const Review = require("./models/Review");
+const Voucher = require("./models/Voucher");
 
 // Database test endpoints
-app.get('/api/database/stats', async (req, res) => {
+app.get("/api/database/stats", async (req, res) => {
   try {
     const stats = {
       users: await User.countDocuments(),
@@ -90,60 +90,61 @@ app.get('/api/database/stats', async (req, res) => {
       orders: await Order.countDocuments(),
       reviews: await Review.countDocuments(),
       vouchers: await Voucher.countDocuments(),
-      collections: await mongoose.connection.db.listCollections().toArray()
+      collections: await mongoose.connection.db.listCollections().toArray(),
     };
-    
+
     res.json({
-      message: 'Database statistics',
+      message: "Database statistics",
       database: mongoose.connection.db.databaseName,
       stats,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.get('/api/database/legos', async (req, res) => {
+app.get("/api/database/legos", async (req, res) => {
   try {
-    const legos = await Lego.find({ status: 'active' })
-      .populate('themeId', 'name description')
-      .populate('ageRangeId', 'rangeLabel minAge maxAge')
-      .populate('difficultyId', 'label level')
-      .populate('createdBy', 'name email role')
+    const legos = await Lego.find({ status: "active" })
+      .populate("themeId", "name description")
+      .populate("ageRangeId", "rangeLabel minAge maxAge")
+      .populate("difficultyId", "label level")
+      .populate("createdBy", "name email role")
       .limit(10)
       .sort({ createdAt: -1 });
-    
+
     res.json({
-      message: 'Sample LEGO products',
+      message: "Sample LEGO products",
       count: legos.length,
-      legos
+      legos,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.get('/api/database/users', async (req, res) => {
+app.get("/api/database/users", async (req, res) => {
   try {
-    const users = await User.find({}, '-password') // Exclude password
+    const users = await User.find({}, "-password") // Exclude password
       .limit(10)
       .sort({ createdAt: -1 });
-    
+
     res.json({
-      message: 'Sample users',
+      message: "Sample users",
       count: users.length,
-      users
+      users,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Routes placeholder
-app.use("/api/auth", (req, res) =>
-  res.json({ message: "Auth routes coming soon..." })
-);
+// Import routes
+const authRoutes = require('./routes/auth');
+
+// Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/users", (req, res) =>
   res.json({ message: "User routes coming soon..." })
 );

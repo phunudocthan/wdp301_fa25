@@ -46,7 +46,9 @@ const seedDatabase = async () => {
           postalCode: '700000',
           country: 'Vietnam'
         },
-        status: 'active'
+        status: 'active',
+        isEmailVerified: true,
+        failedLoginAttempts: 0
       },
       {
         name: 'John Seller',
@@ -61,7 +63,9 @@ const seedDatabase = async () => {
           postalCode: '700000',
           country: 'Vietnam'
         },
-        status: 'active'
+        status: 'active',
+        isEmailVerified: true,
+        failedLoginAttempts: 0
       },
       {
         name: 'Jane Customer',
@@ -76,7 +80,9 @@ const seedDatabase = async () => {
           postalCode: '700000',
           country: 'Vietnam'
         },
-        status: 'active'
+        status: 'active',
+        isEmailVerified: true,
+        failedLoginAttempts: 0
       }
     ]);
 
