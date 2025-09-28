@@ -1,5 +1,16 @@
 ﻿const mongoose = require("mongoose");
 
+const AddressSchema = new mongoose.Schema(
+  {
+    street: { type: String, trim: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
+    postalCode: { type: String, trim: true },
+    country: { type: String, trim: true, default: "Vietnam" },
+  },
+  { _id: false }
+);
+
 const UserSchema = new mongoose.Schema(
   {
     name: {
@@ -16,8 +27,15 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
       minlength: 6,
+      required() {
+        return !this.googleId;
+      },
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     role: {
       type: String,
@@ -25,35 +43,13 @@ const UserSchema = new mongoose.Schema(
       default: "customer",
     },
     avatar: {
-      type: String, // URL to avatar image
+      type: String,
     },
     phone: {
       type: String,
       trim: true,
     },
-    address: {
-      street: {
-        type: String,
-        trim: true,
-      },
-      city: {
-        type: String,
-        trim: true,
-      },
-      state: {
-        type: String,
-        trim: true,
-      },
-      postalCode: {
-        type: String,
-        trim: true,
-      },
-      country: {
-        type: String,
-        trim: true,
-        default: "Vietnam",
-      },
-    },
+    address: AddressSchema,
     status: {
       type: String,
       enum: ["active", "inactive", "locked"],
@@ -75,6 +71,14 @@ const UserSchema = new mongoose.Schema(
     lastVerificationEmailSentAt: {
       type: Date,
     },
+    verificationEmailAttempts: {
+      type: Number,
+      default: 0,
+    },
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -82,5 +86,6 @@ const UserSchema = new mongoose.Schema(
 );
 
 UserSchema.index({ role: 1 });
+UserSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("User", UserSchema);

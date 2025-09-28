@@ -1,11 +1,18 @@
-const express = require("express");
+﻿const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const session = require("express-session");
+const passport = require("passport");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const USE_GOOGLE_AUTH = Boolean(
+  process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_CALLBACK_URL
+);
 
 // Middleware
 app.use(
@@ -16,6 +23,19 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+if (USE_GOOGLE_AUTH) {
+  app.use(
+    session({
+      secret:
+        process.env.SESSION_SECRET || process.env.JWT_SECRET || "lego-secret",
+      resave: false,
+      saveUninitialized: false,
+    })
+  );
+  app.use(passport.initialize());
+  app.use(passport.session());
+}
 
 // Serve static files (avatars)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -147,13 +167,9 @@ app.get("/api/database/users", async (req, res) => {
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
-const { requireAuth, requireRole } = require("./middleware/authMiddleware");
 
-// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-
-// Product routes
 app.use("/api/products", productRoutes);
 
 app.use("/api/legos", (req, res) =>

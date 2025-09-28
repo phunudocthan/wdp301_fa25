@@ -1,17 +1,19 @@
-import React from 'react';
-import { Routes, Route, Navigate, Link } from "react-router-dom";
-import { AuthProvider } from './stores/AuthContext';
+﻿import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./stores/AuthContext";
 
 // Common layout components
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 
 // Pages
-import NewPage from "./pages/Home";  // đổi Home thành NewPage
+import NewPage from "./pages/Home"; // đổi Home thành NewPage
 import Login from "./pages/Login";
 import Profile from "./pages/AdminProfile";
 import Shop from "./pages/Shop";
 import Register from "./pages/Register";
+import VerifyEmailPage from "./views/VerifyEmailPage";
+import ResendVerificationPage from "./views/ResendVerificationPage";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -35,9 +37,11 @@ export default function App() {
             {/* Trang New (trang sản phẩm chính) */}
             <Route path="/new" element={<NewPage />} />
 
-            {/* Đăng nhập */}
+            {/* Đăng nhập/đăng ký */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/resend-verification" element={<ResendVerificationPage />} />
 
             {/* Trang cá nhân (chỉ truy cập khi login) */}
             <Route
