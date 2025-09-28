@@ -43,7 +43,6 @@ app.get("/api/test", (req, res) => {
 // Health check route
 app.get("/api/health", async (req, res) => {
   try {
-    // Test database connection
     const dbStatus =
       mongoose.connection.readyState === 1 ? "Connected" : "Disconnected";
 
@@ -68,10 +67,9 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Routes placeholder
-app.use("/api/auth", (req, res) =>
-  res.json({ message: "Auth routes coming soon..." })
-);
+// Routes
+const authRoutes = require("./routes/auth");
+app.use("/api/auth", authRoutes);
 app.use("/api/users", (req, res) =>
   res.json({ message: "User routes coming soon..." })
 );
