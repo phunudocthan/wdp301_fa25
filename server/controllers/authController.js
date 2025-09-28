@@ -4,6 +4,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -13,10 +15,76 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Cấu hình Passport cho Google OAuth
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Tìm user bằng Google ID hoặc email
+        let user = await User.findOne({ googleId: profile.id });
+
+        if (!user) {
+          // Nếu chưa có, tìm bằng email
+          user = await User.findOne({ email: profile.emails[0].value });
+
+          if (!user) {
+            // Tạo user mới nếu chưa tồn tại
+            user = new User({
+              googleId: profile.id,
+              name: profile.displayName,
+              email: profile.emails[0].value,
+              avatar: profile.photos[0].value,
+              isEmailVerified: true, // Google đã xác thực email
+              role: "customer",
+              status: "active",
+            });
+            await user.save();
+          } else {
+            // Cập nhật Google ID cho user tồn tại
+            user.googleId = profile.id;
+            user.avatar = profile.photos[0].value;
+            await user.save();
+          }
+        }
+
+        // Tạo JWT token
+        const token = jwt.sign(
+          { id: user._id, role: user.role },
+          process.env.JWT_SECRET,
+          { expiresIn: "1h" }
+        );
+
+        return done(null, { user, token });
+      } catch (error) {
+        return done(error, null);
+      }
+    }
+  )
+);
+
+// Serialize và Deserialize user cho session
+passport.serializeUser((userObj, done) => {
+  done(null, userObj.user._id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
+
 // Giới hạn tốc độ cho gửi lại email xác thực
 const resendEmailLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 giờ
-  max: 3, // Giới hạn 3 yêu cầu mỗi giờ cho mỗi IP
+  windowMs: 60 * 60 * 1000,
+  max: 3,
   message: {
     message: "Quá nhiều yêu cầu gửi lại email. Vui lòng thử lại sau.",
   },

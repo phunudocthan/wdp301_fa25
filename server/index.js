@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const session = require("express-session");
+const passport = require("passport");
 require("dotenv").config();
 
 const app = express();
@@ -15,6 +17,19 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware (cho Passport)
+app.use(
+  session({
+    secret: process.env.JWT_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+// Khởi tạo Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // MongoDB Connection
 const connectDB = async () => {

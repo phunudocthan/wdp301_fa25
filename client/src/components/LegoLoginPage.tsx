@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import "../styles/LegoLoginPage.css";
 
@@ -17,6 +17,17 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showResendOption, setShowResendOption] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Xử lý redirect từ Google callback (lấy token từ query param)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    if (token) {
+      // Lưu token vào localStorage hoặc state, và gọi onLoginSuccess
+      localStorage.setItem("authToken", token);
+      onLoginSuccess();
+    }
+  }, [onLoginSuccess]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,6 +73,10 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
   };
 
   return (
@@ -216,15 +231,16 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
         <div style={styles.socialButtons}>
           <button
             style={{ ...styles.socialButton, ...styles.googleButton }}
-            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            onMouseEnter={(e) => {
               e.currentTarget.style.background = "#f5f5f5";
               e.currentTarget.style.transform = "translateY(-2px)";
             }}
-            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+            onMouseLeave={(e) => {
               e.currentTarget.style.background = "white";
               e.currentTarget.style.transform = "translateY(0)";
             }}
-            disabled={isLoading}
           >
             <span style={styles.socialIcon}>🔍</span>
             Đăng nhập với Google
