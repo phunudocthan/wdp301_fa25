@@ -1,0 +1,37 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a { text-decoration: none; }
+
+.container { width: min(1200px, 92%); margin: 0 auto; }
+
+button {
+  border: 0;
+  cursor: pointer;
+  border-radius: $radius;
+  padding: 10px 14px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 0 0 transparent;
+  transition: .2s ease;
+
+  &:hover { background: var(--primary-600); }
+}
+
+input, .input { @include input; }
+
+.card { @include card; }
+
+.text-muted { color: var(--muted); }
+.link { color: var(--secondary); font-weight: 600; }

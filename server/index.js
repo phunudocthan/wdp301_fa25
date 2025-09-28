@@ -6,7 +6,7 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// ================== Middleware ==================
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:3000",
@@ -16,7 +16,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB Connection
+// ================== MongoDB Connect ==================
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
@@ -30,7 +30,7 @@ const connectDB = async () => {
   }
 };
 
-// Test route
+// ================== Health check ==================
 app.get("/api/test", (req, res) => {
   res.json({
     message: "LEGO E-commerce API is running!",
@@ -40,10 +40,8 @@ app.get("/api/test", (req, res) => {
   });
 });
 
-// Health check route
 app.get("/api/health", async (req, res) => {
   try {
-    // Test database connection
     const dbStatus =
       mongoose.connection.readyState === 1 ? "Connected" : "Disconnected";
 
@@ -61,30 +59,25 @@ app.get("/api/health", async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      status: "ERROR",
-      message: error.message,
-    });
+    res.status(500).json({ status: "ERROR", message: error.message });
   }
 });
 
-// Routes placeholder
-app.use("/api/auth", (req, res) =>
-  res.json({ message: "Auth routes coming soon..." })
-);
-app.use("/api/users", (req, res) =>
-  res.json({ message: "User routes coming soon..." })
-);
-app.use("/api/legos", (req, res) =>
-  res.json({ message: "LEGO routes coming soon..." })
-);
-app.use("/api/orders", (req, res) =>
-  res.json({ message: "Order routes coming soon..." })
-);
+// ================== Routes ==================
+const authRoutes = require("./routes/authRoutes");
+const productRoutes = require("./routes/productRoutes");
+const { requireAuth, requireRole } = require("./middleware/authMiddleware");
 
-// Error handling middleware
+app.use("/api/auth", authRoutes);
+
+// ✅ Nếu chỉ test search/filter -> để public
+// 🚨 Khi triển khai chính thức, bật middleware auth + role
+// app.use("/api/products", requireAuth, requireRole("admin", "seller"), productRoutes);
+app.use("/api/products", productRoutes);
+
+// ================== Error handler ==================
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error("🔥 Error:", err.stack);
   res.status(500).json({
     message: "Something went wrong!",
     error:
@@ -94,12 +87,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler - must be last
+// ================== 404 handler ==================
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Start server
+// ================== Start server ==================
 const startServer = async () => {
   try {
     await connectDB();
@@ -110,7 +103,7 @@ const startServer = async () => {
       console.log(`💚 Health check: http://localhost:${PORT}/api/health`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 };
