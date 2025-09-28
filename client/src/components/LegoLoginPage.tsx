@@ -8,6 +8,7 @@ interface Styles {
 interface LegoLoginPageProps {
   onLogin: (email: string, password: string) => Promise<void>;
   onResendVerification: (email: string) => Promise<string | void>;
+  onForgotPassword: (email: string) => Promise<string | void>;
   onNavigateRegister: () => void;
   googleAuthUrl: string;
   onLoginSuccess?: () => void;
@@ -17,6 +18,7 @@ interface LegoLoginPageProps {
 const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
   onLogin,
   onResendVerification,
+  onForgotPassword,
   onNavigateRegister,
   googleAuthUrl,
   onLoginSuccess,
@@ -27,7 +29,8 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"login" | "resend" | "forgot" | null>(null);
+  const isLoading = loadingAction !== null;
   const [showResendOption, setShowResendOption] = useState(false);
 
   useEffect(() => {
@@ -80,7 +83,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
     }
     setError(null);
     setInfo(null);
-    setIsLoading(true);
+    setLoadingAction("login");
     try {
       await onLogin(email, password);
       setInfo("Login successful!");
@@ -94,7 +97,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
         setShowResendOption(true);
       }
     } finally {
-      setIsLoading(false);
+      setLoadingAction(null);
     }
   };
 
@@ -105,7 +108,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
     }
     setError(null);
     setInfo(null);
-    setIsLoading(true);
+    setLoadingAction("resend");
     try {
       const message = await onResendVerification(email);
       setInfo(message || "Verification email sent. Please check your inbox.");
@@ -113,9 +116,29 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
       const message = err instanceof Error ? err.message : "Unable to resend verification email.";
       setError(message);
     } finally {
-      setIsLoading(false);
+      setLoadingAction(null);
     }
   };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Please enter your email first");
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setLoadingAction("forgot");
+    try {
+      const message = await onForgotPassword(email);
+      setInfo(message || "Password reset email sent. Please check your inbox.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to send password reset email.";
+      setError(message);
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
 
   const handleGoogleLogin = () => {
     window.location.href = googleAuthUrl;
@@ -207,7 +230,21 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
               <input type="checkbox" style={styles.checkbox} disabled={isLoading} />
               <span style={styles.checkboxText}>Remember me</span>
             </label>
-            <span style={styles.forgotLink}>Forgot password?</span>
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={isLoading}
+              style={{
+                ...styles.forgotLink,
+                background: "none",
+                border: "none",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                opacity: isLoading ? 0.6 : 1,
+                padding: 0,
+              }}
+            >
+              Forgot password?
+            </button>
           </div>
 
           <button
@@ -218,7 +255,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
             }}
             disabled={isLoading}
           >
-            {isLoading ? (
+            {loadingAction === "login" ? (
               <div
                 style={{
                   display: "flex",
@@ -237,7 +274,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
                     animation: "spin 1s linear infinite",
                   }}
                 />
-                <span>Processing...</span>
+                <span>Signing in...</span>
               </div>
             ) : (
               <span>LOG IN</span>
@@ -493,6 +530,7 @@ const styles: Styles = {
     color: "#2C3E7A",
     textDecoration: "none",
     fontWeight: "bold",
+    cursor: "pointer",
     transition: "all 0.2s ease",
   },
   loginButton: {
@@ -588,4 +626,3 @@ if (styleSheet) {
 }
 
 export default LegoLoginPage;
-

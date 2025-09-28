@@ -1,4 +1,4 @@
-﻿import { toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { storage } from "./storage";
 
 const envApi = import.meta.env.VITE_API_URL as string | undefined;
@@ -32,14 +32,19 @@ export async function http<T = unknown>(path: string, options: HttpOptions = {})
     const data: T = await res.json().catch(() => ({} as T));
 
     if (!res.ok) {
-      const msg = (data as any)?.message || "Request failed";
-      toast.error(msg);
+      const raw = data as any;
+      const msg = raw?.message || raw?.msg || "Request failed";
       throw new Error(msg);
     }
 
     return data;
   } catch (err: any) {
-    toast.error(err?.message || "Network error");
-    throw err;
+    const message = err?.message || "Network error";
+    toast.error(message);
+    if (err instanceof Error) {
+      err.message = message;
+      throw err;
+    }
+    throw new Error(message);
   }
 }

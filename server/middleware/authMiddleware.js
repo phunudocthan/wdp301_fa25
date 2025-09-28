@@ -1,7 +1,6 @@
-const jwt = require("jsonwebtoken");
+﻿const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-// ✅ Check token
 const requireAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -18,6 +17,19 @@ const requireAuth = async (req, res, next) => {
       return res.status(401).json({ message: "User not found" });
     }
 
+    if (user.status && user.status !== "active") {
+      return res.status(403).json({ message: "Account is not active" });
+    }
+
+    if (user.isLocked) {
+      const waitMs = user.lockUntil - Date.now();
+      const waitMinutes = Math.max(1, Math.ceil(waitMs / 60000));
+      return res.status(423).json({
+        message: `Account locked. Try again in ${waitMinutes} minute(s).`,
+        lockUntil: user.lockUntil,
+      });
+    }
+
     req.user = user;
     next();
   } catch (err) {
@@ -26,7 +38,6 @@ const requireAuth = async (req, res, next) => {
   }
 };
 
-// ✅ Check role
 const requireRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {

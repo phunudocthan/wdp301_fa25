@@ -9,6 +9,22 @@ export interface Address {
   country?: string;
 }
 
+export interface UserAddress {
+  _id?: string;
+  label?: string;
+  recipientName?: string;
+  phone?: string;
+  street: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  isDefault?: boolean;
+  archived?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface User {
   _id?: string;
   name: string;
@@ -20,10 +36,13 @@ export interface User {
   address?: Address;
   status?: UserStatus;
   lastLogin?: string;
+  lockUntil?: string;
+  failedLoginAttempts?: number;
   createdAt?: string;
   updatedAt?: string;
   favoriteThemes?: string[];
   isVerified?: boolean;
+  addresses?: UserAddress[];
 }
 
 export interface LoginPayload {
@@ -42,5 +61,4 @@ export interface AuthResponse {
   user: User;
   token: string;
 }
-
 

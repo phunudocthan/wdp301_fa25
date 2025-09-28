@@ -3,7 +3,8 @@
 function resolveCreds() {
   const user = process.env.SMTP_USER || process.env.EMAIL_USER;
   const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-  const host = process.env.SMTP_HOST || (user && user.includes("gmail") ? "smtp.gmail.com" : undefined);
+  const host =
+    process.env.SMTP_HOST || (user && user.includes("gmail") ? "smtp.gmail.com" : undefined);
   const port = Number(process.env.SMTP_PORT || 587);
 
   return { user, pass, host, port };
@@ -43,7 +44,11 @@ async function getTransporter() {
 async function sendVerificationEmail(to, link) {
   const transporter = await getTransporter();
   const appName = process.env.APP_NAME || "Lego Store";
-  const fromAddress = process.env.SMTP_FROM || process.env.EMAIL_FROM || process.env.SMTP_USER || process.env.EMAIL_USER;
+  const fromAddress =
+    process.env.SMTP_FROM ||
+    process.env.EMAIL_FROM ||
+    process.env.SMTP_USER ||
+    process.env.EMAIL_USER;
 
   const info = await transporter.sendMail({
     from: `${appName} <${fromAddress}>`,
@@ -59,10 +64,77 @@ async function sendVerificationEmail(to, link) {
 
   const preview = nodemailer.getTestMessageUrl(info);
   if (preview) {
-    console.log(`[emailService] Preview URL: ${preview}`);
+    console.log(`[emailService] Verification preview URL: ${preview}`);
   } else {
     console.log("[emailService] Verification email sent to", to);
   }
 }
 
-module.exports = { sendVerificationEmail };
+async function sendPasswordResetEmail(to, link) {
+  const transporter = await getTransporter();
+  const appName = process.env.APP_NAME || "Lego Store";
+  const fromAddress =
+    process.env.SMTP_FROM ||
+    process.env.EMAIL_FROM ||
+    process.env.SMTP_USER ||
+    process.env.EMAIL_USER;
+
+  const info = await transporter.sendMail({
+    from: `${appName} <${fromAddress}>`,
+    to,
+    subject: "Password reset request",
+    html: `
+      <p>Xin chào,</p>
+      <p>Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+      <p>Nhấp vào liên kết dưới đây để đặt lại mật khẩu trong vòng 10 phút:</p>
+      <p><a href="${link}" target="_blank">Đặt lại mật khẩu</a></p>
+      <p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>
+    `,
+  });
+
+  const preview = nodemailer.getTestMessageUrl(info);
+  if (preview) {
+    console.log(`[emailService] Password reset preview URL: ${preview}`);
+  } else {
+    console.log("[emailService] Password reset email sent to", to);
+  }
+}
+
+async function sendAccountLockedEmail(to, lockUntil) {
+  if (!lockUntil) return;
+
+  const transporter = await getTransporter();
+  const appName = process.env.APP_NAME || "Lego Store";
+  const fromAddress =
+    process.env.SMTP_FROM ||
+    process.env.EMAIL_FROM ||
+    process.env.SMTP_USER ||
+    process.env.EMAIL_USER;
+
+  const unlockTime = new Date(lockUntil).toLocaleString();
+
+  const info = await transporter.sendMail({
+    from: `${appName} <${fromAddress}>`,
+    to,
+    subject: "Tài khoản tạm thời bị khóa",
+    html: `
+      <p>Xin chào,</p>
+      <p>Tài khoản của bạn đã bị khóa tạm thời do nhập sai mật khẩu quá nhiều lần.</p>
+      <p>Bạn có thể thử đăng nhập lại sau: <strong>${unlockTime}</strong>.</p>
+      <p>Nếu không phải bạn thực hiện, vui lòng đặt lại mật khẩu ngay.</p>
+    `,
+  });
+
+  const preview = nodemailer.getTestMessageUrl(info);
+  if (preview) {
+    console.log(`[emailService] Account locked preview URL: ${preview}`);
+  } else {
+    console.log("[emailService] Account locked notification sent to", to);
+  }
+}
+
+module.exports = {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendAccountLockedEmail,
+};

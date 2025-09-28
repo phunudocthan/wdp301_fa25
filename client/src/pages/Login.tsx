@@ -2,7 +2,10 @@ import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import LegoLoginPage from "../components/LegoLoginPage";
 import { useAuth } from "../components/context/AuthContext";
-import { requestEmailVerification } from "../api/auth";
+import {
+  requestEmailVerification,
+  requestPasswordReset,
+} from "../api/auth";
 
 const Login = () => {
   const { login, loginWithToken } = useAuth();
@@ -29,8 +32,13 @@ const Login = () => {
   }, [location.state, navigate]);
 
   const handleResendVerification = useCallback(async (email: string) => {
-    const { msg } = await requestEmailVerification(email);
-    return msg;
+    const { msg, message } = await requestEmailVerification(email);
+    return message || msg;
+  }, []);
+
+  const handleForgotPassword = useCallback(async (email: string) => {
+    const { msg, message } = await requestPasswordReset(email);
+    return message || msg || "Password reset email sent.";
   }, []);
 
   const handleGoogleToken = useCallback(
@@ -48,6 +56,7 @@ const Login = () => {
     <LegoLoginPage
       onLogin={handleLogin}
       onResendVerification={handleResendVerification}
+      onForgotPassword={handleForgotPassword}
       onNavigateRegister={handleNavigateRegister}
       googleAuthUrl={googleAuthUrl}
       onLoginSuccess={handleLoginSuccess}

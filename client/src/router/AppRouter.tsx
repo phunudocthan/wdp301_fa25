@@ -4,6 +4,7 @@ import LoginPage from '../views/LoginPage';
 import ProfilePage from '../views/ProfilePage';
 import VerifyEmailPage from '../views/VerifyEmailPage';
 import ResendVerificationPage from '../views/ResendVerificationPage';
+import ResetPasswordPage from '../views/ResetPasswordPage';
 
 interface AppRouterProps {
   isAuthenticated: boolean;
@@ -26,6 +27,7 @@ const AppRouter: React.FC<AppRouterProps> = ({ isAuthenticated }) => {
       />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/resend-verification" element={<ResendVerificationPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route 
         path="/" 
         element={<Navigate to={isAuthenticated ? '/profile' : '/login'} replace />} 
