@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
 import "../styles/LegoLoginPage.css";
 
 interface Styles {
@@ -7,48 +6,91 @@ interface Styles {
 }
 
 interface LegoLoginPageProps {
-  onLoginSuccess: () => void;
+  onLogin: (email: string, password: string) => Promise<void>;
+  onResendVerification: (email: string) => Promise<string | void>;
+  onNavigateRegister: () => void;
+  googleAuthUrl: string;
+  onLoginSuccess?: () => void;
+  onGoogleToken?: (token: string) => Promise<void>;
 }
 
-const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showResendOption, setShowResendOption] = useState<boolean>(false);
+const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
+  onLogin,
+  onResendVerification,
+  onNavigateRegister,
+  googleAuthUrl,
+  onLoginSuccess,
+  onGoogleToken,
+}) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showResendOption, setShowResendOption] = useState(false);
 
   useEffect(() => {
-    // Xử lý redirect từ Google callback (lấy token từ query param)
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-    if (token) {
-      // Lưu token vào localStorage hoặc state, và gọi onLoginSuccess
-      localStorage.setItem("authToken", token);
-      onLoginSuccess();
-    }
-  }, [onLoginSuccess]);
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (!token) return;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    let cancelled = false;
 
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          email,
-          password,
+    const clearTokenParam = () => {
+      const nextParams = new URLSearchParams(window.location.search);
+      nextParams.delete("token");
+      const query = nextParams.toString();
+      const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}`;
+      window.history.replaceState({}, document.title, nextUrl);
+    };
+
+    (async () => {
+      try {
+        if (onGoogleToken) {
+          await onGoogleToken(token);
         }
-      );
-      console.log("Login successful:", response.data);
-      onLoginSuccess();
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!";
-      setError(errorMessage);
-      if (errorMessage === "Vui lòng xác thực email trước.") {
+        if (!cancelled) {
+          setError(null);
+          setInfo("Google login successful!");
+          onLoginSuccess?.();
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : "Unable to complete Google login.";
+          setError(message);
+        }
+      } finally {
+        if (!cancelled) {
+          clearTokenParam();
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onGoogleToken, onLoginSuccess]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setIsLoading(true);
+    try {
+      await onLogin(email, password);
+      setInfo("Login successful!");
+      setShowResendOption(false);
+      onLoginSuccess?.();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An error occurred. Please try again.";
+      setError(message);
+      const lower = message.toLowerCase();
+      if (lower.includes("verify") || lower.includes("xac")) {
         setShowResendOption(true);
       }
     } finally {
@@ -57,26 +99,26 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   const handleResendVerification = async () => {
-    setError("");
+    if (!email) {
+      setError("Please enter your email first");
+      return;
+    }
+    setError(null);
+    setInfo(null);
     setIsLoading(true);
-
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/resend-verification-email",
-        { email }
-      );
-      alert(response.data.message);
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Không thể gửi lại email xác thực.";
-      setError(errorMessage);
+      const message = await onResendVerification(email);
+      setInfo(message || "Verification email sent. Please check your inbox.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to resend verification email.";
+      setError(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = googleAuthUrl;
   };
 
   return (
@@ -96,10 +138,8 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        <h2 style={styles.title}>Đăng nhập</h2>
-        <p style={styles.subtitle}>
-          Xin chào! Hãy đăng nhập vào tài khoản của bạn
-        </p>
+        <h2 style={styles.title}>Login</h2>
+        <p style={styles.subtitle}>Welcome back! Please sign in to continue.</p>
 
         {error && (
           <p
@@ -113,57 +153,61 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
           </p>
         )}
 
+        {info && (
+          <p
+            style={{
+              color: "#16a34a",
+              textAlign: "center",
+              marginBottom: "10px",
+            }}
+          >
+            {info}
+          </p>
+        )}
+
         <form style={styles.loginForm} onSubmit={handleSubmit}>
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Email hoặc tên người dùng</label>
+            <label style={styles.label}>Email or username</label>
             <input
               type="email"
               value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEmail(e.target.value)
-              }
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
               style={styles.input}
-              placeholder="Nhập email của bạn"
+              placeholder="Enter your email"
               disabled={isLoading}
+              required
             />
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Mật khẩu</label>
+            <label style={styles.label}>Password</label>
             <div style={styles.passwordContainer}>
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
                 style={{ ...styles.input, paddingRight: "50px" }}
-                placeholder="Nhập mật khẩu"
+                placeholder="Enter your password"
                 disabled={isLoading}
+                required
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowPassword((prev) => !prev)}
                 style={styles.eyeButton}
                 disabled={isLoading}
               >
-                {showPassword ? "👁️" : "👁️‍🗨️"}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
 
           <div style={styles.rememberForgot}>
             <label style={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                style={styles.checkbox}
-                disabled={isLoading}
-              />
-              <span style={styles.checkboxText}>Ghi nhớ đăng nhập</span>
+              <input type="checkbox" style={styles.checkbox} disabled={isLoading} />
+              <span style={styles.checkboxText}>Remember me</span>
             </label>
-            <a href="#" style={styles.forgotLink}>
-              Quên mật khẩu?
-            </a>
+            <span style={styles.forgotLink}>Forgot password?</span>
           </div>
 
           <button
@@ -193,10 +237,10 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
                     animation: "spin 1s linear infinite",
                   }}
                 />
-                <span>Đang xử lý...</span>
+                <span>Processing...</span>
               </div>
             ) : (
-              <span>ĐĂNG NHẬP</span>
+              <span>LOG IN</span>
             )}
           </button>
         </form>
@@ -204,7 +248,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
         {showResendOption && (
           <div style={{ textAlign: "center", marginTop: "15px" }}>
             <p style={{ color: "#666", fontSize: "14px" }}>
-              Chưa nhận được email xác thực?{" "}
+              Need a new verification email?{" "}
               <button
                 onClick={handleResendVerification}
                 style={{
@@ -216,7 +260,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
                 }}
                 disabled={isLoading}
               >
-                Gửi lại email xác thực
+                Resend verification email
               </button>
             </p>
           </div>
@@ -224,7 +268,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
 
         <div style={styles.divider}>
           <div style={styles.dividerLine}></div>
-          <span style={styles.dividerText}>hoặc</span>
+          <span style={styles.dividerText}>or</span>
           <div style={styles.dividerLine}></div>
         </div>
 
@@ -233,25 +277,32 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({ onLoginSuccess }) => {
             style={{ ...styles.socialButton, ...styles.googleButton }}
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#f5f5f5";
-              e.currentTarget.style.transform = "translateY(-2px)";
+            onMouseEnter={(event) => {
+              event.currentTarget.style.background = "#f5f5f5";
+              event.currentTarget.style.transform = "translateY(-2px)";
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "white";
-              e.currentTarget.style.transform = "translateY(0)";
+            onMouseLeave={(event) => {
+              event.currentTarget.style.background = "white";
+              event.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <span style={styles.socialIcon}>🔍</span>
-            Đăng nhập với Google
+            <span style={styles.socialIcon}>G</span>
+            Continue with Google
           </button>
         </div>
 
         <p style={styles.signupText}>
-          Chưa có tài khoản?
-          <a href="/register" style={styles.signupLink}>
+          Don't have an account yet?
+          <a
+            href="/register"
+            style={styles.signupLink}
+            onClick={(event) => {
+              event.preventDefault();
+              onNavigateRegister();
+            }}
+          >
             {" "}
-            Đăng ký ngay
+            Create one now
           </a>
         </p>
       </div>
@@ -403,12 +454,13 @@ const styles: Styles = {
   },
   eyeButton: {
     position: "absolute",
-    right: "-7px",
-    top: "30%",
+    right: "15px",
+    top: "50%",
     transform: "translateY(-50%)",
     background: "none",
     border: "none",
     cursor: "pointer",
+    color: "#2C3E7A",
     fontSize: "18px",
     padding: "5px",
     borderRadius: "50%",
@@ -536,3 +588,4 @@ if (styleSheet) {
 }
 
 export default LegoLoginPage;
+

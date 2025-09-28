@@ -1,15 +1,15 @@
-﻿import React from "react";
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./stores/AuthContext";
+import { AuthProvider } from "./components/context/AuthContext";
 
 // Common layout components
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 
 // Pages
-import NewPage from "./pages/Home"; // đổi Home thành NewPage
+import NewPage from "./pages/Home"; // d?i Home th�nh NewPage
 import Login from "./pages/Login";
-import Profile from "./pages/AdminProfile";
+import ProfilePage from "./views/ProfilePage";
 import Shop from "./pages/Shop";
 import Register from "./pages/Register";
 import VerifyEmailPage from "./views/VerifyEmailPage";
@@ -22,38 +22,38 @@ export default function App() {
   return (
     <AuthProvider>
       <div className="app-shell">
-        {/* Header hiển thị cố định */}
+        {/* Header hi?n th? c? d?nh */}
         <Header />
 
-        {/* Nội dung chính */}
+        {/* N?i dung ch�nh */}
         <main className="app-main">
           <Routes>
-            {/* Redirect "/" về "/new" */}
+            {/* Redirect "/" v? "/new" */}
             <Route path="/" element={<Navigate to="/new" replace />} />
 
             {/* Trang Shop */}
             <Route path="/shop" element={<Shop />} />
 
-            {/* Trang New (trang sản phẩm chính) */}
+            {/* Trang New (trang s?n ph?m ch�nh) */}
             <Route path="/new" element={<NewPage />} />
 
-            {/* Đăng nhập/đăng ký */}
+            {/* �ang nh?p/dang k� */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/resend-verification" element={<ResendVerificationPage />} />
 
-            {/* Trang cá nhân (chỉ truy cập khi login) */}
+            {/* Trang c� nh�n (ch? truy c?p khi login) */}
             <Route
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />
 
-            {/* Nếu không khớp route nào */}
+            {/* N?u kh�ng kh?p route n�o */}
             <Route
               path="*"
               element={
@@ -65,9 +65,11 @@ export default function App() {
           </Routes>
         </main>
 
-        {/* Footer hiển thị cố định */}
+        {/* Footer hi?n th? c? d?nh */}
         <Footer />
       </div>
     </AuthProvider>
   );
 }
+
+

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 
 interface RegisterFormData {
   fullName: string;
@@ -19,7 +18,12 @@ interface FormErrors {
   acceptTerms?: string;
 }
 
-const RegisterForm: React.FC = () => {
+interface RegisterFormProps {
+  onRegister: (payload: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  onNavigateLogin: () => void;
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onNavigateLogin }) => {
   const [formData, setFormData] = useState<RegisterFormData>({
     fullName: "",
     email: "",
@@ -30,53 +34,55 @@ const RegisterForm: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = "Họ và tên là bắt buộc";
+      newErrors.fullName = "Full name is required";
     } else if (formData.fullName.trim().length < 2) {
-      newErrors.fullName = "Họ và tên phải có ít nhất 2 ký tự";
+      newErrors.fullName = "Full name must be at least 2 characters";
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email) {
-      newErrors.email = "Email là bắt buộc";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Email không hợp lệ";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email.trim())) {
+      newErrors.email = "Email is not valid";
     }
 
     if (!formData.password) {
-      newErrors.password = "Mật khẩu là bắt buộc";
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Xác nhận mật khẩu là bắt buộc";
+      newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     const phoneRegex = /^[0-9]{10,11}$/;
-    if (!formData.phone) {
-      newErrors.phone = "Số điện thoại là bắt buộc";
-    } else if (!phoneRegex.test(formData.phone)) {
-      newErrors.phone = "Số điện thoại không hợp lệ";
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!phoneRegex.test(formData.phone.trim())) {
+      newErrors.phone = "Phone number must be 10-11 digits";
     }
 
     if (!formData.acceptTerms) {
-      newErrors.acceptTerms = "Bạn phải đồng ý với điều khoản sử dụng";
+      newErrors.acceptTerms = "You must agree to the terms and conditions";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = event.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -90,26 +96,26 @@ const RegisterForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
+    setSubmitError(null);
+    setStatusMessage(null);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register", // URL cố định tạm thời
-        {
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone,
-        }
-      );
-      alert(response.data.message);
+      await onRegister({
+        name: formData.fullName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        phone: formData.phone.trim() || undefined,
+      });
+
+      setStatusMessage("Account created! Please check your email to verify.");
       setFormData({
         fullName: "",
         email: "",
@@ -118,13 +124,9 @@ const RegisterForm: React.FC = () => {
         phone: "",
         acceptTerms: false,
       });
-    } catch (error: any) {
-      console.error("Error details:", error.response?.data || error.message);
-      alert(
-        error.response?.data?.message ||
-          error.message ||
-          "Có lỗi xảy ra, vui lòng thử lại!"
-      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Registration failed. Please try again.";
+      setSubmitError(message);
     } finally {
       setIsLoading(false);
     }
@@ -160,6 +162,26 @@ const RegisterForm: React.FC = () => {
     subtitle: {
       color: "#4b5563",
       fontSize: "14px",
+    },
+    statusMessage: {
+      background: "#ecfdf5",
+      color: "#047857",
+      padding: "12px",
+      borderRadius: "8px",
+      textAlign: "center",
+      fontSize: "14px",
+      fontWeight: "500",
+      marginBottom: "16px",
+    },
+    errorMessage: {
+      background: "#fef2f2",
+      color: "#b91c1c",
+      padding: "12px",
+      borderRadius: "8px",
+      textAlign: "center",
+      fontSize: "14px",
+      fontWeight: "500",
+      marginBottom: "16px",
     },
     form: {
       display: "flex",
@@ -268,15 +290,17 @@ const RegisterForm: React.FC = () => {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <h2 style={styles.title}>Đăng Ký</h2>
-          <p style={styles.subtitle}>Tạo tài khoản mới của bạn</p>
+          <h2 style={styles.title}>Create your account</h2>
+          <p style={styles.subtitle}>Join the LEGO world in just a few steps.</p>
         </div>
 
+        {submitError && <div style={styles.errorMessage}>{submitError}</div>}
+        {statusMessage && <div style={styles.statusMessage}>{statusMessage}</div>}
+
         <form style={styles.form} onSubmit={handleSubmit}>
-          {/* Full Name */}
           <div style={styles.inputGroup}>
             <label htmlFor="fullName" style={styles.label}>
-              Họ và Tên *
+              Full Name *
             </label>
             <input
               type="text"
@@ -288,14 +312,14 @@ const RegisterForm: React.FC = () => {
                 ...styles.input,
                 ...(errors.fullName ? styles.inputError : {}),
               }}
-              placeholder="Nhập họ và tên"
+              placeholder="Your name"
+              autoComplete="name"
             />
             {errors.fullName && (
               <p style={styles.errorText}>{errors.fullName}</p>
             )}
           </div>
 
-          {/* Email */}
           <div style={styles.inputGroup}>
             <label htmlFor="email" style={styles.label}>
               Email *
@@ -311,15 +335,14 @@ const RegisterForm: React.FC = () => {
                 ...(errors.email ? styles.inputError : {}),
               }}
               placeholder="example@email.com"
-              autoComplete="username" // Thêm thuộc tính này
+              autoComplete="username"
             />
             {errors.email && <p style={styles.errorText}>{errors.email}</p>}
           </div>
 
-          {/* Phone */}
           <div style={styles.inputGroup}>
             <label htmlFor="phone" style={styles.label}>
-              Số Điện Thoại *
+              Phone *
             </label>
             <input
               type="tel"
@@ -336,10 +359,9 @@ const RegisterForm: React.FC = () => {
             {errors.phone && <p style={styles.errorText}>{errors.phone}</p>}
           </div>
 
-          {/* Password */}
           <div style={styles.inputGroup}>
             <label htmlFor="password" style={styles.label}>
-              Mật Khẩu *
+              Password *
             </label>
             <input
               type="password"
@@ -351,7 +373,7 @@ const RegisterForm: React.FC = () => {
                 ...styles.input,
                 ...(errors.password ? styles.inputError : {}),
               }}
-              placeholder="Ít nhất 6 ký tự"
+              placeholder="At least 6 characters"
               autoComplete="new-password"
             />
             {errors.password && (
@@ -359,10 +381,9 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
 
-          {/* Confirm Password */}
           <div style={styles.inputGroup}>
             <label htmlFor="confirmPassword" style={styles.label}>
-              Xác Nhận Mật Khẩu *
+              Confirm Password *
             </label>
             <input
               type="password"
@@ -374,7 +395,7 @@ const RegisterForm: React.FC = () => {
                 ...styles.input,
                 ...(errors.confirmPassword ? styles.inputError : {}),
               }}
-              placeholder="Nhập lại mật khẩu"
+              placeholder="Re-enter your password"
               autoComplete="new-password"
             />
             {errors.confirmPassword && (
@@ -382,7 +403,6 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
 
-          {/* Terms and Conditions */}
           <div style={styles.checkboxContainer}>
             <input
               type="checkbox"
@@ -395,33 +415,32 @@ const RegisterForm: React.FC = () => {
               }}
             />
             <span>
-              Tôi đồng ý với{" "}
+              I agree with{" "}
               <a
                 href="#"
                 style={styles.link}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color =
+                onMouseEnter={(event) =>
+                  (event.currentTarget.style.color =
                     styles.linkHover.color || "#1e40af")
                 }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = styles.link.color || "#1e40af")
+                onMouseLeave={(event) =>
+                  (event.currentTarget.style.color = styles.link.color || "#1e40af")
                 }
               >
-                điều khoản sử dụng
-              </a>{" "}
-              và{" "}
+                terms of service
+              </a>{" "}and{" "}
               <a
                 href="#"
                 style={styles.link}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color =
+                onMouseEnter={(event) =>
+                  (event.currentTarget.style.color =
                     styles.linkHover.color || "#1e40af")
                 }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = styles.link.color || "#1e40af")
+                onMouseLeave={(event) =>
+                  (event.currentTarget.style.color = styles.link.color || "#1e40af")
                 }
               >
-                chính sách bảo mật
+                privacy policy
               </a>
             </span>
           </div>
@@ -429,7 +448,6 @@ const RegisterForm: React.FC = () => {
             <p style={styles.errorText}>{errors.acceptTerms}</p>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
@@ -441,36 +459,40 @@ const RegisterForm: React.FC = () => {
             {isLoading ? (
               <div style={styles.buttonContent}>
                 <div style={styles.spinner} />
-                <span>Đang xử lý...</span>
+                <span>Processing...</span>
               </div>
             ) : (
-              "Đăng Ký"
+              "Sign Up"
             )}
           </button>
         </form>
 
-        {/* Login Link */}
         <div style={styles.loginLink}>
           <p style={styles.loginText}>
-            Đã có tài khoản?{" "}
+            Already have an account?{" "}
             <a
               href="/login"
               style={styles.loginLinkText}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color =
+              onClick={(event) => {
+                event.preventDefault();
+                onNavigateLogin();
+              }}
+              onMouseEnter={(event) =>
+                (event.currentTarget.style.color =
                   styles.linkHover.color || "#1e40af")
               }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color =
+              onMouseLeave={(event) =>
+                (event.currentTarget.style.color =
                   styles.loginLinkText.color || "#1e40af")
               }
             >
-              Đăng nhập ngay
+              Log in now
             </a>
           </p>
         </div>
       </div>
     </div>
+
   );
 };
 
@@ -489,3 +511,9 @@ if (styleSheet) {
 }
 
 export default RegisterForm;
+
+
+
+
+
+

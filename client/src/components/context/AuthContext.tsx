@@ -1,72 +1,96 @@
-import {
+﻿import {
   createContext,
   useContext,
   useEffect,
   useMemo,
   useState,
+  useCallback,
   ReactNode,
 } from "react";
+import { toast } from "react-toastify";
 import { api } from "../../lib/api";
 import { storage } from "../../lib/storage";
-import { toast } from "react-toastify";
+import type { User as ApiUser } from "../../types/user";
 
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-}
+const USER_STORAGE_KEY = "auth_user";
+
+type AuthUser = ApiUser & { id?: string };
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   booted: boolean;
   isAuthed: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
+  updateUser: (user: AuthUser) => void;
   logout: () => void;
 }
 
 const AuthCtx = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [booted, setBooted] = useState(false);
 
-  // Load user nếu có token
+  const setAndPersistUser = useCallback((next: AuthUser | null) => {
+    setUser(next);
+    if (next) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(next));
+    } else {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    }
+  }, []);
+
   useEffect(() => {
     (async () => {
       try {
+        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+
         if (storage.getToken()) {
           const me = await api.me();
-          setUser(me);
+          setAndPersistUser(me);
         }
       } catch {
         storage.clearToken();
+        setAndPersistUser(null);
       } finally {
         setBooted(true);
       }
     })();
+  }, [setAndPersistUser]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const { token, user: loggedInUser } = await api.login(email, password);
+    storage.setToken(token);
+    setAndPersistUser(loggedInUser);
+    toast.success("Đăng nhập thành công");
+  }, [setAndPersistUser]);
+
+  const register = useCallback(async (name: string, email: string, password: string, phone?: string) => {
+    await api.register(name, email, password, phone);
+    toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác minh.");
   }, []);
 
-  // Login
-  const login = async (email: string, password: string) => {
-    const { token, user: u } = await api.login(email, password);
+  const loginWithToken = useCallback(async (token: string) => {
     storage.setToken(token);
-    setUser(u);
+    const me = await api.me();
+    setAndPersistUser(me);
     toast.success("Đăng nhập thành công");
-  };
+  }, [setAndPersistUser]);
 
-  // Register
-  const register = async (name: string, email: string, password: string) => {
-    await api.register(name, email, password);
-    toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
-  };
+  const updateUser = useCallback((next: AuthUser) => {
+    setAndPersistUser(next);
+  }, [setAndPersistUser]);
 
-  // Logout
-  const logout = () => {
+  const logout = useCallback(() => {
     storage.clearToken();
-    setUser(null);
+    setAndPersistUser(null);
     toast.success("Đã đăng xuất");
-  };
+  }, [setAndPersistUser]);
 
   const value: AuthContextType = useMemo(
     () => ({
@@ -75,9 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthed: !!user,
       login,
       register,
+      loginWithToken,
+      updateUser,
       logout,
     }),
-    [user, booted]
+    [user, booted, login, register, loginWithToken, updateUser, logout]
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
