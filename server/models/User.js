@@ -1,4 +1,38 @@
 ﻿const mongoose = require("mongoose");
+const crypto = require("crypto");
+
+const AddressSchema = new mongoose.Schema(
+  {
+    street: { type: String, trim: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
+    postalCode: { type: String, trim: true },
+    country: { type: String, trim: true, default: "Vietnam" },
+  },
+  { _id: false }
+);
+
+const UserAddressSchema = new mongoose.Schema(
+  {
+    label: { type: String, trim: true },
+    recipientName: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    street: { type: String, trim: true, required: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
+    postalCode: { type: String, trim: true },
+    country: { type: String, trim: true, default: "Vietnam" },
+    isDefault: { type: Boolean, default: false },
+    archived: { type: Boolean, default: false },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const MAX_LOGIN_ATTEMPTS = Number(process.env.MAX_LOGIN_ATTEMPTS || 5);
+const LOCK_TIME_MS =
+  Number(process.env.LOGIN_LOCK_TIME_MS) || 2 * 60 * 60 * 1000;
 
 const UserSchema = new mongoose.Schema(
   {
@@ -16,8 +50,16 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
       minlength: 6,
+      select: false,
+      required() {
+        return !this.googleId;
+      },
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     role: {
       type: String,
@@ -31,29 +73,8 @@ const UserSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    address: {
-      street: {
-        type: String,
-        trim: true,
-      },
-      city: {
-        type: String,
-        trim: true,
-      },
-      state: {
-        type: String,
-        trim: true,
-      },
-      postalCode: {
-        type: String,
-        trim: true,
-      },
-      country: {
-        type: String,
-        trim: true,
-        default: "Vietnam",
-      },
-    },
+    address: AddressSchema,
+    addresses: { type: [UserAddressSchema], default: [] },
     status: {
       type: String,
       enum: ["active", "inactive", "locked"],
@@ -61,6 +82,23 @@ const UserSchema = new mongoose.Schema(
     },
     lastLogin: {
       type: Date,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: {
+      type: String,
+    },
+    emailVerificationExpires: {
+      type: Date,
+    },
+    lastVerificationEmailSentAt: {
+      type: Date,
+    },
+    verificationEmailAttempts: {
+      type: Number,
+      default: 0,
     },
     failedLoginAttempts: {
       type: Number,
@@ -71,16 +109,10 @@ const UserSchema = new mongoose.Schema(
     },
     passwordResetToken: {
       type: String,
+      select: false,
     },
     passwordResetExpires: {
       type: Date,
-    },
-    emailVerificationToken: {
-      type: String,
-    },
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
     },
   },
   {
@@ -88,35 +120,23 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-// Constants for account locking
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOCK_TIME = 2 * 60 * 60 * 1000; // 2 hours
-
-// Virtual for account lock status
 UserSchema.virtual("isLocked").get(function () {
-  return !!(this.lockUntil && this.lockUntil > Date.now());
+  return Boolean(this.lockUntil && this.lockUntil > Date.now());
 });
 
-// Instance methods
 UserSchema.methods.incLoginAttempts = function () {
-  // If we have a previous lock that has expired, restart at 1
   if (this.lockUntil && this.lockUntil < Date.now()) {
     return this.updateOne({
-      $unset: {
-        lockUntil: 1,
-      },
-      $set: {
-        failedLoginAttempts: 1,
-      },
+      $set: { failedLoginAttempts: 1 },
+      $unset: { lockUntil: 1 },
     });
   }
 
   const updates = { $inc: { failedLoginAttempts: 1 } };
 
-  // If we have reached max attempts and it's not locked already, lock the account
-  if (this.failedLoginAttempts + 1 >= MAX_LOGIN_ATTEMPTS && !this.isLocked) {
+  if ((this.failedLoginAttempts || 0) + 1 >= MAX_LOGIN_ATTEMPTS && !this.isLocked) {
     updates.$set = {
-      lockUntil: Date.now() + LOCK_TIME,
+      lockUntil: Date.now() + LOCK_TIME_MS,
     };
   }
 
@@ -125,22 +145,19 @@ UserSchema.methods.incLoginAttempts = function () {
 
 UserSchema.methods.resetLoginAttempts = function () {
   return this.updateOne({
-    $unset: {
-      failedLoginAttempts: 1,
-      lockUntil: 1,
-    },
+    $set: { failedLoginAttempts: 0 },
+    $unset: { lockUntil: 1 },
   });
 };
 
 UserSchema.methods.generatePasswordResetToken = function () {
-  const crypto = require("crypto");
   const resetToken = crypto.randomBytes(32).toString("hex");
 
   this.passwordResetToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
   return resetToken;
 };
@@ -149,3 +166,4 @@ UserSchema.index({ role: 1 });
 UserSchema.index({ passwordResetToken: 1 });
 
 module.exports = mongoose.model("User", UserSchema);
+

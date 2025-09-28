@@ -1,36 +1,95 @@
-﻿const express = require("express");
+const express = require("express");
+const http = require("http");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
+const session = require("express-session");
+const passport = require("passport");
+const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+const CLIENT_ORIGIN = process.env.CLIENT_URL || "http://localhost:3000";
+const USE_GOOGLE_AUTH = Boolean(
+  process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_CALLBACK_URL
+);
 
-// Middleware
+const io = new Server(server, {
+  cors: {
+    origin: CLIENT_ORIGIN,
+    credentials: true,
+  },
+});
+
+app.set("io", io);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: CLIENT_ORIGIN,
     credentials: true,
   })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB Connection
+if (USE_GOOGLE_AUTH) {
+  app.use(
+    session({
+      secret:
+        process.env.SESSION_SECRET || process.env.JWT_SECRET || "lego-secret",
+      resave: false,
+      saveUninitialized: false,
+    })
+  );
+  app.use(passport.initialize());
+  app.use(passport.session());
+}
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
       dbName: process.env.DB_NAME || "lego_ecommerce",
     });
-    console.log("âœ… MongoDB Atlas connected successfully");
-    console.log(`ðŸ“¦ Database: ${mongoose.connection.db.databaseName}`);
+    console.log("MongoDB Atlas connected successfully");
+    console.log(`Database: ${mongoose.connection.db.databaseName}`);
   } catch (error) {
-    console.error("âŒ MongoDB connection error:", error.message);
+    console.error("MongoDB connection error:", error.message);
     process.exit(1);
   }
 };
 
-// Test route
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) {
+    return next(new Error("Unauthorized"));
+  }
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    socket.userId = payload.id;
+    socket.join(payload.id);
+    return next();
+  } catch (error) {
+    return next(new Error("Unauthorized"));
+  }
+});
+
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.userId);
+  socket.emit("notification:connected", { ok: true });
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.userId);
+  });
+});
+
 app.get("/api/test", (req, res) => {
   res.json({
     message: "LEGO E-commerce API is running!",
@@ -40,10 +99,8 @@ app.get("/api/test", (req, res) => {
   });
 });
 
-// Health check route
 app.get("/api/health", async (req, res) => {
   try {
-    // Test database connection
     const dbStatus =
       mongoose.connection.readyState === 1 ? "Connected" : "Disconnected";
 
@@ -68,7 +125,6 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Import models for testing
 const User = require("./models/User");
 const Theme = require("./models/Theme");
 const AgeRange = require("./models/AgeRange");
@@ -78,7 +134,6 @@ const Order = require("./models/Order");
 const Review = require("./models/Review");
 const Voucher = require("./models/Voucher");
 
-// Database test endpoints
 app.get("/api/database/stats", async (req, res) => {
   try {
     const stats = {
@@ -126,7 +181,7 @@ app.get("/api/database/legos", async (req, res) => {
 
 app.get("/api/database/users", async (req, res) => {
   try {
-    const users = await User.find({}, "-password") // Exclude password
+    const users = await User.find({}, "-password")
       .limit(10)
       .sort({ createdAt: -1 });
 
@@ -140,14 +195,16 @@ app.get("/api/database/users", async (req, res) => {
   }
 });
 
-// Import routes
-const authRoutes = require('./routes/auth');
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const productRoutes = require("./routes/productRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
-// Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/users", (req, res) =>
-  res.json({ message: "User routes coming soon..." })
-);
+app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/notifications", notificationRoutes);
+
 app.use("/api/legos", (req, res) =>
   res.json({ message: "LEGO routes coming soon..." })
 );
@@ -155,9 +212,8 @@ app.use("/api/orders", (req, res) =>
   res.json({ message: "Order routes coming soon..." })
 );
 
-// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error("Error:", err.stack);
   res.status(500).json({
     message: "Something went wrong!",
     error:
@@ -167,20 +223,18 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler - must be last
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Start server
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
-      console.log(`ðŸš€ Server running on port ${PORT}`);
-      console.log(`ðŸŒ API URL: http://localhost:${PORT}/api`);
-      console.log(`ðŸ” Test endpoint: http://localhost:${PORT}/api/test`);
-      console.log(`ðŸ’š Health check: http://localhost:${PORT}/api/health`);
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`API URL: http://localhost:${PORT}/api`);
+      console.log(`Test endpoint: http://localhost:${PORT}/api/test`);
+      console.log(`Health check: http://localhost:${PORT}/api/health`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

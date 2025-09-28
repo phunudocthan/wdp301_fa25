@@ -47,7 +47,7 @@ const seedDatabase = async () => {
           country: 'Vietnam'
         },
         status: 'active',
-        isEmailVerified: true,
+        isVerified: true,
         failedLoginAttempts: 0
       },
       {
@@ -64,7 +64,7 @@ const seedDatabase = async () => {
           country: 'Vietnam'
         },
         status: 'active',
-        isEmailVerified: true,
+        isVerified: true,
         failedLoginAttempts: 0
       },
       {
@@ -81,7 +81,7 @@ const seedDatabase = async () => {
           country: 'Vietnam'
         },
         status: 'active',
-        isEmailVerified: true,
+        isVerified: true,
         failedLoginAttempts: 0
       }
     ]);
@@ -319,3 +319,4 @@ if (require.main === module) {
 }
 
 module.exports = seedDatabase;
+
