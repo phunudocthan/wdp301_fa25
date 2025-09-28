@@ -1,0 +1,55 @@
+.search-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 20px;
+  background: #ffcf00; // vàng LEGO
+  border-bottom: 1px solid #eee;
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    flex: 1;
+    max-width: 400px;
+
+    .search-icon {
+      margin-right: 8px;
+      color: #666;
+    }
+
+    input {
+      border: none;
+      outline: none;
+      flex: 1;
+      font-size: 14px;
+    }
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 16px;
+
+    button {
+      background: none;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: #333;
+
+      &.active {
+        background: #000;
+        color: #fff;
+      }
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+}

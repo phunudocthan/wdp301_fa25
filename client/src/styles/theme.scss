@@ -1,0 +1,25 @@
+@use "./variables" as *;
+
+:root {
+  --primary: #{$primary};
+  --primary-600: #{$primary-600};
+  --secondary: #{$secondary};
+
+  --bg: #{$bg-light};
+  --surface: #{$surface-light};
+  --text: #{$text-light};
+  --muted: #{$muted-light};
+  --ring: #{$ring-light};
+}
+
+:root[data-theme="dark"] {
+  --primary: #{$primary};
+  --primary-600: #4fc9f3;
+  --secondary: #8795ff;
+
+  --bg: #{$bg-dark};
+  --surface: #{$surface-dark};
+  --text: #{$text-dark};
+  --muted: #{$muted-dark};
+  --ring: #{$ring-dark};
+}
