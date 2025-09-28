@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
     default: 'customer'
   },
   avatar: {
-    type: String
+    type: String // URL to avatar image
   },
   phone: {
     type: String,
@@ -55,10 +55,27 @@ const UserSchema = new mongoose.Schema({
   },
   status: {
     type: String,
+<<<<<<< HEAD
     enum: ['active', 'inactive', 'locked'],
+=======
+    enum: ['active', 'inactive', 'locked'], // updated to include 'inactive' and 'locked'
+>>>>>>> origin/huy
     default: 'active'
   },
   lastLogin: {
+    type: Date
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationToken: {
+    type: String
+  },
+  emailVerificationExpires: {
+    type: Date
+  },
+  lastVerificationEmailSentAt: {
     type: Date
   }
 }, {

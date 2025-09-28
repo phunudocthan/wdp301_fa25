@@ -1,6 +1,7 @@
 ﻿const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -15,6 +16,9 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files (avatars)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // MongoDB Connection
 const connectDB = async () => {
@@ -67,7 +71,14 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
+// Routes
+const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
 
+app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);
+
+<<<<<<< HEAD
 // Import models for testing
 const User = require('./models/User');
 const Theme = require('./models/Theme');
@@ -140,13 +151,13 @@ app.get('/api/database/users', async (req, res) => {
   }
 });
 
-// Routes placeholder
-app.use("/api/auth", (req, res) =>
-  res.json({ message: "Auth routes coming soon..." })
-);
-app.use("/api/users", (req, res) =>
-  res.json({ message: "User routes coming soon..." })
-);
+// Import routes
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/legos", (req, res) =>
   res.json({ message: "LEGO routes coming soon..." })
 );

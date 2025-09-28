@@ -1,0 +1,18 @@
+* [33mdcf5122[m[33m ([m[1;31morigin/An[m[33m, [m[1;32mAn[m[33m)[m feat: Complete authentication system with advanced security
+* [33m34497f7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m)[m style: Format User.js with consistent quotes and spacing
+[31m|[m *   [33m0b5273e[m[33m ([m[1;31morigin/develop[m[33m)[m change
+[31m|[m [32m|[m[33m\[m  
+[31m|[m [32m|[m * [33m9bbd45f[m[33m ([m[1;31morigin/huy[m[33m)[m Cập nhật code mới
+[31m|[m [32m|[m * [33mba4b74d[m feat(server): kết nối MongoDB, thêm config .env
+[31m|[m * [33m|[m [33m9ebe2a5[m aaa
+[31m|[m[31m/[m [33m/[m  
+* [33m|[m [33mdaab12e[m feat: Add address field to User model
+* [33m|[m [33mdfa7a26[m resolve: Fix merge conflicts in README.md and remove TEST_CONNECTION.md
+[34m|[m[33m\[m[33m|[m 
+[34m|[m * [33md742891[m Update README.md
+[34m|[m * [33m63f89a9[m[33m ([m[1;31morigin/Tai[m[33m)[m README.md
+[34m|[m * [33m17393ff[m README.md
+[34m|[m * [33mc5fa9f5[m Update README.md
+[34m|[m * [33m79a246c[m nah
+* [35m|[m [33m32b2a28[m feat: Complete LEGO E-commerce backend setup with MongoDB Atlas
+* [35m|[m [33m32411ae[m  Complete MongoDB Atlas setup with full schema
