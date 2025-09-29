@@ -5,12 +5,16 @@ import ProfilePage from '../views/ProfilePage';
 import VerifyEmailPage from '../views/VerifyEmailPage';
 import ResendVerificationPage from '../views/ResendVerificationPage';
 import ResetPasswordPage from '../views/ResetPasswordPage';
+import AdminNotificationPage from '../views/AdminNotificationPage';
+import { useAuth } from '../components/context/AuthContext';
 
 interface AppRouterProps {
   isAuthenticated: boolean;
 }
 
 const AppRouter: React.FC<AppRouterProps> = ({ isAuthenticated }) => {
+  const { user } = useAuth();
+
   return (
     <Routes>
       <Route 
@@ -32,6 +36,9 @@ const AppRouter: React.FC<AppRouterProps> = ({ isAuthenticated }) => {
         path="/" 
         element={<Navigate to={isAuthenticated ? '/profile' : '/login'} replace />} 
       />
+      {isAuthenticated && user?.role === 'admin' && (
+        <Route path="/admin/notifications" element={<AdminNotificationPage />} />
+      )}
     </Routes>
   );
 };

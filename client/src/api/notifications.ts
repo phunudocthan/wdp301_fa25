@@ -14,12 +14,12 @@ export async function fetchNotifications(): Promise<NotificationItem[]> {
   return response.data?.notifications || [];
 }
 
-export async function createNotification(message: string, type: NotificationItem['type'] = 'system'): Promise<NotificationItem> {
-  const response = await axiosInstance.post('/notifications', { message, type });
+export async function markNotificationRead(notificationId: string): Promise<NotificationItem> {
+  const response = await axiosInstance.patch(`/notifications/${notificationId}/read`);
   return response.data?.notification;
 }
 
-export async function markNotificationRead(notificationId: string): Promise<NotificationItem> {
-  const response = await axiosInstance.patch(`/notifications/${notificationId}/read`);
+export async function fetchNotificationDetail(notificationId: string): Promise<NotificationItem> {
+  const response = await axiosInstance.get(`/notifications/${notificationId}`);
   return response.data?.notification;
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./components/context/AuthContext";
+import { AuthProvider, useAuth } from "./components/context/AuthContext";
 
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
@@ -16,11 +16,14 @@ import ResendVerificationPage from "./views/ResendVerificationPage";
 import ResetPasswordPage from "./views/ResetPasswordPage";
 import AddressBookPage from "./views/AddressBookPage";
 import NotificationsPage from "./views/NotificationsPage";
+import AdminNotificationPage from "./views/AdminNotificationPage";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
+  const { user } = useAuth();
+
   return (
     <AuthProvider>
       <div className="app-shell">
@@ -62,6 +65,16 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            {user?.role === "admin" && (
+              <Route
+                path="/admin/notifications"
+                element={
+                  <ProtectedRoute>
+                    <AdminNotificationPage />
+                  </ProtectedRoute>
+                }
+              />
+            )}
 
             <Route
               path="*"

@@ -1,3 +1,106 @@
+// Lấy tất cả notification mà admin đã gửi (không phải notification nhận)
+exports.adminListSentNotifications = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ msg: 'Forbidden' });
+    const notifications = await Notification.find({ createdBy: req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(100);
+    res.json({ notifications: notifications.map(formatNotification) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Gửi notification cho user (admin là người tạo)
+exports.adminCreateNotification = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ msg: 'Forbidden' });
+    const { message, type = 'system', userId } = req.body || {};
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ msg: 'Message is required' });
+    }
+    const allowedTypes = ['order', 'system', 'promotion'];
+    const normalizedType = allowedTypes.includes(type) ? type : 'system';
+    const Notification = require('../models/Notification');
+    const User = require('../models/User');
+    if (!userId) {
+      // Gửi cho tất cả user (trừ admin)
+      const users = await User.find({ role: { $ne: 'admin' } }, '_id');
+      const notifications = await Notification.insertMany(
+        users.map(u => ({
+          userId: u._id,
+          message: message.trim(),
+          type: normalizedType,
+          createdBy: req.user.id,
+        }))
+      );
+      // Gửi realtime nếu có socket
+      const io = req.app.get('io');
+      if (io) {
+        notifications.forEach(n => {
+          io.to(n.userId.toString()).emit('notification:new', formatNotification(n));
+        });
+      }
+      return res.status(201).json({ notifications: notifications.map(formatNotification) });
+    } else {
+      // Gửi cho 1 user cụ thể
+      const notification = await Notification.create({
+        userId,
+        message: message.trim(),
+        type: normalizedType,
+        createdBy: req.user.id,
+      });
+      const formatted = formatNotification(notification);
+      const io = req.app.get('io');
+      if (io && formatted) {
+        io.to(userId.toString()).emit('notification:new', formatted);
+      }
+      return res.status(201).json({ notification: formatted });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Sửa notification đã gửi (chỉ admin được sửa notification mình đã tạo)
+exports.adminUpdateNotification = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ msg: 'Forbidden' });
+    const { notificationId } = req.params;
+    const { message, type } = req.body || {};
+    const allowedTypes = ['order', 'system', 'promotion'];
+    const updateFields = {};
+    if (message) updateFields.message = message.trim();
+    if (type && allowedTypes.includes(type)) updateFields.type = type;
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, createdBy: req.user.id },
+      updateFields,
+      { new: true }
+    );
+    if (!notification) {
+      return res.status(404).json({ msg: 'Notification not found or not owned by admin' });
+    }
+    res.json({ notification: formatNotification(notification) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Xóa notification đã gửi (chỉ admin được xóa notification mình đã tạo)
+exports.adminDeleteNotification = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ msg: 'Forbidden' });
+    const { notificationId } = req.params;
+    const notification = await Notification.findOneAndDelete({ _id: notificationId, createdBy: req.user.id });
+    if (!notification) {
+      return res.status(404).json({ msg: 'Notification not found or not owned by admin' });
+    }
+    res.json({ msg: 'Notification deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const Notification = require('../models/Notification');
 
 const formatNotification = (notification) => {
@@ -26,32 +129,8 @@ exports.listNotifications = async (req, res) => {
 };
 
 exports.createNotification = async (req, res) => {
-  try {
-    const { message, type = 'system' } = req.body || {};
-
-    if (!message || typeof message !== 'string' || !message.trim()) {
-      return res.status(400).json({ msg: 'Message is required' });
-    }
-
-    const allowedTypes = ['order', 'system', 'promotion'];
-    const normalizedType = allowedTypes.includes(type) ? type : 'system';
-
-    const notification = await Notification.create({
-      userId: req.user.id,
-      message: message.trim(),
-      type: normalizedType,
-    });
-
-    const formatted = formatNotification(notification);
-    const io = req.app.get('io');
-    if (io && formatted) {
-      io.to(req.user.id.toString()).emit('notification:new', formatted);
-    }
-
-    res.status(201).json({ notification: formatted });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  // Không cho phép customer tự tạo notification
+  return res.status(403).json({ msg: 'Forbidden: customers cannot create notifications' });
 };
 
 exports.markNotificationRead = async (req, res) => {
@@ -68,6 +147,19 @@ exports.markNotificationRead = async (req, res) => {
       return res.status(404).json({ msg: 'Notification not found' });
     }
 
+    res.json({ notification: formatNotification(notification) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getNotificationDetail = async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    const notification = await Notification.findOne({ _id: notificationId, userId: req.user.id });
+    if (!notification) {
+      return res.status(404).json({ msg: 'Notification not found' });
+    }
     res.json({ notification: formatNotification(notification) });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
-import { Bell, CheckCircle2, Send, WifiOff } from "lucide-react";
-import { fetchNotifications, createNotification, markNotificationRead, NotificationItem } from "../api/notifications";
+import { Bell, CheckCircle2, WifiOff } from "lucide-react";
+import {
+  fetchNotifications,
+  markNotificationRead,
+  fetchNotificationDetail,
+  NotificationItem,
+} from "../api/notifications";
 import { apiBaseURL } from "../api/axiosInstance";
 import { storage } from "../lib/storage";
 
@@ -9,11 +14,12 @@ const socketEndpoint = apiBaseURL.replace(/\/api$/, "");
 
 const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
-  const [newMessage, setNewMessage] = useState("");
-  const [type, setType] = useState<NotificationItem["type"]>("system");
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connecting" | "connected" | "disconnected"
+  >("connecting");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<NotificationItem | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
   const unreadCount = useMemo(
@@ -27,7 +33,7 @@ const NotificationsPage: React.FC = () => {
         const list = await fetchNotifications();
         setNotifications(list);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unable to load notifications");
+        // setError(err instanceof Error ? err.message : "Unable to load notifications");
       }
     };
     load();
@@ -72,27 +78,6 @@ const NotificationsPage: React.FC = () => {
     };
   }, []);
 
-  const handleSendNotification = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!newMessage.trim()) {
-      setError("Please enter a message before sending");
-      return;
-    }
-    try {
-      setSending(true);
-      setError("");
-      const notification = await createNotification(newMessage.trim(), type);
-      if (notification) {
-        setNotifications((prev) => [notification, ...prev]);
-      }
-      setNewMessage("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to send notification");
-    } finally {
-      setSending(false);
-    }
-  };
-
   const handleMarkRead = async (id: string) => {
     try {
       const updated = await markNotificationRead(id);
@@ -100,7 +85,18 @@ const NotificationsPage: React.FC = () => {
         prev.map((item) => (item._id === updated._id ? { ...item, status: updated.status } : item))
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to update notification status");
+      // setError(err instanceof Error ? err.message : "Unable to update notification status");
+    }
+  };
+
+  const handleShowDetail = async (id: string) => {
+    setSelectedId(id);
+    setLoadingDetail(true);
+    try {
+      const data = await fetchNotificationDetail(id);
+      setDetail(data);
+    } finally {
+      setLoadingDetail(false);
     }
   };
 
@@ -134,41 +130,6 @@ const NotificationsPage: React.FC = () => {
           </div>
         </header>
 
-        <section className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2">
-            <Send size={18} /> Send a test notification
-          </h2>
-          <form onSubmit={handleSendNotification} className="grid grid-cols-1 md:grid-cols-[1fr,180px,140px] gap-3">
-            <input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a notification message..."
-              className="border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-            />
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as NotificationItem['type'])}
-              className="border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-            >
-              <option value="system">System</option>
-              <option value="order">Order</option>
-              <option value="promotion">Promotion</option>
-            </select>
-            <button
-              type="submit"
-              className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition"
-              disabled={sending}
-            >
-              {sending ? 'Sending...' : 'Send notification'}
-            </button>
-          </form>
-          {error && (
-            <div className="mt-3 bg-rose-100 border border-rose-200 text-rose-600 px-3 py-2 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-        </section>
-
         <section className="space-y-4">
           {notifications.length === 0 ? (
             <div className="bg-white rounded-xl shadow p-6 text-center text-slate-500">
@@ -180,6 +141,8 @@ const NotificationsPage: React.FC = () => {
               return (
                 <div
                   key={notification._id}
+                  onClick={() => handleShowDetail(notification._id)}
+                  style={{ cursor: "pointer" }}
                   className={`bg-white rounded-xl shadow-sm border transition hover:shadow-md ${
                     isUnread ? 'border-indigo-200' : 'border-slate-200'
                   }`}
@@ -227,6 +190,64 @@ const NotificationsPage: React.FC = () => {
             })
           )}
         </section>
+
+        {selectedId && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 transition-all duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-[scaleIn_0.2s] border-t-8"
+              style={{
+                borderTopColor: detail?.type === 'order' ? '#10b981' : detail?.type === 'promotion' ? '#f59e42' : '#6366f1',
+              }}
+            >
+              <button
+                className="absolute top-3 right-3 text-slate-400 hover:text-slate-700 text-2xl font-bold transition-colors"
+                onClick={() => { setSelectedId(null); setDetail(null); }}
+                aria-label="Close"
+              >×</button>
+              {loadingDetail ? (
+                <div className="flex flex-col items-center justify-center min-h-[120px]">
+                  <span className="loader mb-2"></span>
+                  <span className="text-slate-500">Loading...</span>
+                </div>
+              ) : detail ? (
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className={`rounded-full p-3 mb-2 shadow-lg ${
+                    detail.type === 'order' ? 'bg-emerald-100 text-emerald-600' :
+                    detail.type === 'promotion' ? 'bg-amber-100 text-amber-600' :
+                    'bg-indigo-100 text-indigo-600'
+                  }`}>
+                    {detail.type === 'order' ? <CheckCircle2 size={32}/> :
+                     detail.type === 'promotion' ? <Bell size={32}/> :
+                     <Bell size={32}/>
+                    }
+                  </div>
+                  <h3 className="text-2xl font-bold mb-1 tracking-tight">
+                    {detail.type === 'order' ? 'Order Notification' :
+                     detail.type === 'promotion' ? 'Promotion' : 'System Notification'}
+                  </h3>
+                  <div className="text-base text-slate-700 whitespace-pre-line mb-2">{detail.message}</div>
+                  <div className="flex flex-col items-center gap-1 mt-2">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${
+                      detail.status === 'unread' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                    }`}>
+                      {detail.status === 'unread' ? 'Unread' : 'Read'}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {detail.createdAt ? new Date(detail.createdAt).toLocaleString() : ''}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center min-h-[120px] text-slate-400">Not found</div>
+              )}
+            </div>
+            <style>{`
+              @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+              .animate-\[scaleIn_0.2s\] { animation: scaleIn 0.2s cubic-bezier(.4,0,.2,1); }
+              .loader { border: 3px solid #e5e7eb; border-top: 3px solid #6366f1; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; }
+              @keyframes spin { 100% { transform: rotate(360deg); } }
+            `}</style>
+          </div>
+        )}
       </div>
     </div>
   );
