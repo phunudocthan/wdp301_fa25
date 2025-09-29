@@ -1,6 +1,7 @@
 // src/pages/AdminProfile.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import AdminNav from "../views/AdminNav";
 
 interface User {
   _id: string;
@@ -42,6 +43,7 @@ const AdminProfile: React.FC = () => {
 
   return (
     <div className="p-6 max-w-xl mx-auto bg-white rounded-xl shadow-md space-y-4">
+      <AdminNav />
       <div className="flex items-center space-x-4">
         <div className="bg-blue-600 text-white rounded-full h-16 w-16 flex items-center justify-center text-xl">
           {admin?.name[0]}

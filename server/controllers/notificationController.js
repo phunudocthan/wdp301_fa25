@@ -15,23 +15,36 @@ exports.adminListSentNotifications = async (req, res) => {
 exports.adminCreateNotification = async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ msg: 'Forbidden' });
-    const { message, type = 'system', userId } = req.body || {};
+    const { message, title, category = 'system', type, link, image, meta, userId } = req.body || {};
     if (!message || typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ msg: 'Message is required' });
     }
-    const allowedTypes = ['order', 'system', 'promotion'];
-    const normalizedType = allowedTypes.includes(type) ? type : 'system';
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ msg: 'Title is required' });
+    }
+    const allowedCategories = ['promotion', 'order', 'product', 'system', 'engagement'];
+    const allowedTypes = ['order', 'system', 'promotion', 'product', 'engagement'];
+    const normalizedCategory = allowedCategories.includes(category) ? category : 'system';
+    const normalizedType = allowedTypes.includes(type) ? type : normalizedCategory;
     const Notification = require('../models/Notification');
     const User = require('../models/User');
+    const baseData = {
+      title: title.trim(),
+      message: message.trim(),
+      category: normalizedCategory,
+      type: normalizedType,
+      link: link || '',
+      image: image || '',
+      meta: meta || {},
+      createdBy: req.user.id,
+    };
     if (!userId) {
       // Gửi cho tất cả user (trừ admin)
       const users = await User.find({ role: { $ne: 'admin' } }, '_id');
       const notifications = await Notification.insertMany(
         users.map(u => ({
+          ...baseData,
           userId: u._id,
-          message: message.trim(),
-          type: normalizedType,
-          createdBy: req.user.id,
         }))
       );
       // Gửi realtime nếu có socket
@@ -45,10 +58,8 @@ exports.adminCreateNotification = async (req, res) => {
     } else {
       // Gửi cho 1 user cụ thể
       const notification = await Notification.create({
+        ...baseData,
         userId,
-        message: message.trim(),
-        type: normalizedType,
-        createdBy: req.user.id,
       });
       const formatted = formatNotification(notification);
       const io = req.app.get('io');
@@ -67,11 +78,17 @@ exports.adminUpdateNotification = async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ msg: 'Forbidden' });
     const { notificationId } = req.params;
-    const { message, type } = req.body || {};
-    const allowedTypes = ['order', 'system', 'promotion'];
+    const { message, title, category, type, link, image, meta } = req.body || {};
+    const allowedCategories = ['promotion', 'order', 'product', 'system', 'engagement'];
+    const allowedTypes = ['order', 'system', 'promotion', 'product', 'engagement'];
     const updateFields = {};
     if (message) updateFields.message = message.trim();
+    if (title) updateFields.title = title.trim();
+    if (category && allowedCategories.includes(category)) updateFields.category = category;
     if (type && allowedTypes.includes(type)) updateFields.type = type;
+    if (link !== undefined) updateFields.link = link;
+    if (image !== undefined) updateFields.image = image;
+    if (meta !== undefined) updateFields.meta = meta;
     const notification = await Notification.findOneAndUpdate(
       { _id: notificationId, createdBy: req.user.id },
       updateFields,
@@ -109,10 +126,16 @@ const formatNotification = (notification) => {
   return {
     _id: obj._id?.toString?.() || obj._id,
     userId: obj.userId?.toString?.() || obj.userId,
+    title: obj.title,
     message: obj.message,
+    category: obj.category,
     type: obj.type,
+    link: obj.link,
+    image: obj.image,
+    meta: obj.meta,
     status: obj.status,
     createdAt: obj.createdAt,
+    createdBy: obj.createdBy?.toString?.() || obj.createdBy,
   };
 };
 

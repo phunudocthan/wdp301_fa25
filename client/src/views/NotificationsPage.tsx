@@ -151,23 +151,30 @@ const NotificationsPage: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full ${
-                          notification.type === 'order'
+                          notification.category === 'order'
                             ? 'bg-emerald-100 text-emerald-600'
-                            : notification.type === 'promotion'
+                            : notification.category === 'promotion'
                             ? 'bg-amber-100 text-amber-600'
+                            : notification.category === 'product'
+                            ? 'bg-blue-100 text-blue-600'
+                            : notification.category === 'engagement'
+                            ? 'bg-pink-100 text-pink-600'
                             : 'bg-indigo-100 text-indigo-600'
                         }`}>
-                          {notification.type === 'order'
-                            ? 'Order'
-                            : notification.type === 'promotion'
-                            ? 'Promotion'
-                            : 'System'}
+                          {notification.category?.toUpperCase() || notification.type?.toUpperCase()}
                         </span>
                         {isUnread && (
                           <span className="text-xs text-indigo-500 font-medium">New</span>
                         )}
                       </div>
-                      <p className="text-slate-700">{notification.message}</p>
+                      <div className="font-bold text-lg text-indigo-700 mb-1">{notification.title}</div>
+                      <p className="text-slate-700 whitespace-pre-line">{notification.message}</p>
+                      {notification.link && (
+                        <a href={notification.link} className="text-blue-500 underline text-xs block mt-1" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>
+                      )}
+                      {notification.image && (
+                        <img src={notification.image} alt="notification" className="max-h-24 mt-2 rounded shadow" />
+                      )}
                       <p className="text-xs text-slate-400 mt-2">
                         {notification.createdAt
                           ? new Date(notification.createdAt).toLocaleString()
@@ -211,28 +218,32 @@ const NotificationsPage: React.FC = () => {
               ) : detail ? (
                 <div className="flex flex-col items-center text-center gap-3">
                   <div className={`rounded-full p-3 mb-2 shadow-lg ${
-                    detail.type === 'order' ? 'bg-emerald-100 text-emerald-600' :
-                    detail.type === 'promotion' ? 'bg-amber-100 text-amber-600' :
+                    detail?.category === 'order' ? 'bg-emerald-100 text-emerald-600' :
+                    detail?.category === 'promotion' ? 'bg-amber-100 text-amber-600' :
+                    detail?.category === 'product' ? 'bg-blue-100 text-blue-600' :
+                    detail?.category === 'engagement' ? 'bg-pink-100 text-pink-600' :
                     'bg-indigo-100 text-indigo-600'
                   }`}>
-                    {detail.type === 'order' ? <CheckCircle2 size={32}/> :
-                     detail.type === 'promotion' ? <Bell size={32}/> :
-                     <Bell size={32}/>
-                    }
+                    <Bell size={32}/>
                   </div>
                   <h3 className="text-2xl font-bold mb-1 tracking-tight">
-                    {detail.type === 'order' ? 'Order Notification' :
-                     detail.type === 'promotion' ? 'Promotion' : 'System Notification'}
+                    {detail?.title || (detail?.category ? detail.category.toUpperCase() : '')}
                   </h3>
-                  <div className="text-base text-slate-700 whitespace-pre-line mb-2">{detail.message}</div>
+                  <div className="text-base text-slate-700 whitespace-pre-line mb-2">{detail?.message}</div>
+                  {detail?.link && (
+                    <a href={detail.link} className="text-blue-500 underline text-xs block mb-2" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>
+                  )}
+                  {detail?.image && (
+                    <img src={detail.image} alt="notification" className="max-h-32 mb-2 rounded shadow" />
+                  )}
                   <div className="flex flex-col items-center gap-1 mt-2">
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${
-                      detail.status === 'unread' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                      detail?.status === 'unread' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                     }`}>
-                      {detail.status === 'unread' ? 'Unread' : 'Read'}
+                      {detail?.status === 'unread' ? 'Unread' : 'Read'}
                     </span>
                     <span className="text-xs text-slate-400">
-                      {detail.createdAt ? new Date(detail.createdAt).toLocaleString() : ''}
+                      {detail?.createdAt ? new Date(detail.createdAt).toLocaleString() : ''}
                     </span>
                   </div>
                 </div>

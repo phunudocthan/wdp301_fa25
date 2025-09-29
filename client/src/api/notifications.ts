@@ -3,8 +3,13 @@ import axiosInstance from './axiosInstance';
 export interface NotificationItem {
   _id: string;
   userId?: string;
+  title: string;
   message: string;
-  type: 'order' | 'system' | 'promotion';
+  category: 'promotion' | 'order' | 'product' | 'system' | 'engagement';
+  type: 'order' | 'system' | 'promotion' | 'product' | 'engagement';
+  link?: string;
+  image?: string;
+  meta?: any;
   status: 'unread' | 'read';
   createdAt?: string;
 }
