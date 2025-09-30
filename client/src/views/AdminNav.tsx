@@ -3,7 +3,10 @@ import { NavLink } from "react-router-dom";
 
 const navs = [
   { to: "/admin/profile", label: "Admin Profile" },
+  
   { to: "/admin/notifications", label: "Manager Notification" },
+  { to: "/profile", label: "Profile" },
+
   // Thêm các page admin khác ở đây nếu có
 ];
 

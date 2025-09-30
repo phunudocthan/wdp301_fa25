@@ -21,6 +21,13 @@ const NotificationsPage: React.FC = () => {
   const [detail, setDetail] = useState<NotificationItem | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter((item) => {
+      const text = (item.title + item.message).toLowerCase();
+      return text.includes(searchTerm.toLowerCase());
+    });
+  }, [notifications, searchTerm]);
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => item.status === "unread").length,
@@ -112,6 +119,14 @@ const NotificationsPage: React.FC = () => {
               Receive live updates about your orders and promotions in real time.
             </p>
           </div>
+          <input
+            type="text"
+            placeholder="Search notifications..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+
           <div className="flex items-center gap-2 text-sm">
             {connectionStatus === "connected" ? (
               <span className="flex items-center gap-1 text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full">
@@ -131,36 +146,34 @@ const NotificationsPage: React.FC = () => {
         </header>
 
         <section className="space-y-4">
-          {notifications.length === 0 ? (
+          {filteredNotifications.length === 0 ? (
             <div className="bg-white rounded-xl shadow p-6 text-center text-slate-500">
               You do not have any notifications yet.
             </div>
           ) : (
-            notifications.map((notification) => {
+            filteredNotifications.map((notification) => {
               const isUnread = notification.status === 'unread';
               return (
                 <div
                   key={notification._id}
                   onClick={() => handleShowDetail(notification._id)}
                   style={{ cursor: "pointer" }}
-                  className={`bg-white rounded-xl shadow-sm border transition hover:shadow-md ${
-                    isUnread ? 'border-indigo-200' : 'border-slate-200'
-                  }`}
+                  className={`bg-white rounded-xl shadow-sm border transition hover:shadow-md ${isUnread ? 'border-indigo-200' : 'border-slate-200'
+                    }`}
                 >
                   <div className="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full ${
-                          notification.category === 'order'
-                            ? 'bg-emerald-100 text-emerald-600'
-                            : notification.category === 'promotion'
+                        <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full ${notification.category === 'order'
+                          ? 'bg-emerald-100 text-emerald-600'
+                          : notification.category === 'promotion'
                             ? 'bg-amber-100 text-amber-600'
                             : notification.category === 'product'
-                            ? 'bg-blue-100 text-blue-600'
-                            : notification.category === 'engagement'
-                            ? 'bg-pink-100 text-pink-600'
-                            : 'bg-indigo-100 text-indigo-600'
-                        }`}>
+                              ? 'bg-blue-100 text-blue-600'
+                              : notification.category === 'engagement'
+                                ? 'bg-pink-100 text-pink-600'
+                                : 'bg-indigo-100 text-indigo-600'
+                          }`}>
                           {notification.category?.toUpperCase() || notification.type?.toUpperCase()}
                         </span>
                         {isUnread && (
@@ -217,14 +230,13 @@ const NotificationsPage: React.FC = () => {
                 </div>
               ) : detail ? (
                 <div className="flex flex-col items-center text-center gap-3">
-                  <div className={`rounded-full p-3 mb-2 shadow-lg ${
-                    detail?.category === 'order' ? 'bg-emerald-100 text-emerald-600' :
+                  <div className={`rounded-full p-3 mb-2 shadow-lg ${detail?.category === 'order' ? 'bg-emerald-100 text-emerald-600' :
                     detail?.category === 'promotion' ? 'bg-amber-100 text-amber-600' :
-                    detail?.category === 'product' ? 'bg-blue-100 text-blue-600' :
-                    detail?.category === 'engagement' ? 'bg-pink-100 text-pink-600' :
-                    'bg-indigo-100 text-indigo-600'
-                  }`}>
-                    <Bell size={32}/>
+                      detail?.category === 'product' ? 'bg-blue-100 text-blue-600' :
+                        detail?.category === 'engagement' ? 'bg-pink-100 text-pink-600' :
+                          'bg-indigo-100 text-indigo-600'
+                    }`}>
+                    <Bell size={32} />
                   </div>
                   <h3 className="text-2xl font-bold mb-1 tracking-tight">
                     {detail?.title || (detail?.category ? detail.category.toUpperCase() : '')}
@@ -237,9 +249,8 @@ const NotificationsPage: React.FC = () => {
                     <img src={detail.image} alt="notification" className="max-h-32 mb-2 rounded shadow" />
                   )}
                   <div className="flex flex-col items-center gap-1 mt-2">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${
-                      detail?.status === 'unread' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                    }`}>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${detail?.status === 'unread' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                      }`}>
                       {detail?.status === 'unread' ? 'Unread' : 'Read'}
                     </span>
                     <span className="text-xs text-slate-400">

@@ -18,11 +18,18 @@ const AppRouter: React.FC<AppRouterProps> = ({ isAuthenticated }) => {
 
   return (
     <Routes>
-      <Route 
-        path="/login" 
+      <Route path="/" element={<Navigate to="/new" replace />} />
+      <Route path="/new" element={<NewPage />} />
+      <Route path="/shop" element={<Shop />} />
+      <Route path="/register" element={<Register />} />
+
+      <Route
+        path="/profile"
         element={
-          !isAuthenticated ? <LoginPage /> : <Navigate to="/profile" replace />
-        } 
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
       />
       <Route 
         path="/profile" 
@@ -45,8 +52,4 @@ const AppRouter: React.FC<AppRouterProps> = ({ isAuthenticated }) => {
       )}
     </Routes>
   );
-};
-
-export default AppRouter;
-
-
+}

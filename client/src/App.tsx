@@ -6,6 +6,8 @@ import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 
 // Pages
+import NewPage from "./pages/Home"; // đổi Home thành NewPage
+import Profile from "./pages/AdminProfile";
 import HomePage from "./pages/Home";
 import Shop from "./pages/Shop";
 import Login from "./pages/Login";
@@ -20,21 +22,25 @@ import AdminNotificationPage from "./views/AdminNotificationPage";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
+import AdminNav from "./views/AdminNav";
 
 export default function App() {
   const { user } = useAuth();
-
   return (
     <AuthProvider>
       <div className="app-shell">
-        <Header />
+        {user && user.role === "admin" ? <AdminNav /> : <Header />}
+        
         <main className="app-main">
           <Routes>
-            <Route path="/" element={<Navigate to="/new" replace />} />
 
-            <Route path="/new" element={<HomePage />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/shop" element={<Shop />} />
 
+            {/* Trang New (trang sản phẩm chính) */}
+            <Route path="/new" element={<NewPage />} />
+
+            {/* Đăng ký */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />

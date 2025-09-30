@@ -2,6 +2,7 @@
 import Navbar from "../components/Navbar";
 import Profile from "../components/Profile";
 import { useAuth } from "../components/context/AuthContext";
+import AdminProfile from "../pages/AdminProfile";
 
 const ProfilePage = () => {
   const { user, booted, logout, updateUser } = useAuth();
@@ -14,9 +15,10 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <Navbar user={profileUser} onLogout={logout} />
+      {/* <Navbar user={profileUser} onLogout={logout} /> */}
       {profileUser ? (
-        <Profile user={profileUser} onUpdateUser={updateUser} />
+        // <Profile user={profileUser} onUpdateUser={updateUser} />
+        <AdminProfile/>
       ) : (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">

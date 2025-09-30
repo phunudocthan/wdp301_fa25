@@ -24,12 +24,9 @@ const Login = () => {
     [login]
   );
 
-  const handleLoginSuccess = useCallback(() => {
-    const redirectTo = (
-      (location.state as { from?: { pathname?: string } } | undefined)?.from?.pathname || "/profile"
-    );
-    navigate(redirectTo, { replace: true });
-  }, [location.state, navigate]);
+  const handleLoginSuccess = () => {
+  console.log("Login successful, navigating...");
+  };
 
   const handleResendVerification = useCallback(async (email: string) => {
     const { msg, message } = await requestEmailVerification(email);

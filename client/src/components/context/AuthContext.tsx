@@ -16,6 +16,9 @@ const USER_STORAGE_KEY = "auth_user";
 
 type AuthUser = ApiUser & { id?: string };
 
+// --------------------
+// Auth context type
+// --------------------
 interface AuthContextType {
   user: AuthUser | null;
   booted: boolean;
@@ -25,10 +28,14 @@ interface AuthContextType {
   loginWithToken: (token: string) => Promise<void>;
   updateUser: (user: AuthUser) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthCtx = createContext<AuthContextType | undefined>(undefined);
 
+// --------------------
+// Provider
+// --------------------
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [booted, setBooted] = useState(false);
@@ -92,6 +99,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     toast.success("Đã đăng xuất");
   }, [setAndPersistUser]);
 
+  const refreshUser = async () => {
+    try {
+      if (storage.getToken()) {
+        const me = await api.me();
+        setUser(me);
+      }
+    } catch {
+      setUser(null);
+      storage.clearToken();
+    }
+  };
+
+  // --------------------
+  // Context value
+  // --------------------
   const value: AuthContextType = useMemo(
     () => ({
       user,
@@ -102,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithToken,
       updateUser,
       logout,
+      refreshUser,
     }),
     [user, booted, login, register, loginWithToken, updateUser, logout]
   );
@@ -109,6 +132,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
+// --------------------
+// Hook
+// --------------------
 export const useAuth = () => {
   const ctx = useContext(AuthCtx);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
