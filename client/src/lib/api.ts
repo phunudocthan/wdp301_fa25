@@ -1,3 +1,4 @@
+// lib/api.ts
 import { http } from "./http";
 
 export const api = {

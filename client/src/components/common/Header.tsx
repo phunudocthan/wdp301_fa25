@@ -1,12 +1,14 @@
-import { NavLink, useNavigate } from "react-router-dom";
+// src/components/common/Header.tsx
+import { NavLink } from "react-router-dom";
 import { FaSearch, FaHeart, FaShoppingBag } from "react-icons/fa";
 import { useState } from "react";
 import logo from "/logo.png";
-import "./../../styles/layout.scss";
+import LoginModal from "../ui/LoginModal";
+import "../../styles/layout.scss";
 
 export default function Header() {
-  const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  const [showLogin, setShowLogin] = useState(false);
 
   // Lấy thông tin user từ localStorage
   const name = localStorage.getItem("name") || "A";
@@ -15,7 +17,7 @@ export default function Header() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim().length > 0) {
-      navigate(`/shop?search=${encodeURIComponent(query)}`);
+      window.location.href = `/shop?search=${encodeURIComponent(query)}`;
       setQuery("");
     }
   };
@@ -26,7 +28,7 @@ export default function Header() {
         {/* Logo + Brand */}
         <div
           className="brand"
-          onClick={() => navigate("/new")}
+          onClick={() => (window.location.href = "/new")}
           style={{ cursor: "pointer" }}
         >
           <img src={logo} alt="LEGO Logo" className="logo" />
@@ -57,26 +59,32 @@ export default function Header() {
             <FaShoppingBag className="icon" />
           </div>
 
-          {/* Avatar → dẫn đến profile */}
-          <div
-            onClick={() => navigate("/profile")}
-            className="rounded-full overflow-hidden h-8 w-8 cursor-pointer hover:ring-2 hover:ring-blue-600 ml-4"
-            title="Trang cá nhân"
-          >
-            {avatar ? (
+          {/* Avatar hoặc nút đăng nhập */}
+          {avatar ? (
+            <div
+              onClick={() => (window.location.href = "/profile")}
+              className="rounded-full overflow-hidden h-8 w-8 cursor-pointer hover:ring-2 hover:ring-blue-600 ml-4"
+              title="Trang cá nhân"
+            >
               <img
                 src={avatar}
                 alt="avatar"
                 className="h-full w-full object-cover"
               />
-            ) : (
-              <div className="bg-blue-600 text-white flex items-center justify-center h-full w-full text-sm rounded-full">
-                {name[0]}
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowLogin(true)}
+              className="ml-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+            >
+              Đăng nhập
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Modal Login */}
+<LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     </header>
   );
 }

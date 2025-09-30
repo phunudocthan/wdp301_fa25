@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { getProfile, updateProfile, updateAvatar, changePassword } = require('../controllers/userController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const { requireAuth} = require('../middleware/authMiddleware');
 const upload = require('../utils/multerConfig');
 
 // Routes của Huy
-router.get('/profile', authMiddleware, getProfile);
-router.patch('/profile', authMiddleware, updateProfile);
-router.put('/avatar', authMiddleware, upload.single('avatar'), updateAvatar);
-router.put('/password', authMiddleware, changePassword);
+router.get('/profile', requireAuth, getProfile); 
+router.patch('/profile', requireAuth, updateProfile);
+router.put('/avatar', requireAuth, upload.single('avatar'), updateAvatar);
+router.put('/password', requireAuth, changePassword);
 
 module.exports = router;

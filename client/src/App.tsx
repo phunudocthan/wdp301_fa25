@@ -1,14 +1,13 @@
-import React from 'react';
-import { Routes, Route, Navigate, Link } from "react-router-dom";
-import { AuthProvider } from './stores/AuthContext';
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./components/context/AuthContext";
 
 // Common layout components
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 
 // Pages
-import NewPage from "./pages/Home";  // đổi Home thành NewPage
-import Login from "./pages/Login";
+import NewPage from "./pages/Home"; // đổi Home thành NewPage
 import Profile from "./pages/AdminProfile";
 import Shop from "./pages/Shop";
 import Register from "./pages/Register";
@@ -35,8 +34,7 @@ export default function App() {
             {/* Trang New (trang sản phẩm chính) */}
             <Route path="/new" element={<NewPage />} />
 
-            {/* Đăng nhập */}
-            <Route path="/login" element={<Login />} />
+            {/* Đăng ký */}
             <Route path="/register" element={<Register />} />
 
             {/* Trang cá nhân (chỉ truy cập khi login) */}

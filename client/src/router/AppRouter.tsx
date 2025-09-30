@@ -1,39 +1,32 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from '../views/LoginPage';
-import ProfilePage from '../views/ProfilePage';
-import VerifyEmailPage from '../views/VerifyEmailPage';
-import ResendVerificationPage from '../views/ResendVerificationPage';
+// src/router/AppRouter.tsx
+import { Routes, Route, Navigate } from "react-router-dom";
+import ProfilePage from "../pages/AdminProfile";
+import Shop from "../pages/Shop";
+import NewPage from "../pages/Home";
+import Register from "../pages/Register";
+import ProtectedRoute from "../routes/ProtectedRoute";
 
-interface AppRouterProps {
-  isAuthenticated: boolean;
-}
-
-const AppRouter: React.FC<AppRouterProps> = ({ isAuthenticated }) => {
+export default function AppRouter() {
   return (
     <Routes>
-      <Route 
-        path="/login" 
+      <Route path="/" element={<Navigate to="/new" replace />} />
+      <Route path="/new" element={<NewPage />} />
+      <Route path="/shop" element={<Shop />} />
+      <Route path="/register" element={<Register />} />
+
+      <Route
+        path="/profile"
         element={
-          !isAuthenticated ? <LoginPage /> : <Navigate to="/profile" replace />
-        } 
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
       />
-      <Route 
-        path="/profile" 
-        element={
-          isAuthenticated ? <ProfilePage /> : <Navigate to="/login" replace />
-        } 
-      />
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/resend-verification" element={<ResendVerificationPage />} />
-      <Route 
-        path="/" 
-        element={<Navigate to={isAuthenticated ? '/profile' : '/login'} replace />} 
+
+      <Route
+        path="*"
+        element={<div className="p-6">404 - Trang không tồn tại</div>}
       />
     </Routes>
   );
-};
-
-export default AppRouter;
-
-
+}

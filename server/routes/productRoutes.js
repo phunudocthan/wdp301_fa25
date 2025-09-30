@@ -1,6 +1,6 @@
 const express = require("express");
 const Lego = require("../models/Lego");
-
+const { requireAuth} = require('../middleware/authMiddleware');
 const router = express.Router();
 
 /**
@@ -8,7 +8,7 @@ const router = express.Router();
  * @desc    Lấy danh sách sản phẩm (có hỗ trợ search + filter + sort)
  * @access  Public
  */
-router.get("/", async (req, res) => {
+router.get("/",requireAuth ,async (req, res) => {
   try {
     const { search, theme, minPrice, maxPrice, status, sortBy } = req.query;
 

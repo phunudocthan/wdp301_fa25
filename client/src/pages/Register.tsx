@@ -4,23 +4,29 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 export default function Register() {
-  const { register } = useAuth(); // giả định bạn có hàm register trong AuthContext
+  const { register } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const nav = useNavigate();
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    try {
-      if (!name || !email || !password) {
-        toast.error("Vui lòng nhập đầy đủ thông tin");
-        return;
-      }
-      await register(name, email, password);
 
-      toast.success("Đăng ký thành công!");
-      nav("/login"); // sau khi đăng ký thì chuyển sang trang login
+    if (!name || !email || !password || !confirmPassword) {
+      toast.error("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    try {
+      await register(name, email, password);
+      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+      nav("/login");
     } catch (err) {
       toast.error("Đăng ký thất bại, vui lòng thử lại!");
     }
@@ -29,7 +35,7 @@ export default function Register() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white shadow-lg p-6 rounded-lg w-96">
-        <h3 className="text-xl font-bold text-center mb-4">Tạo tài khoản mới</h3>
+        <h3 className="text-xl font-bold text-center mb-4">Đăng ký tài khoản</h3>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -65,9 +71,22 @@ export default function Register() {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Xác nhận mật khẩu
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+            />
+          </div>
+
           <button
             type="submit"
-            className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="w-full py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
           >
             Đăng ký
           </button>
@@ -79,7 +98,7 @@ export default function Register() {
             onClick={() => nav("/login")}
             className="text-blue-600 cursor-pointer hover:underline"
           >
-            Đăng nhập
+            Đăng nhập ngay
           </span>
         </p>
       </div>
