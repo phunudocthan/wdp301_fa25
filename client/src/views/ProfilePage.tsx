@@ -1,11 +1,11 @@
 ﻿import { useMemo } from "react";
-import Navbar from "../components/Navbar";
-import Profile from "../components/Profile";
+import Profile from "../components/ProfileNew";
 import { useAuth } from "../components/context/AuthContext";
 import AdminProfile from "../pages/AdminProfile";
+import "../styles/profile.scss";
 
 const ProfilePage = () => {
-  const { user, booted, logout, updateUser } = useAuth();
+  const { user, booted, updateUser } = useAuth();
 
   const profileUser = useMemo(() => user, [user]);
 
@@ -20,10 +20,13 @@ const ProfilePage = () => {
         // <Profile user={profileUser} onUpdateUser={updateUser} />
         <AdminProfile/>
       ) : (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mx-auto mb-4"></div>
-            <p className="text-gray-600">Đang tải thông tin profile...</p>
+        <div className="profile-container">
+          <div className="profile-card" style={{ textAlign: "center" }}>
+            <div
+              className="loading-spinner"
+              style={{ margin: "2rem auto" }}
+            ></div>
+            <p>Đang tải thông tin profile...</p>
           </div>
         </div>
       )}

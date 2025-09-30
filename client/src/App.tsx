@@ -2,17 +2,19 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/context/AuthContext";
 
+// Common UI
 import Header from "./components/common/Header";
-import Footer from "./components/common/Footer";
+import AdminNav from "./views/AdminNav";
+import AuthDemo from "./components/common/AuthDemo";
 
 // Pages
-import NewPage from "./pages/Home"; // đổi Home thành NewPage
-import Profile from "./pages/AdminProfile";
 import HomePage from "./pages/Home";
 import Shop from "./pages/Shop";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProfilePage from "./views/ProfilePage";
+import AdminDashboard from "./pages/AdminDashboard";
+import UserDashboard from "./pages/UserDashboard";
 import VerifyEmailPage from "./views/VerifyEmailPage";
 import ResendVerificationPage from "./views/ResendVerificationPage";
 import ResetPasswordPage from "./views/ResetPasswordPage";
@@ -22,31 +24,32 @@ import AdminNotificationPage from "./views/AdminNotificationPage";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
-import AdminNav from "./views/AdminNav";
 
 export default function App() {
   const { user } = useAuth();
+
   return (
     <AuthProvider>
       <div className="app-shell">
-        {user && user.role === "admin" ? <AdminNav /> : <Header />}
-        
+        {/* Navigation */}
+        {user?.role === "admin" ? <AdminNav /> : <Header />}
+
         <main className="app-main">
           <Routes>
+            {/* Redirect root */}
+            <Route path="/" element={<Navigate to="/home" replace />} />
 
-            <Route path="/" element={<HomePage />} />
+            {/* Public routes */}
+            <Route path="/home" element={<HomePage />} />
             <Route path="/shop" element={<Shop />} />
-
-            {/* Trang New (trang sản phẩm chính) */}
-            <Route path="/new" element={<NewPage />} />
-
-            {/* Đăng ký */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/resend-verification" element={<ResendVerificationPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth-demo" element={<AuthDemo />} />
 
+            {/* Protected routes */}
             <Route
               path="/profile"
               element={
@@ -71,6 +74,24 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Admin routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user"
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              }
+            />
             {user?.role === "admin" && (
               <Route
                 path="/admin/notifications"
@@ -82,18 +103,20 @@ export default function App() {
               />
             )}
 
+            {/* 404 fallback */}
             <Route
               path="*"
               element={
                 <div className="container py-12 text-center text-slate-500">
                   <h2 className="text-2xl font-semibold">404 - Not Found</h2>
-                  <p className="mt-2">The page you are looking for could not be found.</p>
+                  <p className="mt-2">
+                    The page you are looking for could not be found.
+                  </p>
                 </div>
               }
             />
           </Routes>
         </main>
-        <Footer />
       </div>
     </AuthProvider>
   );

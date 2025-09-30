@@ -52,12 +52,6 @@ const statusLabels: Record<UserStatus, string> = {
   locked: "Bị khóa",
 };
 
-const statusColors: Record<UserStatus, string> = {
-  active: "text-emerald-600 bg-emerald-50",
-  inactive: "text-amber-600 bg-amber-50",
-  locked: "text-rose-600 bg-rose-50",
-};
-
 type LocalUser = Omit<
   UserType,
   "role" | "status" | "avatar" | "email" | "name" | "address" | "favoriteThemes"
@@ -109,14 +103,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
   });
   const [passwordMsg, setPasswordMsg] = useState("");
 
-  // ✅ Regex kiểm tra số điện thoại: bắt đầu bằng 0, tổng cộng 10 số
   const phoneRegex = /^0\d{9}$/;
-
-  // ✅ Regex kiểm tra độ mạnh mật khẩu: ít nhất 8 ký tự, có hoa, thường, số, ký tự đặc biệt
   const strongPasswordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-  // Lấy thông tin profile khi mount
   useEffect(() => {
     async function fetchProfile() {
       try {
@@ -154,14 +144,12 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
       }
     }
     fetchProfile();
-  }, []);
+  }, [onUpdateUser]);
 
-  // Cập nhật profile
   const handleSave = async () => {
     setIsLoading(true);
     setErrorMsg("");
 
-    // ✅ validate số điện thoại trước khi gọi API
     if (!phoneRegex.test(editData.phone || "")) {
       setErrorMsg("Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số.");
       setIsLoading(false);
@@ -204,7 +192,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
     }
   };
 
-  // Cập nhật avatar
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const formData = new FormData();
@@ -247,23 +234,19 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
     }
   };
 
-  // Đổi mật khẩu
   const handleChangePassword = async () => {
     setPasswordMsg("");
 
-    // ✅ Bắt buộc nhập đủ 2 trường
     if (!passwords.oldPassword || !passwords.newPassword) {
       setPasswordMsg("Vui lòng nhập đầy đủ mật khẩu cũ và mật khẩu mới.");
       return;
     }
 
-    // ✅ Không cho phép mật khẩu mới giống mật khẩu cũ
     if (passwords.oldPassword === passwords.newPassword) {
       setPasswordMsg("Mật khẩu mới không được trùng mật khẩu cũ.");
       return;
     }
 
-    // ✅ Kiểm tra độ mạnh mật khẩu
     if (!strongPasswordRegex.test(passwords.newPassword)) {
       setPasswordMsg(
         "Mật khẩu mới phải ≥ 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt."
@@ -285,7 +268,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
     }
   };
 
-  // Chủ đề yêu thích
   const addFavoriteTheme = () => {
     if (newTheme && !editData.favoriteThemes?.includes(newTheme)) {
       setEditData((prev) => ({
@@ -305,7 +287,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
     }));
   };
 
-  // Xử lý input
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -321,7 +302,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
     }
   };
 
-  // Hiển thị địa chỉ an toàn
   const renderAddress = (address?: UserType["address"]) => {
     if (!address) return "";
     return [address.street, address.city, address.state, address.country]
@@ -331,23 +311,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
 
   return (
     <div className="profile-container">
-      {/* Error Message */}
-      {errorMsg && (
-        <div className="error-message">
-          {errorMsg}
-        </div>
-      )}
+      {errorMsg && <div className="error-message">{errorMsg}</div>}
 
-      {/* Profile Header */}
       <div className="profile-header">
         <div className="profile-banner"></div>
-        
+
         <div className="profile-info">
           <div className="profile-avatar">
-            <img
-              src={editData.avatar}
-              alt="Profile"
-            />
+            <img src={editData.avatar} alt="Profile" />
             {isEditing && (
               <label className="avatar-upload-btn" title="Thay đổi avatar">
                 <Camera className="h-4 w-4" />
@@ -355,17 +326,17 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
                   type="file"
                   accept="image/*"
                   onChange={handleAvatarChange}
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                   aria-label="Upload avatar"
                 />
               </label>
             )}
           </div>
-          
+
           <div className="profile-details">
             <h1>{editData.name}</h1>
             <p>{editData.email}</p>
-            
+
             <div className="profile-badges">
               <div className="profile-badge role">
                 <Shield className="h-4 w-4" />
@@ -384,10 +355,13 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
                 </span>
               </div>
             </div>
-            
+
             <div className="profile-actions">
               {!isEditing ? (
-                <button onClick={() => setIsEditing(true)} className="btn-primary">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="btn-primary"
+                >
                   <Edit3 className="h-4 w-4" />
                   Chỉnh sửa
                 </button>
@@ -419,146 +393,159 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
         </div>
       </div>
 
-        {/* Profile Details */}
-        <div className="profile-content">
-          {/* Personal Information */}
-          <div className="profile-card">
-            <div className="card-header">
-              <User className="card-icon" />
-              <h3>Thông tin cá nhân</h3>
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">Họ và tên</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="name"
-                  value={editData.name}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Nhập họ và tên"
-                />
-              ) : (
-                <div className="form-input" style={{ background: '#f8f9fa' }}>{editData.name}</div>
-              )}
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">
-                <Mail className="h-4 w-4" style={{ display: 'inline', marginRight: '0.5rem' }} />
-                Email
-              </label>
-              <input
-                type="email"
-                value={editData.email}
-                disabled
-                className="form-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                <Phone className="h-4 w-4" style={{ display: 'inline', marginRight: '0.5rem' }} />
-                Số điện thoại
-              </label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  name="phone"
-                  value={editData.phone}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Nhập số điện thoại"
-                />
-              ) : (
-                <div className="form-input" style={{ background: '#f8f9fa' }}>{editData.phone}</div>
-              )}
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">
-                <MapPin className="h-4 w-4" style={{ display: 'inline', marginRight: '0.5rem' }} />
-                Địa chỉ
-              </label>
-              {isEditing ? (
-                <div className="form-grid">
-                  <input
-                    type="text"
-                    name="address.street"
-                    value={editData.address?.street || ""}
-                    onChange={handleInputChange}
-                    placeholder="Đường"
-                    className="form-input"
-                  />
-                  <input
-                    type="text"
-                    name="address.city"
-                    value={editData.address?.city || ""}
-                    onChange={handleInputChange}
-                    placeholder="Thành phố"
-                    className="form-input"
-                  />
-                  <input
-                    type="text"
-                    name="address.state"
-                    value={editData.address?.state || ""}
-                    onChange={handleInputChange}
-                    placeholder="Tỉnh/Thành"
-                    className="form-input"
-                  />
-                  <input
-                    type="text"
-                    name="address.postalCode"
-                    value={editData.address?.postalCode || ""}
-                    onChange={handleInputChange}
-                    placeholder="Mã bưu chính"
-                    className="form-input"
-                  />
-                </div>
-              ) : (
-                <div className="form-input" style={{ background: '#f8f9fa' }}>
-                  {renderAddress(editData.address)}
-                </div>
-              )}
-            </div>
+      <div className="profile-content">
+        <div className="profile-card">
+          <div className="card-header">
+            <User className="card-icon" />
+            <h3>Thông tin cá nhân</h3>
           </div>
 
-          {/* Favorite Themes */}
-          <div className="profile-card">
-            <div className="card-header">
-              <Heart className="card-icon" style={{ color: '#e91e63' }} />
-              <h3>Chủ đề yêu thích</h3>
-            </div>
-            
-            {isEditing && (
-              <div className="theme-add">
-                <select
-                  value={newTheme}
-                  onChange={(e) => setNewTheme(e.target.value)}
-                  className="theme-select"
-                >
-                  <option value="">Chọn chủ đề...</option>
-                  {legoThemes
-                    .filter((theme) => !(editData.favoriteThemes || []).includes(theme))
-                    .map((theme) => (
-                      <option key={theme} value={theme}>
-                        {theme}
-                      </option>
-                    ))}
-                </select>
-                <button
-                  onClick={addFavoriteTheme}
-                  disabled={!newTheme}
-                  className="theme-add-btn"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+          <div className="form-group">
+            <label className="form-label">Họ và tên</label>
+            {isEditing ? (
+              <input
+                type="text"
+                name="name"
+                value={editData.name}
+                onChange={handleInputChange}
+                className="form-input"
+                placeholder="Nhập họ và tên"
+              />
+            ) : (
+              <div className="form-input" style={{ background: "#f8f9fa" }}>
+                {editData.name}
               </div>
             )}
-            
-            <div className="theme-tags">
-              {(isEditing ? editData.favoriteThemes : user.favoriteThemes)?.map((theme) => (
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              <Mail
+                className="h-4 w-4"
+                style={{ display: "inline", marginRight: "0.5rem" }}
+              />
+              Email
+            </label>
+            <input
+              type="email"
+              value={editData.email}
+              disabled
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              <Phone
+                className="h-4 w-4"
+                style={{ display: "inline", marginRight: "0.5rem" }}
+              />
+              Số điện thoại
+            </label>
+            {isEditing ? (
+              <input
+                type="tel"
+                name="phone"
+                value={editData.phone}
+                onChange={handleInputChange}
+                className="form-input"
+                placeholder="Nhập số điện thoại"
+              />
+            ) : (
+              <div className="form-input" style={{ background: "#f8f9fa" }}>
+                {editData.phone}
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              <MapPin
+                className="h-4 w-4"
+                style={{ display: "inline", marginRight: "0.5rem" }}
+              />
+              Địa chỉ
+            </label>
+            {isEditing ? (
+              <div className="form-grid">
+                <input
+                  type="text"
+                  name="address.street"
+                  value={editData.address?.street || ""}
+                  onChange={handleInputChange}
+                  placeholder="Đường"
+                  className="form-input"
+                />
+                <input
+                  type="text"
+                  name="address.city"
+                  value={editData.address?.city || ""}
+                  onChange={handleInputChange}
+                  placeholder="Thành phố"
+                  className="form-input"
+                />
+                <input
+                  type="text"
+                  name="address.state"
+                  value={editData.address?.state || ""}
+                  onChange={handleInputChange}
+                  placeholder="Tỉnh/Thành"
+                  className="form-input"
+                />
+                <input
+                  type="text"
+                  name="address.postalCode"
+                  value={editData.address?.postalCode || ""}
+                  onChange={handleInputChange}
+                  placeholder="Mã bưu chính"
+                  className="form-input"
+                />
+              </div>
+            ) : (
+              <div className="form-input" style={{ background: "#f8f9fa" }}>
+                {renderAddress(editData.address)}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="profile-card">
+          <div className="card-header">
+            <Heart className="card-icon" style={{ color: "#e91e63" }} />
+            <h3>Chủ đề yêu thích</h3>
+          </div>
+
+          {isEditing && (
+            <div className="theme-add">
+              <select
+                value={newTheme}
+                onChange={(e) => setNewTheme(e.target.value)}
+                className="theme-select"
+              >
+                <option value="">Chọn chủ đề...</option>
+                {legoThemes
+                  .filter(
+                    (theme) => !(editData.favoriteThemes || []).includes(theme)
+                  )
+                  .map((theme) => (
+                    <option key={theme} value={theme}>
+                      {theme}
+                    </option>
+                  ))}
+              </select>
+              <button
+                onClick={addFavoriteTheme}
+                disabled={!newTheme}
+                className="theme-add-btn"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          <div className="theme-tags">
+            {(isEditing ? editData.favoriteThemes : user.favoriteThemes)?.map(
+              (theme) => (
                 <div key={theme} className="theme-tag">
                   {theme}
                   {isEditing && (
@@ -570,109 +557,125 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
                     </button>
                   )}
                 </div>
-              ))}
-            </div>
-            
-            {(!user.favoriteThemes || user.favoriteThemes.length === 0) && !isEditing && (
-              <p style={{ color: '#718096', fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
+              )
+            )}
+          </div>
+
+          {(!user.favoriteThemes || user.favoriteThemes.length === 0) &&
+            !isEditing && (
+              <p
+                style={{
+                  color: "#718096",
+                  fontStyle: "italic",
+                  textAlign: "center",
+                  padding: "2rem",
+                }}
+              >
                 Chưa có chủ đề yêu thích nào được thêm
               </p>
             )}
-          </div>
         </div>
+      </div>
 
-        {/* Stats and Activity */}
-        <div className="profile-content" style={{ marginTop: '2rem' }}>
-          <div className="profile-card">
-            <div className="card-header">
-              <Edit3 className="card-icon" />
-              <h3>Thống kê</h3>
-            </div>
-            <div className="stats-grid">
-              <div className="stat-item">
-                <div className="stat-value">12</div>
-                <div className="stat-label">Đơn hàng</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-value">8</div>
-                <div className="stat-label">Yêu thích</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-value">2,450</div>
-                <div className="stat-label">Điểm tích lũy</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="profile-card">
-            <div className="card-header">
-              <Calendar className="card-icon" />
-              <h3>Hoạt động gần đây</h3>
-            </div>
-            <div className="activity-list">
-              <div className="activity-item">
-                <div className="activity-dot blue"></div>
-                <div className="activity-content">
-                  <h4>Mua LEGO City Fire Station</h4>
-                  <p>2 ngày trước</p>
-                </div>
-              </div>
-              <div className="activity-item">
-                <div className="activity-dot green"></div>
-                <div className="activity-content">
-                  <h4>Thêm vào yêu thích: Creator Expert</h4>
-                  <p>5 ngày trước</p>
-                </div>
-              </div>
-              <div className="activity-item">
-                <div className="activity-dot orange"></div>
-                <div className="activity-content">
-                  <h4>Đánh giá sản phẩm Technic</h4>
-                  <p>1 tuần trước</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Password Section */}
-        <div className="profile-card" style={{ marginTop: '2rem' }}>
+      <div className="profile-content" style={{ marginTop: "2rem" }}>
+        <div className="profile-card">
           <div className="card-header">
-            <Shield className="card-icon" />
-            <h3>Bảo mật</h3>
+            <Edit3 className="card-icon" />
+            <h3>Thống kê</h3>
           </div>
-          
-          <div className="password-section">
-            <label className="form-label">Đổi mật khẩu</label>
-            <div className="password-grid">
-              <input
-                type="password"
-                placeholder="Mật khẩu cũ"
-                value={passwords.oldPassword}
-                onChange={(e) =>
-                  setPasswords((p) => ({ ...p, oldPassword: e.target.value }))
-                }
-                className="form-input"
-              />
-              <input
-                type="password"
-                placeholder="Mật khẩu mới"
-                value={passwords.newPassword}
-                onChange={(e) =>
-                  setPasswords((p) => ({ ...p, newPassword: e.target.value }))
-                }
-                className="form-input"
-              />
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-value">12</div>
+              <div className="stat-label">Đơn hàng</div>
             </div>
-            <button onClick={handleChangePassword} className="btn-primary" style={{ marginTop: '1rem' }}>
-              Đổi mật khẩu
-            </button>
-            {passwordMsg && (
-              <div className={passwordMsg.toLowerCase().includes("success") ? "success-message" : "error-message"}>
-                {passwordMsg}
-              </div>
-            )}
+            <div className="stat-item">
+              <div className="stat-value">8</div>
+              <div className="stat-label">Yêu thích</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">2,450</div>
+              <div className="stat-label">Điểm tích lũy</div>
+            </div>
           </div>
+        </div>
+
+        <div className="profile-card">
+          <div className="card-header">
+            <Calendar className="card-icon" />
+            <h3>Hoạt động gần đây</h3>
+          </div>
+          <div className="activity-list">
+            <div className="activity-item">
+              <div className="activity-dot blue"></div>
+              <div className="activity-content">
+                <h4>Mua LEGO City Fire Station</h4>
+                <p>2 ngày trước</p>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-dot green"></div>
+              <div className="activity-content">
+                <h4>Thêm vào yêu thích: Creator Expert</h4>
+                <p>5 ngày trước</p>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-dot orange"></div>
+              <div className="activity-content">
+                <h4>Đánh giá sản phẩm Technic</h4>
+                <p>1 tuần trước</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="profile-card" style={{ marginTop: "2rem" }}>
+        <div className="card-header">
+          <Shield className="card-icon" />
+          <h3>Bảo mật</h3>
+        </div>
+
+        <div className="password-section">
+          <label className="form-label">Đổi mật khẩu</label>
+          <div className="password-grid">
+            <input
+              type="password"
+              placeholder="Mật khẩu cũ"
+              value={passwords.oldPassword}
+              onChange={(e) =>
+                setPasswords((p) => ({ ...p, oldPassword: e.target.value }))
+              }
+              className="form-input"
+            />
+            <input
+              type="password"
+              placeholder="Mật khẩu mới"
+              value={passwords.newPassword}
+              onChange={(e) =>
+                setPasswords((p) => ({ ...p, newPassword: e.target.value }))
+              }
+              className="form-input"
+            />
+          </div>
+          <button
+            onClick={handleChangePassword}
+            className="btn-primary"
+            style={{ marginTop: "1rem" }}
+          >
+            Đổi mật khẩu
+          </button>
+          {passwordMsg && (
+            <div
+              className={
+                passwordMsg.toLowerCase().includes("success")
+                  ? "success-message"
+                  : "error-message"
+              }
+            >
+              {passwordMsg}
+            </div>
+          )}
         </div>
       </div>
     </div>

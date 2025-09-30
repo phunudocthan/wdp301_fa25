@@ -23,8 +23,17 @@ interface AuthContextType {
   user: AuthUser | null;
   booted: boolean;
   isAuthed: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ token: string; role: string }>;
+  googleLogin: (token: string) => Promise<{ token: string; role: string }>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    phone?: string
+  ) => Promise<void>;
   loginWithToken: (token: string) => Promise<void>;
   updateUser: (user: AuthUser) => void;
   logout: () => void;
@@ -70,33 +79,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, [setAndPersistUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const { token, user: loggedInUser } = await api.login(email, password);
-    storage.setToken(token);
-    setAndPersistUser(loggedInUser);
-    toast.success("Đăng nhập thành công");
-  }, [setAndPersistUser]);
+  // 🔹 Login thường
+  // 🔹 Login thường
+  const login = useCallback(
+    async (
+      email: string,
+      password: string
+    ): Promise<{ token: string; role: string }> => {
+      const response = (await api.login(email, password)) as any;
+      const { token, user, role } = response;
 
-  const register = useCallback(async (name: string, email: string, password: string, phone?: string) => {
-    await api.register(name, email, password, phone);
-    toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác minh.");
-  }, []);
+      console.log("Login response:", { token, user, role }); // Debug log
 
-  const loginWithToken = useCallback(async (token: string) => {
-    storage.setToken(token);
-    const me = await api.me();
-    setAndPersistUser(me);
-    toast.success("Đăng nhập thành công");
-  }, [setAndPersistUser]);
+      storage.setToken(token);
+      setAndPersistUser(user);
+      toast.success("Đăng nhập thành công");
 
-  const updateUser = useCallback((next: AuthUser) => {
-    setAndPersistUser(next);
-  }, [setAndPersistUser]);
+      // 👈 Trả cả token + role
+      return { token, role };
+    },
+    [setAndPersistUser]
+  );
+
+  // 🔹 Login Google
+  // 🔹 Login Google
+  const googleLogin = useCallback(
+    async (token: string): Promise<{ token: string; role: string }> => {
+      const {
+        token: jwtToken,
+        user: loggedInUser,
+        role,
+      } = await api.googleLogin(token);
+
+      storage.setToken(jwtToken);
+      setAndPersistUser(loggedInUser);
+      toast.success("Đăng nhập Google thành công");
+
+      // 👈 Trả cả token + role
+      return { token: jwtToken, role };
+    },
+    [setAndPersistUser]
+  );
+
+  const register = useCallback(
+    async (name: string, email: string, password: string, phone?: string) => {
+      await api.register(name, email, password, phone);
+      toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác minh.");
+    },
+    []
+  );
+
+  const loginWithToken = useCallback(
+    async (token: string) => {
+      storage.setToken(token);
+      const me = await api.me();
+      setAndPersistUser(me);
+      toast.success("Đăng nhập thành công");
+    },
+    [setAndPersistUser]
+  );
+
+  const updateUser = useCallback(
+    (next: AuthUser) => {
+      setAndPersistUser(next);
+    },
+    [setAndPersistUser]
+  );
 
   const logout = useCallback(() => {
     storage.clearToken();
     setAndPersistUser(null);
-    toast.success("Đã đăng xuất");
+    // Xóa các thông tin khác trong localStorage
+    localStorage.removeItem("role");
+    localStorage.removeItem("name");
+    localStorage.removeItem("avatar");
+    toast.success("Đã đăng xuất thành công");
   }, [setAndPersistUser]);
 
   const refreshUser = async () => {
@@ -120,13 +177,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       booted,
       isAuthed: !!user,
       login,
+      googleLogin,
       register,
       loginWithToken,
       updateUser,
       logout,
       refreshUser,
     }),
-    [user, booted, login, register, loginWithToken, updateUser, logout]
+    [
+      user,
+      booted,
+      login,
+      googleLogin,
+      register,
+      loginWithToken,
+      updateUser,
+      logout,
+    ]
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

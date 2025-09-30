@@ -174,11 +174,15 @@ if (GOOGLE_AUTH_ENABLED) {
 exports.googleAuthEnabled = GOOGLE_AUTH_ENABLED;
 
 exports.handleGoogleCallback = (req, res) => {
-  const { token } = req.user || {};
-  if (!token) {
+  const { user, token } = req.user || {};
+  if (!token || !user) {
     return res.redirect(`${CLIENT_URL}/login?error=no_token`);
   }
-  return res.redirect(`${CLIENT_URL}?token=${encodeURIComponent(token)}`);
+  return res.redirect(
+    `${CLIENT_URL}?token=${encodeURIComponent(token)}&role=${encodeURIComponent(
+      user.role
+    )}`
+  );
 };
 
 exports.register = async (req, res) => {
@@ -239,7 +243,9 @@ exports.login = async (req, res) => {
       return res.status(400).json({ msg: "Email and password are required" });
     }
 
-    const user = await User.findOne({ email }).select("+password +passwordResetToken");
+    const user = await User.findOne({ email }).select(
+      "+password +passwordResetToken"
+    );
     if (!user) {
       await logActivity(null, `Failed login - unknown email (${email})`, req);
       return res.status(400).json({ msg: "Invalid credentials" });
@@ -248,11 +254,7 @@ exports.login = async (req, res) => {
     await clearExpiredLock(user);
 
     if (user.status && user.status !== "active") {
-      await logActivity(
-        user._id,
-        `Failed login - status ${user.status}`,
-        req
-      );
+      await logActivity(user._id, `Failed login - status ${user.status}`, req);
       return res.status(403).json({ msg: "Account is not active" });
     }
 
@@ -281,26 +283,27 @@ exports.login = async (req, res) => {
       user.failedLoginAttempts = attempts;
 
       if (willLock) {
-      const lockUntilDate = new Date(Date.now() + LOCK_TIME_MS);
-      user.lockUntil = lockUntilDate;
-      await logActivity(user._id, "Account locked due to failed logins", req);
-      await sendAccountLockedEmail(user.email, lockUntilDate).catch((error) =>
-        console.error("sendAccountLockedEmail error:", error)
-      );
+        const lockUntilDate = new Date(Date.now() + LOCK_TIME_MS);
+        user.lockUntil = lockUntilDate;
+        await logActivity(user._id, "Account locked due to failed logins", req);
+        await sendAccountLockedEmail(user.email, lockUntilDate).catch((error) =>
+          console.error("sendAccountLockedEmail error:", error)
+        );
 
-      const lockMessage = "Too many failed attempts. Account locked temporarily.";
-      const retryAfterSeconds = Math.max(
-        0,
-        Math.ceil((lockUntilDate.getTime() - Date.now()) / 1000)
-      );
+        const lockMessage =
+          "Too many failed attempts. Account locked temporarily.";
+        const retryAfterSeconds = Math.max(
+          0,
+          Math.ceil((lockUntilDate.getTime() - Date.now()) / 1000)
+        );
 
-      return res.status(423).json({
-        msg: lockMessage,
-        message: lockMessage,
-        lockUntil: lockUntilDate,
-        retryAfterSeconds,
-      });
-    }
+        return res.status(423).json({
+          msg: lockMessage,
+          message: lockMessage,
+          lockUntil: lockUntilDate,
+          retryAfterSeconds,
+        });
+      }
 
       const attemptsRemaining = Math.max(0, MAX_LOGIN_ATTEMPTS - attempts);
 
@@ -308,14 +311,14 @@ exports.login = async (req, res) => {
 
       const attemptMessage =
         attemptsRemaining > 0
-        ? `Invalid credentials. ${attemptsRemaining} attempt(s) remaining.`
-        : "Invalid credentials.";
+          ? `Invalid credentials. ${attemptsRemaining} attempt(s) remaining.`
+          : "Invalid credentials.";
 
       return res.status(400).json({
-      msg: attemptMessage,
-      message: attemptMessage,
-      attemptsRemaining,
-    });
+        msg: attemptMessage,
+        message: attemptMessage,
+        attemptsRemaining,
+      });
     }
 
     if (!user.isVerified) {
@@ -338,6 +341,7 @@ exports.login = async (req, res) => {
     res.json({
       msg: "Login successful",
       token,
+      role: user.role,
       user: buildUserPayload(user),
     });
   } catch (err) {
@@ -541,11 +545,7 @@ exports.unlockAccount = async (req, res) => {
     user.status = "active";
     await user.save({ validateBeforeSave: false });
 
-    await logActivity(
-      req.user.id,
-      `Unlocked account for ${user.email}`,
-      req
-    );
+    await logActivity(req.user.id, `Unlocked account for ${user.email}`, req);
 
     res.json({ msg: "Account unlocked successfully" });
   } catch (error) {
@@ -553,4 +553,3 @@ exports.unlockAccount = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-

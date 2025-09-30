@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import "../styles/LegoLoginPage.css";
 
 interface Styles {
   [key: string]: React.CSSProperties;
 }
-
+interface LoginResult {
+  token: string;
+  role: string;
+}
 interface LegoLoginPageProps {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (email: string, password: string) => Promise<LoginResult>;
   onResendVerification: (email: string) => Promise<string | void>;
   onForgotPassword: (email: string) => Promise<string | void>;
   onNavigateRegister: () => void;
@@ -29,13 +34,17 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [loadingAction, setLoadingAction] = useState<"login" | "resend" | "forgot" | null>(null);
+  const [loadingAction, setLoadingAction] = useState<
+    "login" | "resend" | "forgot" | null
+  >(null);
   const isLoading = loadingAction !== null;
   const [showResendOption, setShowResendOption] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
+    const role = params.get("role");
     if (!token) return;
 
     let cancelled = false;
@@ -43,6 +52,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
     const clearTokenParam = () => {
       const nextParams = new URLSearchParams(window.location.search);
       nextParams.delete("token");
+      nextParams.delete("role");
       const query = nextParams.toString();
       const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}`;
       window.history.replaceState({}, document.title, nextUrl);
@@ -54,13 +64,28 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
           await onGoogleToken(token);
         }
         if (!cancelled) {
+          // Lưu token + role vào localStorage
+          localStorage.setItem("token", token);
+          if (role) localStorage.setItem("role", role);
+
           setError(null);
           setInfo("Google login successful!");
+
+          // Điều hướng dựa trên role
+          if (role === "admin") {
+            navigate("/shop");
+          } else {
+            navigate("/home");
+          }
+
           onLoginSuccess?.();
         }
       } catch (err) {
         if (!cancelled) {
-          const message = err instanceof Error ? err.message : "Unable to complete Google login.";
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Unable to complete Google login.";
           setError(message);
         }
       } finally {
@@ -73,25 +98,39 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [onGoogleToken, onLoginSuccess]);
+  }, [onGoogleToken, onLoginSuccess, navigate]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     if (!email || !password) {
       setError("Email and password are required");
       return;
     }
+
     setError(null);
     setInfo(null);
     setLoadingAction("login");
+
     try {
+      // onLogin giờ sẽ return { token, role }
       await onLogin(email, password);
+
       setInfo("Login successful!");
       setShowResendOption(false);
+
+      // Không navigate ở đây nữa, để onLoginSuccess xử lý
+      // Callback sau khi login thành công sẽ handle navigation
       onLoginSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "An error occurred. Please try again.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "An error occurred. Please try again.";
+
       setError(message);
+
+      // Nếu lỗi liên quan đến xác thực email thì hiển thị resend option
       const lower = message.toLowerCase();
       if (lower.includes("verify") || lower.includes("xac")) {
         setShowResendOption(true);
@@ -113,7 +152,10 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
       const message = await onResendVerification(email);
       setInfo(message || "Verification email sent. Please check your inbox.");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to resend verification email.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to resend verification email.";
       setError(message);
     } finally {
       setLoadingAction(null);
@@ -132,13 +174,15 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
       const message = await onForgotPassword(email);
       setInfo(message || "Password reset email sent. Please check your inbox.");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to send password reset email.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to send password reset email.";
       setError(message);
     } finally {
       setLoadingAction(null);
     }
   };
-
 
   const handleGoogleLogin = () => {
     window.location.href = googleAuthUrl;
@@ -194,7 +238,9 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
             <input
               type="email"
               value={email}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(event.target.value)
+              }
               style={styles.input}
               placeholder="Enter your email"
               disabled={isLoading}
@@ -208,7 +254,9 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(event.target.value)
+                }
                 style={{ ...styles.input, paddingRight: "50px" }}
                 placeholder="Enter your password"
                 disabled={isLoading}
@@ -227,7 +275,11 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
 
           <div style={styles.rememberForgot}>
             <label style={styles.checkboxContainer}>
-              <input type="checkbox" style={styles.checkbox} disabled={isLoading} />
+              <input
+                type="checkbox"
+                style={styles.checkbox}
+                disabled={isLoading}
+              />
               <span style={styles.checkboxText}>Remember me</span>
             </label>
             <button
