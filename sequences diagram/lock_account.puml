@@ -1,0 +1,110 @@
+@startuml
+title UC-02 Account Lock After Failed Attempts
+
+actor Customer
+participant LoginPage
+participant ":AuthRouter" as AuthRouter
+participant ":AuthController" as AuthController
+participant ":UserModel" as UserModel
+database MongoDB
+participant ":ActivityLog" as ActivityLog
+participant ":EmailService" as EmailService
+
+activate Customer
+Customer -> LoginPage: 1. Input email & password
+activate LoginPage
+LoginPage -> AuthRouter: 2. POST /login
+activate AuthRouter
+AuthRouter -> AuthController: 3. Forward to login()
+activate AuthController
+AuthController -> UserModel: 4. Find user by email
+activate UserModel
+UserModel -> MongoDB: 5. Query user
+activate MongoDB
+MongoDB --> UserModel: 6. Return user
+deactivate MongoDB
+UserModel --> AuthController: 7. Return user
+deactivate UserModel
+
+alt Unknown email
+  AuthController -> ActivityLog: 7.1 Log failed login - unknown email
+  activate ActivityLog
+  ActivityLog --> AuthController: 7.1.1 Logged
+  deactivate ActivityLog
+  AuthController --> AuthRouter: 7.1.2 Return 400 Invalid credentials
+  AuthRouter --> LoginPage: 7.1.3 Forward error
+  LoginPage --> Customer: 7.1.4 Display error
+  
+else Status not active
+  AuthController -> ActivityLog: 7.2 Log failed - status not active
+  activate ActivityLog
+  ActivityLog --> AuthController: 7.2.1 Logged
+  deactivate ActivityLog
+  AuthController --> AuthRouter: 7.2.2 Return 403 Account not active
+  AuthRouter --> LoginPage: 7.2.3 Forward error
+  LoginPage --> Customer: 7.2.4 Display message
+  
+else Account locked (user.isLocked)
+  AuthController -> ActivityLog: 7.3 Log attempt on locked account
+  activate ActivityLog
+  ActivityLog --> AuthController: 7.3.1 Logged
+  deactivate ActivityLog
+  AuthController --> AuthRouter: 7.3.2 Return 423 with lockUntil
+  AuthRouter --> LoginPage: 7.3.3 Forward lock info
+  LoginPage --> Customer: 7.3.4 Show lock timer
+  
+else Password mismatch
+  AuthController -> AuthController: 7.4 Compute attempts = failed+1
+  AuthController -> UserModel: 7.5 incLoginAttempts() / update
+  activate UserModel
+  UserModel -> MongoDB: 7.6 Update attempts / maybe set lockUntil
+  activate MongoDB
+  MongoDB --> UserModel: 7.7 Updated
+  deactivate MongoDB
+  UserModel --> AuthController: 7.8 Done
+  deactivate UserModel
+  alt Threshold reached
+    AuthController -> ActivityLog: 7.9 Log account locked
+    activate ActivityLog
+    ActivityLog --> AuthController: 7.9.1 Logged
+    deactivate ActivityLog
+    AuthController -> EmailService: 7.10 SendAccountLockedEmail(user, lockUntil)
+    activate EmailService
+    EmailService --> AuthController: 7.10.1 OK/ignored
+    deactivate EmailService
+    AuthController --> AuthRouter: 7.11 Return 423 lockUntil + retryAfter
+    AuthRouter --> LoginPage: 7.11.1 Forward lock response
+    LoginPage --> Customer: 7.11.2 Display lock message
+    
+  else Below threshold
+    AuthController --> AuthRouter: 7.12 Return 400 + attemptsRemaining
+    AuthRouter --> LoginPage: 7.12.1 Forward error
+    LoginPage --> Customer: 7.12.2 Show remaining attempts
+    
+  end
+else Credentials valid & email verified
+  AuthController -> UserModel: 7.13 Reset counters, set lastLogin
+  activate UserModel
+  UserModel -> MongoDB: 7.14 Save user
+  MongoDB --> UserModel: 7.15 Saved
+  deactivate UserModel
+  AuthController -> ActivityLog: 7.16 Log login successful
+  activate ActivityLog
+  ActivityLog --> AuthController: 7.16.1 Logged
+  deactivate ActivityLog
+  AuthController --> AuthRouter: 7.17 Return JWT + user payload
+  AuthRouter --> LoginPage: 7.18 Forward success
+  LoginPage --> Customer: 7.19 Redirect to dashboard
+  
+end
+
+note right of AuthController
+MAX_LOGIN_ATTEMPTS (env, default 5)\nLOGIN_LOCK_TIME_MS (env, default 2h)
+end note
+
+deactivate AuthController
+deactivate AuthRouter
+deactivate LoginPage
+deactivate Customer
+
+@enduml

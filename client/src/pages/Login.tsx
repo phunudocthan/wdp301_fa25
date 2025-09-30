@@ -2,10 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import LegoLoginPage from "../components/LegoLoginPage";
 import { useAuth } from "../components/context/AuthContext";
-import {
-  requestEmailVerification,
-  requestPasswordReset,
-} from "../api/auth";
+import { requestEmailVerification } from "../api/auth";
 
 const Login = () => {
   const { login, loginWithToken } = useAuth();
@@ -13,7 +10,7 @@ const Login = () => {
   const location = useLocation();
 
   const googleAuthUrl = useMemo(() => {
-    const base = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000";
+    const base = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5001";
     return `${base.replace(/\/$/, "")}/api/auth/google`;
   }, []);
 
@@ -33,10 +30,9 @@ const Login = () => {
     return message || msg;
   }, []);
 
-  const handleForgotPassword = useCallback(async (email: string) => {
-    const { msg, message } = await requestPasswordReset(email);
-    return message || msg || "Password reset email sent.";
-  }, []);
+  const handleForgotPassword = useCallback(() => {
+    navigate("/forgot-password");
+  }, [navigate]);
 
   const handleGoogleToken = useCallback(
     async (token: string) => {

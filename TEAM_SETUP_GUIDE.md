@@ -52,7 +52,7 @@ node seedDatabase.js
 ```bash
 cd server
 npm start
-# Server sẽ chạy trên http://localhost:5000
+# Server sẽ chạy trên http://localhost:5001
 ```
 
 ### Chạy Frontend (Terminal 2):
@@ -65,9 +65,9 @@ npm run dev
 
 ## ✅ Kiểm tra hoạt động
 
-1. **Backend**: Truy cập http://localhost:5000/api/health
+1. **Backend**: Truy cập http://localhost:5001/api/health
 2. **Frontend**: Truy cập http://localhost:3001 (hoặc port hiển thị trong terminal)
-3. **Database**: Kiểm tra kết nối qua API http://localhost:5000/api/database/stats
+3. **Database**: Kiểm tra kết nối qua API http://localhost:5001/api/database/stats
 
 ## 📋 Cấu trúc Project hiện tại
 

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:5000/api/auth';
+const BASE_URL = 'http://localhost:5001/api/auth';
 
 async function testLogin() {
   console.log('🔍 Testing Login...');

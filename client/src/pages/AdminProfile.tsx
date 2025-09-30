@@ -1,6 +1,6 @@
 // src/pages/AdminProfile.tsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../components/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import AdminNav from "../views/AdminNav";
@@ -26,7 +26,7 @@ const AdminProfile: React.FC = () => {
     const fetchAdmin = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/auth/me", {
+        const res = await axiosInstance.get("/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log(res.data);

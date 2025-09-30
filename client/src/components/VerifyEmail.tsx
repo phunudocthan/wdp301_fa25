@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
+import { apiBaseURL } from "../api/axiosInstance";
 
 const VerifyEmail: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -14,7 +15,7 @@ const VerifyEmail: React.FC = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/auth/verify-email?token=${token}`,
+          `${apiBaseURL}/auth/verify-email?token=${token}`,
           { headers: { "Cache-Control": "no-cache" } }
         );
         if (isMounted) {

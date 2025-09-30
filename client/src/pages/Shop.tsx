@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import "./../styles/home.scss"; // có thể tạo file riêng shop.scss
 
 interface Product {
@@ -24,8 +24,8 @@ export default function Shop() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(
-          `http://localhost:5000/api/products?search=${search}`
+        const res = await axiosInstance.get(
+          `/products?search=${search}`
         );
         setProducts(res.data.products || []);
       } catch (err) {

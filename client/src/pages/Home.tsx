@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import "./../styles/home.scss";
 
 interface Product {
@@ -29,9 +29,9 @@ export default function Home() {
       try {
         setLoading(true);
         const url = search
-          ? `http://localhost:5000/api/products?search=${encodeURIComponent(search)}`
-          : "http://localhost:5000/api/products";
-        const res = await axios.get(url);
+          ? `/products?search=${encodeURIComponent(search)}`
+          : "/products";
+        const res = await axiosInstance.get(url);
         setProducts(res.data.products || []);
       } catch (err) {
         console.error("❌ Error fetching products:", err);
