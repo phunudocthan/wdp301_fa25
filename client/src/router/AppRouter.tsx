@@ -1,12 +1,21 @@
-// src/router/AppRouter.tsx
-import { Routes, Route, Navigate } from "react-router-dom";
-import ProfilePage from "../pages/AdminProfile";
-import Shop from "../pages/Shop";
-import NewPage from "../pages/Home";
-import Register from "../pages/Register";
-import ProtectedRoute from "../routes/ProtectedRoute";
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from '../views/LoginPage';
+import ProfilePage from '../views/ProfilePage';
+import VerifyEmailPage from '../views/VerifyEmailPage';
+import ResendVerificationPage from '../views/ResendVerificationPage';
+import ResetPasswordPage from '../views/ResetPasswordPage';
+import AdminNotificationPage from '../views/AdminNotificationPage';
+import AdminProfile from '../pages/AdminProfile';
+import { useAuth } from '../components/context/AuthContext';
 
-export default function AppRouter() {
+interface AppRouterProps {
+  isAuthenticated: boolean;
+}
+
+const AppRouter: React.FC<AppRouterProps> = ({ isAuthenticated }) => {
+  const { user } = useAuth();
+
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/new" replace />} />
@@ -22,11 +31,25 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
-
-      <Route
-        path="*"
-        element={<div className="p-6">404 - Trang không tồn tại</div>}
+      <Route 
+        path="/profile" 
+        element={
+          isAuthenticated ? <ProfilePage /> : <Navigate to="/login" replace />
+        } 
       />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/resend-verification" element={<ResendVerificationPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route 
+        path="/" 
+        element={<Navigate to={isAuthenticated ? '/profile' : '/login'} replace />} 
+      />
+      {isAuthenticated && user?.role === 'admin' && (
+        <>
+          <Route path="/admin/profile" element={<AdminProfile />} />
+          <Route path="/admin/notifications" element={<AdminNotificationPage />} />
+        </>
+      )}
     </Routes>
   );
 }

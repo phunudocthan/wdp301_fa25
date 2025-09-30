@@ -1,6 +1,6 @@
 // src/components/common/Header.tsx
-import { NavLink } from "react-router-dom";
-import { FaSearch, FaHeart, FaShoppingBag } from "react-icons/fa";
+import { NavLink, useNavigate } from "react-router-dom";
+import { FaSearch, FaHeart, FaShoppingBag, FaBell } from "react-icons/fa";
 import { useState } from "react";
 import logo from "/logo.png";
 import LoginModal from "../ui/LoginModal";
@@ -10,12 +10,11 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [showLogin, setShowLogin] = useState(false);
 
-  // Lấy thông tin user từ localStorage
   const name = localStorage.getItem("name") || "A";
   const avatar = localStorage.getItem("avatar");
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (query.trim().length > 0) {
       window.location.href = `/shop?search=${encodeURIComponent(query)}`;
       setQuery("");
@@ -23,6 +22,7 @@ export default function Header() {
   };
 
   return (
+    
     <header className="header">
       <div className="container header-inner">
         {/* Logo + Brand */}
@@ -35,26 +35,30 @@ export default function Header() {
           <span>LEGOs</span>
         </div>
 
-        {/* Nav Menu */}
         <nav className="nav">
-          <NavLink to="/shop">Cửa Hàng</NavLink>
-          <NavLink to="/help">Về chúng tôi</NavLink>
-          <NavLink to="/new">Trang chủ</NavLink>
+          <NavLink to="/shop">Shop</NavLink>
+          <NavLink to="/new">Home</NavLink>
+          <NavLink to="/addresses">Address Book</NavLink>
+          <NavLink to="/notifications">Notifications</NavLink>
         </nav>
 
-        {/* Search + Icons */}
         <div className="header-right">
           <form className="search-box" onSubmit={handleSearchSubmit}>
             <FaSearch className="search-icon" />
             <input
               type="text"
-              placeholder="Tìm kiếm..."
+              placeholder="Search products..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(event) => setQuery(event.target.value)}
             />
           </form>
 
           <div className="icons">
+            <FaBell
+              className="icon"
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigate('/notifications')}
+            />
             <FaHeart className="icon" />
             <FaShoppingBag className="icon" />
           </div>
@@ -84,7 +88,7 @@ export default function Header() {
       </div>
 
       {/* Modal Login */}
-<LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
+      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     </header>
   );
 }

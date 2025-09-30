@@ -1,28 +1,25 @@
 import { toast } from "react-toastify";
 import { storage } from "./storage";
 
-// API base URL lấy từ .env (vite)
-const API_BASE: string = import.meta.env.VITE_API_URL;
+const envApi = import.meta.env.VITE_API_URL as string | undefined;
+const currentOrigin = window.location.origin.replace(/\/$/, "");
+const defaultApiBase = window.location.port === "3000"
+  ? "http://localhost:5000/api"
+  : `${currentOrigin}/api`;
+const API_BASE = (envApi && envApi.trim().length > 0 ? envApi : defaultApiBase).replace(/\/$/, "");
 
-/**
- * Options cho http request
- */
 interface HttpOptions {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
 }
 
-/**
- * Hàm gọi API với fetch wrapper
- * @param path - endpoint (vd: "/auth/login")
- * @param options - method, body, headers
- */
-export async function http<T = any>(path: string, options: HttpOptions = {}): Promise<T> {
+export async function http<T = unknown>(path: string, options: HttpOptions = {}): Promise<T> {
   const { method = "GET", body, headers = {} } = options;
+  const url = path.startsWith("/") ? `${API_BASE}${path}` : `${API_BASE}/${path}`;
 
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(url, {
       method,
       headers: {
         "Content-Type": "application/json",
@@ -35,15 +32,19 @@ export async function http<T = any>(path: string, options: HttpOptions = {}): Pr
     const data: T = await res.json().catch(() => ({} as T));
 
     if (!res.ok) {
-      const msg = (data as any)?.message || "Request failed";
-      toast.error(msg);
+      const raw = data as any;
+      const msg = raw?.message || raw?.msg || "Request failed";
       throw new Error(msg);
     }
 
     return data;
   } catch (err: any) {
-    // Bắt lỗi mạng
-    toast.error(err.message || "Network error");
-    throw err;
+    const message = err?.message || "Network error";
+    toast.error(message);
+    if (err instanceof Error) {
+      err.message = message;
+      throw err;
+    }
+    throw new Error(message);
   }
 }

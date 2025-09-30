@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../components/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import AdminNav from "../views/AdminNav";
 
 interface User {
   _id: string;
@@ -28,6 +29,8 @@ const AdminProfile: React.FC = () => {
         const res = await axios.get("http://localhost:5000/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log(res.data);
+        
         setAdmin(res.data);
       } catch (err: any) {
         console.error("Lỗi khi lấy thông tin admin:", err);

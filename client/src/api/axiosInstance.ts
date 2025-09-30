@@ -1,15 +1,21 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = `${import.meta.env.VITE_API_URL}/api`;
+const envApi = import.meta.env.VITE_API_URL as string | undefined;
+const currentOrigin = window.location.origin.replace(/\/$/, "");
+const defaultApiBase = window.location.port === "3000"
+  ? "http://localhost:5000/api"
+  : `${currentOrigin}/api`;
+const baseURL = (envApi && envApi.trim().length > 0 ? envApi : defaultApiBase).replace(/\/$/, "");
+
+export const apiBaseURL = baseURL;
 
 const axiosInstance = axios.create({
-  baseURL: API_URL,
-  withCredentials: true, // nếu cần gửi cookie
+  baseURL,
+  withCredentials: true,
 });
 
-// Tự động gắn Authorization header từ localStorage cho mọi request
 axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers = config.headers || {};
     (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
@@ -17,15 +23,14 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-// Chuẩn hóa error từ response để UI dễ hiển thị
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     const normalized = new Error(
       error?.response?.data?.msg ||
-      error?.response?.data?.error ||
-      error?.message ||
-      'Đã xảy ra lỗi, vui lòng thử lại sau'
+        error?.response?.data?.error ||
+        error?.message ||
+        "Đã xảy ra lỗi, vui lòng thử lại sau"
     );
     return Promise.reject(normalized);
   }
