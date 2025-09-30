@@ -13,7 +13,7 @@ interface LoginResult {
 interface LegoLoginPageProps {
   onLogin: (email: string, password: string) => Promise<LoginResult>;
   onResendVerification: (email: string) => Promise<string | void>;
-  onForgotPassword: (email: string) => Promise<string | void>;
+  onForgotPassword: () => void | Promise<void>;
   onNavigateRegister: () => void;
   googleAuthUrl: string;
   onLoginSuccess?: () => void;
@@ -34,9 +34,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [loadingAction, setLoadingAction] = useState<
-    "login" | "resend" | "forgot" | null
-  >(null);
+  const [loadingAction, setLoadingAction] = useState<"login" | "resend" | null>(null);
   const isLoading = loadingAction !== null;
   const [showResendOption, setShowResendOption] = useState(false);
   const navigate = useNavigate();
@@ -162,26 +160,10 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      setError("Please enter your email first");
-      return;
-    }
+  const handleForgotPassword = () => {
     setError(null);
     setInfo(null);
-    setLoadingAction("forgot");
-    try {
-      const message = await onForgotPassword(email);
-      setInfo(message || "Password reset email sent. Please check your inbox.");
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Unable to send password reset email.";
-      setError(message);
-    } finally {
-      setLoadingAction(null);
-    }
+    onForgotPassword();
   };
 
   const handleGoogleLogin = () => {

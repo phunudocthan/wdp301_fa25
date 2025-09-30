@@ -52,10 +52,9 @@ const Login = () => {
     return message || msg;
   }, []);
 
-  const handleForgotPassword = useCallback(async (email: string) => {
-    const { msg, message } = await requestPasswordReset(email);
-    return message || msg || "Password reset email sent.";
-  }, []);
+  const handleForgotPassword = useCallback(() => {
+    navigate("/forgot-password");
+  }, [navigate]);
 
   const handleGoogleToken = useCallback(
     async (token: string) => {

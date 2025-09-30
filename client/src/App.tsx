@@ -20,6 +20,7 @@ import UserDashboard from "./pages/UserDashboard";
 import VerifyEmailPage from "./views/VerifyEmailPage";
 import ResendVerificationPage from "./views/ResendVerificationPage";
 import ResetPasswordPage from "./views/ResetPasswordPage";
+import ForgotPasswordPage from "./views/ForgotPasswordPage";
 import AddressBookPage from "./views/AddressBookPage";
 import NotificationsPage from "./views/NotificationsPage";
 import AdminNotificationPage from "./views/AdminNotificationPage";
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/resend-verification" element={<ResendVerificationPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth-demo" element={<AuthDemo />} />
 
