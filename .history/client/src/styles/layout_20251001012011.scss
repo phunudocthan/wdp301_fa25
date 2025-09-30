@@ -231,9 +231,9 @@
     }
   }
 }
-.header .user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
+.header .relative .rounded-full img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;  /* giữ ảnh không méo */
+  border-radius: 50%; /* luôn tròn */
 }

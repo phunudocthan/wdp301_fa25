@@ -114,11 +114,12 @@ export default function Header() {
               >
                 <div className="rounded-full overflow-hidden h-8 w-8">
                   {avatar ? (
-                  <img
-  src={avatar}
-  alt="avatar"
-  className="user-avatar"
-/>
+                    <img
+                      src={avatar}
+                      alt="avatar"
+                      className="h-full w-full object-cover"
+                      style={{ borderRadius: "50%", width: "20%", height: "20%" }}
+                    />
                   ) : (
                     <div className="bg-blue-600 text-white flex items-center justify-center h-full w-full text-sm rounded-full">
                       {name[0]}

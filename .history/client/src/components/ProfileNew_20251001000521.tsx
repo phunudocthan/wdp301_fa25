@@ -14,7 +14,6 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { Eye, EyeOff } from "lucide-react";
 import {
   updateProfile,
   getProfile,
@@ -75,7 +74,6 @@ interface ProfileProps {
 
 
 const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
-  const [showPasswords, setShowPasswords] = useState({ old: false, new: false });
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<LocalUser>({
@@ -577,75 +575,47 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
           <h3>Bảo mật</h3>
         </div>
 
-       <div className="password-section">
-  <label className="form-label">Đổi mật khẩu</label>
-  <div className="password-grid">
-    {/* Mật khẩu cũ */}
-    <div className="relative">
-      <input
-        type={showPasswords.old ? "text" : "password"}
-        placeholder="Mật khẩu cũ"
-        value={passwords.oldPassword}
-        onChange={(e) =>
-          setPasswords((p) => ({ ...p, oldPassword: e.target.value }))
-        }
-        className="form-input pr-10"
-      />
-      <button
-        type="button"
-        onClick={() =>
-          setShowPasswords((p) => ({ ...p, old: !p.old }))
-        }
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-      >
-        {showPasswords.old ? <EyeOff size={18} /> : <Eye size={18} />}
-      </button>
-    </div>
-
-    {/* Mật khẩu mới */}
-    <div className="relative">
-      <input
-        type={showPasswords.new ? "text" : "password"}
-        placeholder="Mật khẩu mới"
-        value={passwords.newPassword}
-        onChange={(e) =>
-          setPasswords((p) => ({ ...p, newPassword: e.target.value }))
-        }
-        className="form-input pr-10"
-      />
-      <button
-        type="button"
-        onClick={() =>
-          setShowPasswords((p) => ({ ...p, new: !p.new }))
-        }
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-      >
-        {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
-      </button>
-    </div>
-  </div>
-
-  <button
-    onClick={handleChangePassword}
-    className="btn-primary"
-    style={{ marginTop: "1rem" }}
-  >
-    Đổi mật khẩu
-  </button>
-
-  {passwordMsg && (
-    <div
-      className={
-        passwordMsg.toLowerCase().includes("success")
-          ? "success-message"
-          : "error-message"
-      }
-    >
-      {passwordMsg}
-    </div>
-  )}
-</div>
-
+        <div className="password-section">
+          <label className="form-label">Đổi mật khẩu</label>
+          <div className="password-grid">
+            <input
+              type="password"
+              placeholder="Mật khẩu cũ"
+              value={passwords.oldPassword}
+              onChange={(e) =>
+                setPasswords((p) => ({ ...p, oldPassword: e.target.value }))
+              }
+              className="form-input"
+            />
+            <input
+              type="password"
+              placeholder="Mật khẩu mới"
+              value={passwords.newPassword}
+              onChange={(e) =>
+                setPasswords((p) => ({ ...p, newPassword: e.target.value }))
+              }
+              className="form-input"
+            />
+          </div>
+          <button
+            onClick={handleChangePassword}
+            className="btn-primary"
+            style={{ marginTop: "1rem" }}
+          >
+            Đổi mật khẩu
+          </button>
+          {passwordMsg && (
+            <div
+              className={
+                passwordMsg.toLowerCase().includes("success")
+                  ? "success-message"
+                  : "error-message"
+              }
+            >
+              {passwordMsg}
+            </div>
+          )}
+        </div>
       </div>
     </div>
     </>
