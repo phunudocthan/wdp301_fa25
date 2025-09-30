@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { apiBaseURL } from "../api/axiosInstance";
+import axiosInstance, { apiBaseURL } from "../api/axiosInstance";
+import AdminNav from "./AdminNav";
+import "./../styles/AdminNotificationPage.css"; // import CSS thuần
 
 interface NotificationItem {
   _id: string;
   userId: string;
   title: string;
   message: string;
-  category: 'promotion' | 'order' | 'product' | 'system' | 'engagement';
-  type: 'order' | 'system' | 'promotion' | 'product' | 'engagement';
+  category: "promotion" | "order" | "product" | "system" | "engagement";
+  type: "order" | "system" | "promotion" | "product" | "engagement";
   link?: string;
   image?: string;
   meta?: any;
   createdAt?: string;
 }
-
-import AdminNav from "./AdminNav";
 
 const AdminNotificationPage: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -32,25 +32,6 @@ const AdminNotificationPage: React.FC = () => {
   const [editType, setEditType] = useState<NotificationItem["type"]>("system");
   const [error, setError] = useState("");
 
-  // Fetch sent notifications
-  const fetchSent = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${apiBaseURL}/notifications/admin/sent`, { withCredentials: true });
-      setNotifications(res.data.notifications || []);
-    } catch (err: any) {
-      setError(err?.response?.data?.msg || "Failed to load notifications");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSent();
-  }, []);
-
-  // Send notification
-  // Gợi ý nội dung theo chủ đề
   const suggestionMap: Record<NotificationItem["category"], { title: string; message: string }[]> = {
     promotion: [
       { title: "Ưu đãi đặc biệt tháng này!", message: "Nhận ngay mã giảm giá 20% cho đơn hàng đầu tiên trong tháng này. Số lượng có hạn!" },
@@ -74,6 +55,35 @@ const AdminNotificationPage: React.FC = () => {
     ],
   };
 
+  const fetchSent = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.get(`/notifications/admin/sent`, { withCredentials: true });
+      let notifications = res.data.notifications || [];
+
+      // Lọc trùng theo title + message, giữ notification mới nhất
+      const map = new Map<string, typeof notifications[0]>();
+      notifications.forEach(n => {
+        const key = `${n.title.trim()}|${n.message.trim()}`;
+        const existing = map.get(key);
+        if (!existing || new Date(n.createdAt) > new Date(existing.createdAt)) {
+          map.set(key, n);
+        }
+      });
+
+      setNotifications(Array.from(map.values()));
+    } catch (err: any) {
+      setError(err?.response?.data?.msg || "Failed to load notifications");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchSent();
+  }, []);
+
   const handleSuggestion = (cat: NotificationItem["category"], idx: number) => {
     setCategory(cat);
     setTitle(suggestionMap[cat][idx].title);
@@ -86,20 +96,15 @@ const AdminNotificationPage: React.FC = () => {
     if (!message) return setError("Nội dung thông báo không được để trống");
     setLoading(true);
     try {
-      await axios.post(`${apiBaseURL}/notifications/admin`,
+      await axiosInstance.post(`/notifications/admin`,
         userId
           ? { userId, title, message, category, type, link, image }
           : { title, message, category, type, link, image },
         { withCredentials: true }
       );
-      setTitle("");
-      setMessage("");
-      setCategory("system");
-      setType("system");
-      setLink("");
-      setImage("");
-      setUserId("");
+      setTitle(""); setMessage(""); setCategory("system"); setType("system"); setLink(""); setImage(""); setUserId("");
       fetchSent();
+      setError("");
     } catch (err: any) {
       setError(err?.response?.data?.msg || "Gửi thông báo thất bại");
     } finally {
@@ -107,12 +112,11 @@ const AdminNotificationPage: React.FC = () => {
     }
   };
 
-  // Delete notification
   const handleDelete = async (id: string) => {
     if (!window.confirm("Xác nhận xóa notification này?")) return;
     setLoading(true);
     try {
-      await axios.delete(`${apiBaseURL}/notifications/admin/${id}`, { withCredentials: true });
+      await axiosInstance.delete(`/notifications/admin/${id}`, { withCredentials: true });
       fetchSent();
     } catch (err: any) {
       setError(err?.response?.data?.msg || "Xóa thất bại");
@@ -121,24 +125,21 @@ const AdminNotificationPage: React.FC = () => {
     }
   };
 
-  // Start edit
   const startEdit = (item: NotificationItem) => {
     setEditId(item._id);
     setEditMessage(item.message);
     setEditType(item.type);
   };
 
-  // Save edit
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editId || !editMessage) return setError("Message không được để trống");
     setLoading(true);
     try {
-      await axios.patch(`${apiBaseURL}/notifications/admin/${editId}`, { message: editMessage, type: editType }, { withCredentials: true });
-      setEditId(null);
-      setEditMessage("");
-      setEditType("system");
+      await axiosInstance.patch(`/notifications/admin/${editId}`, { message: editMessage, type: editType }, { withCredentials: true });
+      setEditId(null); setEditMessage(""); setEditType("system");
       fetchSent();
+      setError("");
     } catch (err: any) {
       setError(err?.response?.data?.msg || "Cập nhật thất bại");
     } finally {
@@ -147,74 +148,81 @@ const AdminNotificationPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-10 px-4">
+    <div className="admin-container">
       <AdminNav />
-      <h1 className="text-2xl font-bold mb-6">Admin Notification Management</h1>
-      <form onSubmit={handleSend} className="flex flex-col gap-3 mb-8 bg-white p-4 rounded shadow">
-        <div className="flex flex-col md:flex-row gap-2">
-          <select value={category} onChange={e => setCategory(e.target.value as NotificationItem["category"])} className="border px-3 py-2 rounded w-full md:w-1/3">
+      <h1 className="admin-title">Quản lý Notification</h1>
+
+      <form onSubmit={handleSend} className="admin-form">
+        <div className="form-row">
+          <select value={category} onChange={e => setCategory(e.target.value as NotificationItem["category"])} className="form-select">
             <option value="promotion">Khuyến mãi & Marketing</option>
             <option value="order">Đơn hàng & Giao dịch</option>
             <option value="product">Sản phẩm mới</option>
             <option value="system">Thông báo hệ thống</option>
             <option value="engagement">Tương tác khách hàng</option>
           </select>
-          <input value={userId} onChange={e => setUserId(e.target.value)} placeholder="UserId (bỏ trống để gửi toàn bộ user)" className="border px-3 py-2 rounded w-full md:w-2/3" />
+          {/* <input value={userId} onChange={e => setUserId(e.target.value)} placeholder="UserId (bỏ trống để gửi toàn bộ user)" className="form-input" /> */}
         </div>
-        <div className="flex flex-col md:flex-row gap-2">
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Tiêu đề thông báo" className="border px-3 py-2 rounded w-full" />
-          <input value={link} onChange={e => setLink(e.target.value)} placeholder="Link chi tiết (nếu có)" className="border px-3 py-2 rounded w-full" />
-        </div>
-        <input value={image} onChange={e => setImage(e.target.value)} placeholder="Link ảnh (nếu có)" className="border px-3 py-2 rounded" />
-        <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Nội dung thông báo" className="border px-3 py-2 rounded min-h-[80px]" />
-        <div className="flex flex-wrap gap-2 mb-2">
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Tiêu đề thông báo" className="form-input" />
+        {/* <input value={link} onChange={e => setLink(e.target.value)} placeholder="Link chi tiết (nếu có)" className="form-input" /> */}
+        {/* <input value={image} onChange={e => setImage(e.target.value)} placeholder="Link ảnh (nếu có)" className="form-input" /> */}
+        <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Nội dung thông báo" className="form-textarea" />
+
+        <div className="suggestion-row " style={{ marginBottom: "10px", color: "#c41717ff" }}>
           {suggestionMap[category].map((sug, idx) => (
-            <button type="button" key={idx} className="bg-slate-100 border px-2 py-1 rounded text-xs hover:bg-indigo-100" onClick={() => handleSuggestion(category, idx)}>
-              Gợi ý: {sug.title}
+            <button type="button" key={idx} onClick={() => handleSuggestion(category, idx)}>
+              {sug.title}
             </button>
           ))}
         </div>
-        <select value={type} onChange={e => setType(e.target.value as NotificationItem["type"])} className="border px-3 py-2 rounded">
+
+        <select value={type} onChange={e => setType(e.target.value as NotificationItem["type"])} className="form-select">
           <option value="system">System</option>
           <option value="order">Order</option>
           <option value="promotion">Promotion</option>
           <option value="product">Product</option>
           <option value="engagement">Engagement</option>
         </select>
-        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700" disabled={loading}>Gửi thông báo</button>
+
+        <button type="submit" className="btn-submit" disabled={loading}>Gửi thông báo</button>
+        {error && <div className="error-msg">{error}</div>}
       </form>
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      <h2 className="text-lg font-semibold mb-2">Danh sách notification đã gửi</h2>
-      {loading ? <div>Đang tải...</div> : (
-        <ul className="space-y-3">
+
+      <h2 className="section-title">Notifications đã gửi</h2>
+      {loading ? (
+        <div className="loading-text">Đang tải...</div>
+      ) : (
+        <ul className="notification-list">
           {notifications.map(item => (
-            <li key={item._id} className="bg-gray-50 p-3 rounded shadow flex flex-col gap-2">
+            <li key={item._id} className="notification-card">
               {editId === item._id ? (
-                <form onSubmit={handleEdit} className="flex flex-col gap-2">
-                  <input value={editMessage} onChange={e => setEditMessage(e.target.value)} className="border px-2 py-1 rounded" />
-                  <select value={editType} onChange={e => setEditType(e.target.value as NotificationItem["type"])} className="border px-2 py-1 rounded">
+                <form onSubmit={handleEdit} className="edit-form">
+                  <textarea value={editMessage} onChange={e => setEditMessage(e.target.value)} className="form-textarea" />
+                  <select value={editType} onChange={e => setEditType(e.target.value as NotificationItem["type"])} className="form-select">
                     <option value="system">System</option>
                     <option value="order">Order</option>
                     <option value="promotion">Promotion</option>
+                    <option value="product">Product</option>
+                    <option value="engagement">Engagement</option>
                   </select>
-                  <div className="flex gap-2">
-                    <button type="submit" className="bg-emerald-600 text-white px-3 py-1 rounded">Lưu</button>
-                    <button type="button" onClick={() => setEditId(null)} className="bg-gray-300 px-3 py-1 rounded">Hủy</button>
+                  <div className="edit-btns">
+                    <button type="submit" className="btn-save">Lưu</button>
+                    <button type="button" onClick={() => setEditId(null)} className="btn-cancel">Hủy</button>
                   </div>
                 </form>
               ) : (
                 <>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{item.category.toUpperCase()}</span>
-                    <span className="text-xs text-gray-400">{item.createdAt ? new Date(item.createdAt).toLocaleString() : ""}</span>
+                  <div className="notification-header">
+                    <span className="category">{item.category.toUpperCase()}</span>
+                    <span className="created-at">{item.createdAt ? new Date(item.createdAt).toLocaleString() : ""}</span>
                   </div>
-                  <div className="font-bold text-indigo-700">{item.title}</div>
-                  <div>{item.message}</div>
-                  {item.link && <a href={item.link} className="text-blue-500 underline text-xs" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>}
-                  {item.image && <img src={item.image} alt="notification" className="max-h-24 mt-1 rounded" />}
-                  <div className="flex gap-2 mt-1">
-                    <button onClick={() => startEdit(item)} className="bg-yellow-400 text-white px-3 py-1 rounded">Sửa</button>
-                    <button onClick={() => handleDelete(item._id)} className="bg-rose-500 text-white px-3 py-1 rounded">Xóa</button>
+                  <div className="notification-title">{item.title}</div>
+                  <div className="notification-message">{item.message}</div>
+                  {item.link && <a href={item.link} className="notification-link" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>}
+                  {item.image && <img src={item.image} alt="notification" className="notification-img" />}
+                  <div className="notification-actions">
+                    <button onClick={() => startEdit(item)} className="btn-edit">Sửa</button>
+                    <button onClick={() => handleDelete(item._id)} className="btn-delete">Xóa</button>
                   </div>
                 </>
               )}

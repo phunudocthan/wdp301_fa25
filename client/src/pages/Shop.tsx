@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./../styles/home.scss"; // có thể tạo file riêng shop.scss
+import Header from "../components/common/Header";
 
 interface Product {
   _id: string;
@@ -38,8 +39,9 @@ export default function Shop() {
     fetchProducts();
   }, [search]);
 
-  return (
+  return ( <>  <Header />
     <div className="shop-page container">
+   
       <h2>Shop</h2>
 
       {loading ? (
@@ -60,5 +62,6 @@ export default function Shop() {
         <p>Không tìm thấy sản phẩm nào.</p>
       )}
     </div>
+    </>
   );
 }

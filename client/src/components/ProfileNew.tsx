@@ -26,6 +26,8 @@ import type {
   UserStatus,
   Address,
 } from "../types/user";
+import { useNavigate } from "react-router-dom";
+import Header from "./common/Header";
 
 const legoThemes = [
   "LEGO City",
@@ -67,10 +69,12 @@ type LocalUser = Omit<
 
 interface ProfileProps {
   user: UserType;
-  onUpdateUser: (user: UserType) => void;
+  onUpdateUser?: (user: UserType) => void;
 }
 
+
 const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<LocalUser>({
     name: user?.name || "Người dùng",
@@ -134,7 +138,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
           updatedAt: profile?.updatedAt,
         };
         setEditData(normalized);
-        onUpdateUser(normalized);
+        onUpdateUser?.(normalized);
       } catch (error: unknown) {
         const message =
           error instanceof Error
@@ -181,7 +185,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
         updatedAt: updatedUser?.updatedAt,
       };
       setEditData(normalized);
-      onUpdateUser(normalized);
+      onUpdateUser?.(normalized);
       setIsEditing(false);
     } catch (error: unknown) {
       const message =
@@ -216,14 +220,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
             postalCode: "",
             country: "",
           },
-          favoriteThemes: updatedUser?.favoriteThemes || [],
+          // favoriteThemes: updatedUser?.favoriteThemes || [],
           _id: updatedUser?._id,
           lastLogin: updatedUser?.lastLogin,
           createdAt: updatedUser?.createdAt,
           updatedAt: updatedUser?.updatedAt,
         };
         setEditData(normalized);
-        onUpdateUser(normalized);
+        onUpdateUser?.(normalized);
       } catch (error: unknown) {
         const message =
           error instanceof Error ? error.message : "Cập nhật avatar thất bại";
@@ -268,24 +272,24 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
     }
   };
 
-  const addFavoriteTheme = () => {
-    if (newTheme && !editData.favoriteThemes?.includes(newTheme)) {
-      setEditData((prev) => ({
-        ...prev,
-        favoriteThemes: [...(prev.favoriteThemes || []), newTheme],
-      }));
-      setNewTheme("");
-    }
-  };
+  // const addFavoriteTheme = () => {
+  //   if (newTheme && !editData.favoriteThemes?.includes(newTheme)) {
+  //     setEditData((prev) => ({
+  //       ...prev,
+  //       favoriteThemes: [...(prev.favoriteThemes || []), newTheme],
+  //     }));
+  //     setNewTheme("");
+  //   }
+  // };
 
-  const removeFavoriteTheme = (themeToRemove: string) => {
-    setEditData((prev) => ({
-      ...prev,
-      favoriteThemes: (prev.favoriteThemes || []).filter(
-        (theme) => theme !== themeToRemove
-      ),
-    }));
-  };
+  // const removeFavoriteTheme = (themeToRemove: string) => {
+  //   setEditData((prev) => ({
+  //     ...prev,
+  //     favoriteThemes: (prev.favoriteThemes || []).filter(
+  //       (theme) => theme !== themeToRemove
+  //     ),
+  //   }));
+  // };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -309,7 +313,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
       .join(", ");
   };
 
-  return (
+  return (<>      <Header/>
+
     <div className="profile-container">
       {errorMsg && <div className="error-message">{errorMsg}</div>}
 
@@ -508,74 +513,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
             )}
           </div>
         </div>
-
-        <div className="profile-card">
-          <div className="card-header">
-            <Heart className="card-icon" style={{ color: "#e91e63" }} />
-            <h3>Chủ đề yêu thích</h3>
-          </div>
-
-          {isEditing && (
-            <div className="theme-add">
-              <select
-                value={newTheme}
-                onChange={(e) => setNewTheme(e.target.value)}
-                className="theme-select"
-              >
-                <option value="">Chọn chủ đề...</option>
-                {legoThemes
-                  .filter(
-                    (theme) => !(editData.favoriteThemes || []).includes(theme)
-                  )
-                  .map((theme) => (
-                    <option key={theme} value={theme}>
-                      {theme}
-                    </option>
-                  ))}
-              </select>
-              <button
-                onClick={addFavoriteTheme}
-                disabled={!newTheme}
-                className="theme-add-btn"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-
-          <div className="theme-tags">
-            {(isEditing ? editData.favoriteThemes : user.favoriteThemes)?.map(
-              (theme) => (
-                <div key={theme} className="theme-tag">
-                  {theme}
-                  {isEditing && (
-                    <button
-                      onClick={() => removeFavoriteTheme(theme)}
-                      className="theme-remove"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              )
-            )}
-          </div>
-
-          {(!user.favoriteThemes || user.favoriteThemes.length === 0) &&
-            !isEditing && (
-              <p
-                style={{
-                  color: "#718096",
-                  fontStyle: "italic",
-                  textAlign: "center",
-                  padding: "2rem",
-                }}
-              >
-                Chưa có chủ đề yêu thích nào được thêm
-              </p>
-            )}
-        </div>
       </div>
+
 
       <div className="profile-content" style={{ marginTop: "2rem" }}>
         <div className="profile-card">
@@ -679,6 +618,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

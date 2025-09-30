@@ -13,6 +13,8 @@ import Shop from "./pages/Shop";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProfilePage from "./views/ProfilePage";
+import ProfileAdminPage from "./components/ProfileNew";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import VerifyEmailPage from "./views/VerifyEmailPage";
@@ -24,6 +26,7 @@ import AdminNotificationPage from "./views/AdminNotificationPage";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function App() {
   const { user } = useAuth();
@@ -32,12 +35,11 @@ export default function App() {
     <AuthProvider>
       <div className="app-shell">
         {/* Navigation */}
-        {user?.role === "admin" ? <AdminNav /> : <Header />}
 
         <main className="app-main">
           <Routes>
             {/* Redirect root */}
-            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
 
             {/* Public routes */}
             <Route path="/home" element={<HomePage />} />
@@ -55,6 +57,15 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Protected routes */}
+            <Route
+              path="/profileAdmin"
+              element={
+                <ProtectedRoute>
+                  <ProfileAdminPage />
                 </ProtectedRoute>
               }
             />
@@ -92,7 +103,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            {user?.role === "admin" && (
+     
               <Route
                 path="/admin/notifications"
                 element={
@@ -101,20 +112,9 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-            )}
+       
 
-            {/* 404 fallback */}
-            <Route
-              path="*"
-              element={
-                <div className="container py-12 text-center text-slate-500">
-                  <h2 className="text-2xl font-semibold">404 - Not Found</h2>
-                  <p className="mt-2">
-                    The page you are looking for could not be found.
-                  </p>
-                </div>
-              }
-            />
+         
           </Routes>
         </main>
       </div>

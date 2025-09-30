@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./../styles/home.scss";
+import Header from "../components/common/Header";
 
 interface Product {
   _id: string;
@@ -44,6 +45,8 @@ export default function Home() {
 
   return (
     <div className="homepage">
+      <Header />
+
       {/* Avatar góc phải dẫn tới /profile */}
       <div className="fixed top-4 right-4 z-50">
         <div
@@ -51,7 +54,7 @@ export default function Home() {
           className="bg-blue-600 text-white rounded-full h-10 w-10 flex items-center justify-center cursor-pointer hover:bg-blue-700"
           title="Trang cá nhân"
         >
-          
+
         </div>
       </div>
 

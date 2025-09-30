@@ -174,6 +174,34 @@
         margin-top: 2px;
       }
     }
+.notification-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+
+  .notification-icon {
+    font-size: 24px;
+    color: #4b5563; // xám đậm
+    transition: color 0.2s;
+
+    &:hover {
+      color: #2563eb; // xanh khi hover
+    }
+  }
+
+  .notification-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: #ef4444; // đỏ
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 12px;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+  }
+}
 
     .dropdown-item {
       width: 100%;

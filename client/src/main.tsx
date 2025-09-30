@@ -16,6 +16,7 @@ import "./styles/searchbar.scss";
 // Context providers
 import { AuthProvider } from "./components/context/AuthContext";
 import { ThemeProvider } from "./components/context/ThemeContext";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 // Toast provider
 import ToastProvider from "./components/ui/ToastProvider";

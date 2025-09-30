@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 
 const navs = [
-  { to: "/admin/profile", label: "Admin Profile" },
+  { to: "/admin", label: "Admin Profile" },
   
   { to: "/admin/notifications", label: "Manager Notification" },
   { to: "/profile", label: "Profile" },
