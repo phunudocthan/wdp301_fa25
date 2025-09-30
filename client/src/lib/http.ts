@@ -4,7 +4,7 @@ import { storage } from "./storage";
 const envApi = import.meta.env.VITE_API_URL as string | undefined;
 const currentOrigin = window.location.origin.replace(/\/$/, "");
 const defaultApiBase = window.location.port === "3000"
-  ? "http://localhost:5001/api"
+  ? "http://localhost:5000/api"
   : `${currentOrigin}/api`;
 const API_BASE = (envApi && envApi.trim().length > 0 ? envApi : defaultApiBase).replace(/\/$/, "");
 

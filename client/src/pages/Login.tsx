@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import LegoLoginPage from "../components/LegoLoginPage";
 import { useAuth } from "../components/context/AuthContext";
-import { requestEmailVerification, requestPasswordReset } from "../api/auth";
+import { requestEmailVerification } from "../api/auth";
 
 interface LoginResult {
   token: string;
