@@ -14,7 +14,7 @@ import {
   Star,
 } from "lucide-react";
 import "../styles/productDetail.scss";
-
+import { ArrowLeftOutlined } from "@ant-design/icons";
 interface Product {
   _id: string;
   name: string;
@@ -61,6 +61,9 @@ export default function ProductDetail() {
     <>
       <Header />
       <div className="product-detail-page">
+        <button className="back-btn" onClick={() => window.history.back()}>
+          <ArrowLeftOutlined />
+        </button>
         <div className="product-container">
           {/* === LEFT IMAGE === */}
           <div className="image-section">
