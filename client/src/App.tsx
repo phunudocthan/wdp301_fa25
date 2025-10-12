@@ -1,4 +1,3 @@
-import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/context/AuthContext";
 import { useTokenExpirationCheck } from "./hooks/useAuthHooks";
@@ -24,6 +23,10 @@ import ForgotPasswordPage from "./views/ForgotPasswordPage";
 import AddressBookPage from "./views/AddressBookPage";
 import NotificationsPage from "./views/NotificationsPage";
 import AdminNotificationPage from "./views/AdminNotificationPage";
+import AdminProductManagement from "./pages/AdminProductManagement";
+import AdminCategoryManagement from "./pages/AdminCategoryManagement";
+import AdminProductDetail from "./pages/AdminProductDetail";
+import AdminProductEdit from "./pages/AdminProductEdit";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -127,6 +130,42 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <AdminNotificationPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/products"
+            element={
+              <ProtectedRoute>
+                <AdminProductManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/categories"
+            element={
+              <ProtectedRoute>
+                <AdminCategoryManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/products/edit/:id"
+            element={
+              <ProtectedRoute>
+                <AdminProductEdit />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/products/:id"
+            element={
+              <ProtectedRoute>
+                <AdminProductDetail />
               </ProtectedRoute>
             }
           />

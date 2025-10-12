@@ -199,11 +199,17 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const helperRoutes = require("./routes/helperRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/helpers", helperRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.use("/api/legos", (req, res) =>
   res.json({ message: "LEGO routes coming soon..." })
