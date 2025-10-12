@@ -93,17 +93,24 @@ const AddressBookPage: React.FC = () => {
     setError("");
     setMessage("");
 
+    // Validate phone: chỉ số, 10 số, bắt đầu bằng 0
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(String(formData.phone))) {
+      setError("Số điện thoại phải là 10 số, bắt đầu bằng 0 và chỉ chứa số.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
       if (mode === "create") {
-        const newAddress = await createAddress(formData);
-        setAddresses((prev) => [...(prev || []), newAddress]);
+        const result = await createAddress(formData);
+        setAddresses((prev) => [...(prev || []), result.address]);
         setMessage("Address added successfully!");
       } else if (mode === "edit" && editingId) {
-        const updated = await updateAddress(editingId, formData);
+        const result = await updateAddress(editingId, formData);
         fetchAddresses();
-
         setAddresses((prev) =>
-          (prev || []).map((addr) => (addr._id === editingId ? updated : addr))
+          (prev || []).map((addr) => (addr._id === editingId ? result.address : addr))
         );
         setMessage("Address updated successfully!");
       }

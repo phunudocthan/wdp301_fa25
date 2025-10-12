@@ -157,7 +157,7 @@ const formatNotification = (notification) => {
 
 exports.listNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ userId: req.user.id })
+    const notifications = await Notification.find()
       .sort({ createdAt: -1 })
       .limit(100);
 
@@ -179,7 +179,7 @@ exports.markNotificationRead = async (req, res) => {
     const { notificationId } = req.params;
 
     const notification = await Notification.findOneAndUpdate(
-      { _id: notificationId, userId: req.user.id },
+      { _id: notificationId },
       { status: "read" },
       { new: true }
     );
@@ -199,7 +199,6 @@ exports.getNotificationDetail = async (req, res) => {
     const { notificationId } = req.params;
     const notification = await Notification.findOne({
       _id: notificationId,
-      userId: req.user.id,
     });
     if (!notification) {
       return res.status(404).json({ msg: "Notification not found" });
