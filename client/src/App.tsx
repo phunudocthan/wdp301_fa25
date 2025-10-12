@@ -52,9 +52,7 @@ export default function App() {
             <Route path="/home/featured" element={<FeaturedPage />} />
             <Route path="/home/popular" element={<PopularPage />} />
             <Route path="/home/gaming" element={<GamingPage />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-
-            
+            <Route path="/product/:id" element={<ProductDetail />} />            
             <Route path="/shop" element={<Shop />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
