@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "react-modal";
 import { io, Socket } from "socket.io-client";
-import { Bell, CheckCircle2, WifiOff } from "lucide-react";
+import { Bell } from "lucide-react";
 import {
   fetchNotifications,
   markNotificationRead,
@@ -19,12 +19,12 @@ const socketEndpoint = apiBaseURL.replace(/\/api$/, "");
 
 const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [connectionStatus, setConnectionStatus] = useState<
-    "connecting" | "connected" | "disconnected"
-  >("connecting");
+  // connection status is tracked but not used in UI; keep ref via ref if needed later
+  const connectionStatusRef = useRef<"connecting" | "connected" | "disconnected">("connecting");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<NotificationItem | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [detailMissingMessage, setDetailMissingMessage] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -55,7 +55,7 @@ const NotificationsPage: React.FC = () => {
   useEffect(() => {
     const token = storage.getToken();
     if (!token) {
-      setConnectionStatus("disconnected");
+      connectionStatusRef.current = "disconnected";
       return;
     }
 
@@ -65,8 +65,8 @@ const NotificationsPage: React.FC = () => {
     });
     socketRef.current = socket;
 
-    socket.on("connect", () => setConnectionStatus("connected"));
-    socket.on("disconnect", () => setConnectionStatus("disconnected"));
+  socket.on("connect", () => (connectionStatusRef.current = "connected"));
+  socket.on("disconnect", () => (connectionStatusRef.current = "disconnected"));
 
     socket.on("notification:new", (payload: NotificationItem) => {
       setNotifications((prev) => {
@@ -76,6 +76,25 @@ const NotificationsPage: React.FC = () => {
             item._id === payload._id ? { ...payload, status: payload.status || "unread" } : item
           );
         }
+        return [payload, ...prev];
+      });
+    });
+
+    socket.on("notification:updated", (payload: NotificationItem) => {
+      setNotifications((prev) => prev.map((item) => (item._id === payload._id ? { ...item, ...payload } : item)));
+    });
+
+    socket.on("notification:deleted", ({ _id }: { _id: string }) => {
+      setNotifications((prev) => prev.filter((item) => item._id !== _id));
+      // if the deleted notification is currently open in modal, close it
+      setSelectedId((current) => (current === _id ? null : current));
+    });
+
+    socket.on("notification:restored", (payload: NotificationItem) => {
+      setNotifications((prev) => {
+        // if exists, replace, otherwise insert at top
+        const exists = prev.some((p) => p._id === payload._id);
+        if (exists) return prev.map((p) => (p._id === payload._id ? payload : p));
         return [payload, ...prev];
       });
     });
@@ -100,11 +119,15 @@ const NotificationsPage: React.FC = () => {
   const handleShowDetail = async (id: string) => {
     setSelectedId(id);
     handleMarkRead(id);
-
     setLoadingDetail(true);
+    setDetailMissingMessage(null);
     try {
       const data = await fetchNotificationDetail(id);
       setDetail(data);
+    } catch (err: any) {
+      // if not found or removed, show friendly message
+      setDetail(null);
+      setDetailMissingMessage(err?.response?.data?.msg || "Thông báo này đã bị thu hồi hoặc không tồn tại.");
     } finally {
       setLoadingDetail(false);
     }
@@ -129,31 +152,20 @@ const NotificationsPage: React.FC = () => {
 
         <div className="notifications-list">
           {filteredNotifications.map((notification) => (
-            <div key={notification._id} className="d-flex align-items-center justify-content-between notification-item-wrapper">
-              <div
-                key={notification._id}
-                onClick={() => handleShowDetail(notification._id)}
-              >
+            <div key={notification._id} className={`card notification ${notification.status === 'unread' ? 'unread' : ''}`}>
+              <div className="notification-content" onClick={() => handleShowDetail(notification._id)}>
+                <div className="notification-meta">
+                  <span className={`category ${notification.category}`}>{notification.category}</span>
+                  <small className="tag-new">{notification.createdAt ? new Date(notification.createdAt).toLocaleString() : ''}</small>
+                </div>
                 <h3>{notification.title}</h3>
                 <p>{notification.message}</p>
-
+                {notification.link && <a href={notification.link} target="_blank" rel="noreferrer">View more</a>}
               </div>
-
-              <div
-                key={notification._id}
-                className={`notification-item ${notification.status === "unread" ? "unread" : "read"
-                  }`}
-                onClick={() => handleShowDetail(notification._id)}
-
-              >
-                {notification.status === "unread" ? (
-                  <WifiOff className="status-icon unread-icon" title="Unread" />
-                ) : (
-                  <CheckCircle2 className="status-icon read-icon" title="Read" />
-                )}
-
+              <div className="notification-actions">
+                <button className="btn-read" onClick={() => handleMarkRead(notification._id)}>Mark read</button>
               </div>
-              </div>
+            </div>
           ))}
         </div>
 
@@ -166,7 +178,7 @@ const NotificationsPage: React.FC = () => {
             content: { maxWidth: "500px", maxHeight: "300px", margin: "auto", borderRadius: "8px", padding: "20px", position: "absolute", zIndex: 1001 },
           }}
         >
-          <button onClick={() => setSelectedId(null)} style={{ float: "right" }}>
+          <button onClick={() => { setSelectedId(null); setDetail(null); setDetailMissingMessage(null); }} style={{ float: "right" }}>
             ×
           </button>
           {loadingDetail ? (
@@ -181,6 +193,10 @@ const NotificationsPage: React.FC = () => {
                 </a>
               )}
             </>
+          ) : detailMissingMessage ? (
+            <div className="detail-missing">
+              <p>{detailMissingMessage}</p>
+            </div>
           ) : (
             <p>Not found</p>
           )}
