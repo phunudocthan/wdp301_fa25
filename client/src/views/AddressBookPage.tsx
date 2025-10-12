@@ -31,8 +31,10 @@ const AddressBookPage: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const hasAddresses = useMemo(() => addresses.length > 0, [addresses]);
 
@@ -60,12 +62,55 @@ const AddressBookPage: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type, checked } = e.target;
+    const target = e.target as HTMLInputElement | HTMLSelectElement;
+    const { name, value, type } = target;
+    const checked = (target as HTMLInputElement).checked;
+    // sanitize phone: remove non-digit
+    const newValue = name === 'phone' ? String(value).replace(/\D/g, '').slice(0, 10) : (type === 'checkbox' ? checked : value);
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: newValue,
     }));
+
+    // inline validate this field
+    const fieldError = validateField(name, newValue);
+    setFieldErrors((prev) => {
+      const copy = { ...prev };
+      if (fieldError) copy[name] = fieldError; else delete copy[name];
+      return copy;
+    });
   };
+
+  // validate helpers
+  const phoneRegex = /^0\d{9}$/;
+  const validateField = (name: string, value: any) => {
+    const v = value === undefined || value === null ? '' : String(value);
+    if (name === 'recipientName') {
+      if (!v.trim()) return 'Recipient name is required';
+    }
+    if (name === 'phone') {
+      if (!v.trim()) return 'Phone is required';
+      if (!phoneRegex.test(v)) return 'Phone must be 10 digits and start with 0';
+    }
+    if (name === 'street') {
+      if (!v.trim()) return 'Street is required';
+    }
+    return '';
+  };
+
+  const validateAll = (data: AddressPayload) => {
+    const errors: Record<string, string> = {};
+    const r = validateField('recipientName', data.recipientName);
+    if (r) errors.recipientName = r;
+    const p = validateField('phone', data.phone);
+    if (p) errors.phone = p;
+    const s = validateField('street', data.street);
+    if (s) errors.street = s;
+    return errors;
+  };
+
+  const isFormValid = Object.keys(fieldErrors).length === 0 &&
+    !!formData.recipientName && phoneRegex.test(String(formData.phone)) && !!formData.street;
 
   // 📌 Sửa địa chỉ
   const handleEdit = (address: UserAddress) => {
@@ -92,11 +137,14 @@ const AddressBookPage: React.FC = () => {
     setSubmitting(true);
     setError("");
     setMessage("");
-
-    // Validate phone: chỉ số, 10 số, bắt đầu bằng 0
-    const phoneRegex = /^0\d{9}$/;
-    if (!phoneRegex.test(String(formData.phone))) {
-      setError("Số điện thoại phải là 10 số, bắt đầu bằng 0 và chỉ chứa số.");
+    // final validation
+    const errors = validateAll(formData);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      // focus first invalid
+      const first = Object.keys(errors)[0];
+      const el = document.getElementsByName(first)[0] as HTMLElement | undefined;
+      if (el && typeof el.focus === 'function') el.focus();
       setSubmitting(false);
       return;
     }
@@ -107,7 +155,9 @@ const AddressBookPage: React.FC = () => {
         setAddresses((prev) => [...(prev || []), result.address]);
         setMessage("Address added successfully!");
       } else if (mode === "edit" && editingId) {
-        const result = await updateAddress(editingId, formData);
+        const payload: Partial<AddressPayload> & { setAsDefault?: boolean } = { ...formData };
+        if (formData.isDefault) payload.setAsDefault = true;
+        const result = await updateAddress(editingId, payload);
         fetchAddresses();
         setAddresses((prev) =>
           (prev || []).map((addr) => (addr._id === editingId ? result.address : addr))
@@ -127,6 +177,7 @@ const AddressBookPage: React.FC = () => {
 
   // 📌 Đặt địa chỉ mặc định
   const handleSetDefault = async (id: string) => {
+    setActionLoading(true);
     try {
       await setDefaultAddress(id);
       setAddresses((prev) =>
@@ -136,11 +187,27 @@ const AddressBookPage: React.FC = () => {
     } catch (err) {
       console.error("Error setting default:", err);
       setError("Failed to set default address.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   // 📌 Xoá/Archive địa chỉ
-  const handleArchive = async (id: string) => {
+  // archive flow handled via confirm modal (openConfirm -> confirmRemove)
+
+  // inline confirm target (shows small bubble next to Remove)
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; label?: string } | null>(null);
+
+  const openConfirm = (id: string, label?: string) => {
+    setConfirmTarget({ id, label });
+  };
+
+  const closeConfirm = () => setConfirmTarget(null);
+
+  const confirmRemove = async () => {
+    if (!confirmTarget) return;
+    const id = confirmTarget.id;
+    setActionLoading(true);
     try {
       await archiveAddress(id);
       setAddresses((prev) => (prev || []).filter((addr) => addr._id !== id));
@@ -148,6 +215,9 @@ const AddressBookPage: React.FC = () => {
     } catch (err) {
       console.error("Error archiving address:", err);
       setError("Failed to remove address.");
+    } finally {
+      setActionLoading(false);
+      setConfirmTarget(null);
     }
   };
 
@@ -204,26 +274,38 @@ const AddressBookPage: React.FC = () => {
                     </p>
                   </div>
                   <div className="address-actions">
-                    <button
-                      // className="btn-icon"
-                      onClick={() => handleEdit(address)}
-                    >
-                      <Edit size={16} /> Edit
-                    </button>
-                    {!address.isDefault && (
-                      <button
-                        className="btn-icon success"
-                        onClick={() => handleSetDefault(address._id!)}
-                      >
-                        <Star size={16} /> Default
+                    <div className="action-row">
+                      <button className="btn btn-edit" onClick={() => handleEdit(address)}>
+                        <Edit size={16} /> Edit
                       </button>
-                    )}
-                    <button
-                      className="btn-icon danger"
-                      onClick={() => handleArchive(address._id!)}
-                    >
-                      <Trash2 size={16} /> Remove
-                    </button>
+                      {!address.isDefault && (
+                        <button
+                          className="btn btn-default"
+                          onClick={() => handleSetDefault(address._id!)}
+                          disabled={actionLoading}
+                        >
+                          <Star size={14} /> Default
+                        </button>
+                      )}
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          className="btn btn-remove"
+                          onClick={() => openConfirm(address._id!, address.label)}
+                          disabled={actionLoading}
+                        >
+                          <Trash2 size={14} /> Remove
+                        </button>
+                        {confirmTarget?.id === address._id && (
+                          <div className="confirm-bubble">
+                            <div className="confirm-text">Remove "{confirmTarget?.label || ''}"?</div>
+                            <div className="confirm-actions">
+                              <button className="btn btn-default" onClick={() => closeConfirm()} disabled={actionLoading}>Cancel</button>
+                              <button className="btn btn-remove" onClick={() => confirmRemove()} disabled={actionLoading}>Yes</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))
@@ -249,80 +331,112 @@ const AddressBookPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit}>
-              <label>
+              <label htmlFor="label">
                 Label
                 <input
+                  id="label"
                   name="label"
                   value={formData.label}
                   onChange={handleChange}
+                  placeholder="Home, Office, etc."
                 />
               </label>
-              <label>
-                Recipient
+
+              <label htmlFor="recipientName">
+                Recipient <span className="required">*</span>
                 <input
+                  id="recipientName"
                   name="recipientName"
                   value={formData.recipientName}
                   onChange={handleChange}
+                  placeholder="Full name"
+                  aria-invalid={!!fieldErrors.recipientName}
                 />
+                {fieldErrors.recipientName && (
+                  <div className="field-error">{fieldErrors.recipientName}</div>
+                )}
               </label>
-              <label>
+
+              <label htmlFor="phone">
                 Phone <span className="required">*</span>
                 <input
+                  id="phone"
                   name="phone"
+                  type="tel"
                   value={formData.phone}
                   onChange={handleChange}
-                  required
+                  placeholder="0xxxxxxxxx"
+                  aria-invalid={!!fieldErrors.phone}
                 />
+                {fieldErrors.phone && <div className="field-error">{fieldErrors.phone}</div>}
               </label>
-              <label>
-                Street
+
+              <label htmlFor="street">
+                Street <span className="required">*</span>
                 <input
+                  id="street"
                   name="street"
                   value={formData.street}
                   onChange={handleChange}
-                  required
+                  placeholder="123 Example St"
+                  aria-invalid={!!fieldErrors.street}
                 />
+                {fieldErrors.street && <div className="field-error">{fieldErrors.street}</div>}
               </label>
+
               <div className="grid-2">
-                <label>
+                <label htmlFor="city">
                   City
                   <input
+                    id="city"
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
+                    placeholder="Hanoi"
                   />
                 </label>
-                <label>
+                <label htmlFor="state">
                   State
                   <input
+                    id="state"
                     name="state"
                     value={formData.state}
                     onChange={handleChange}
+                    placeholder="District / Province"
                   />
                 </label>
               </div>
-              <label>
-                Country
-                <input
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                />
-              </label>
+
+              <div className="grid-2">
+                <label htmlFor="country">
+                  Country
+                  <input
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    placeholder="Vietnam"
+                  />
+                </label>
+                <div style={{alignSelf: 'center'}}></div>
+              </div>
+
               <label className="checkbox">
                 <input
                   type="checkbox"
                   name="isDefault"
-                  checked={formData.isDefault}
+                  checked={!!formData.isDefault}
                   onChange={handleChange}
-                />{" "}
+                />{' '}
                 Set as default
               </label>
 
               {error && <div className="alert error">{error}</div>}
               {message && <div className="alert success">{message}</div>}
 
-              <button type="submit" className="btn-primary" disabled={submitting}>
+              <div className="help">Phone format: 0xxxxxxxxx</div>
+
+              <button type="submit" className="btn-primary" disabled={submitting || !isFormValid}>
                 <Save size={18} />{" "}
                 {mode === "edit" ? "Save changes" : "Save address"}
               </button>
@@ -330,8 +444,11 @@ const AddressBookPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* inline confirm bubbles are rendered next to each Remove button */}
     </>
   );
 };
 
 export default AddressBookPage;
+
+// Note: modal markup is rendered inside component; exported here just for completeness

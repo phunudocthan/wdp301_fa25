@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import axiosInstance, { apiBaseURL } from "../api/axiosInstance";
+import axiosInstance from "../api/axiosInstance";
+import { restoreNotification } from "../api/notifications";
 import AdminNav from "./AdminNav";
 import "./../styles/AdminNotificationPage.css"; // import CSS thuần
 
@@ -31,6 +31,9 @@ const AdminNotificationPage: React.FC = () => {
   const [editMessage, setEditMessage] = useState("");
   const [editType, setEditType] = useState<NotificationItem["type"]>("system");
   const [error, setError] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [undoInfo, setUndoInfo] = useState<{ id: string; timer?: any } | null>(null);
+  const [showBroadcastConfirm, setShowBroadcastConfirm] = useState(false);
 
   const suggestionMap: Record<NotificationItem["category"], { title: string; message: string }[]> = {
     promotion: [
@@ -59,14 +62,16 @@ const AdminNotificationPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await axiosInstance.get(`/notifications/admin/sent`, { withCredentials: true });
-      let notifications = res.data.notifications || [];
+      let notifications: NotificationItem[] = res.data.notifications || [];
 
       // Lọc trùng theo title + message, giữ notification mới nhất
       const map = new Map<string, typeof notifications[0]>();
-      notifications.forEach(n => {
+      notifications.forEach((n: NotificationItem) => {
         const key = `${n.title.trim()}|${n.message.trim()}`;
         const existing = map.get(key);
-        if (!existing || new Date(n.createdAt) > new Date(existing.createdAt)) {
+        const nTime = n.createdAt ? new Date(n.createdAt).getTime() : 0;
+        const existingTime = existing && existing.createdAt ? new Date(existing.createdAt).getTime() : 0;
+        if (!existing || nTime > existingTime) {
           map.set(key, n);
         }
       });
@@ -90,18 +95,10 @@ const AdminNotificationPage: React.FC = () => {
     setMessage(suggestionMap[cat][idx].message);
   };
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title) return setError("Tiêu đề không được để trống");
-    if (!message) return setError("Nội dung thông báo không được để trống");
+  const doSend = async (payload: any) => {
     setLoading(true);
     try {
-      await axiosInstance.post(`/notifications/admin`,
-        userId
-          ? { userId, title, message, category, type, link, image }
-          : { title, message, category, type, link, image },
-        { withCredentials: true }
-      );
+      await axiosInstance.post(`/notifications/admin`, payload, { withCredentials: true });
       setTitle(""); setMessage(""); setCategory("system"); setType("system"); setLink(""); setImage(""); setUserId("");
       fetchSent();
       setError("");
@@ -109,17 +106,55 @@ const AdminNotificationPage: React.FC = () => {
       setError(err?.response?.data?.msg || "Gửi thông báo thất bại");
     } finally {
       setLoading(false);
+      setShowBroadcastConfirm(false);
     }
   };
 
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title) return setError("Tiêu đề không được để trống");
+    if (!message) return setError("Nội dung thông báo không được để trống");
+
+    const payload = userId
+      ? { userId, title, message, category, type, link, image }
+      : { title, message, category, type, link, image, confirmBroadcast: true };
+
+    // If broadcasting to all users (no userId), show a confirmation modal first
+    if (!userId) {
+      setShowBroadcastConfirm(true);
+      return;
+    }
+
+    await doSend(payload);
+  };
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Xác nhận xóa notification này?")) return;
     setLoading(true);
     try {
       await axiosInstance.delete(`/notifications/admin/${id}`, { withCredentials: true });
       fetchSent();
+      // show undo toast for 8s
+      const t = setTimeout(() => {
+        setUndoInfo(null);
+      }, 8000);
+      setUndoInfo({ id, timer: t });
     } catch (err: any) {
       setError(err?.response?.data?.msg || "Xóa thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUndo = async (id: string) => {
+    // cancel timer
+    if (undoInfo?.timer) clearTimeout(undoInfo.timer);
+    setLoading(true);
+    try {
+      await restoreNotification(id);
+      fetchSent();
+      setUndoInfo(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.msg || "Phục hồi thất bại");
     } finally {
       setLoading(false);
     }
@@ -161,22 +196,38 @@ const AdminNotificationPage: React.FC = () => {
             <option value="system">Thông báo hệ thống</option>
             <option value="engagement">Tương tác khách hàng</option>
           </select>
-          {/* <input value={userId} onChange={e => setUserId(e.target.value)} placeholder="UserId (bỏ trống để gửi toàn bộ user)" className="form-input" /> */}
+          {/* optional user targeting input (commented) */}
         </div>
-        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Tiêu đề thông báo" className="form-input" />
+        <div style={{ position: 'relative' }}>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Tiêu đề thông báo" className="form-input" maxLength={120} />
+          <small style={{ position: 'absolute', right: 8, top: 6, color: '#666' }}>{title.length}/120</small>
+        </div>
         {/* <input value={link} onChange={e => setLink(e.target.value)} placeholder="Link chi tiết (nếu có)" className="form-input" /> */}
         {/* <input value={image} onChange={e => setImage(e.target.value)} placeholder="Link ảnh (nếu có)" className="form-input" /> */}
-        <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Nội dung thông báo" className="form-textarea" />
+        <div style={{ position: 'relative' }}>
+          <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Nội dung thông báo" className="form-textarea" maxLength={1000} />
+          <small style={{ position: 'absolute', right: 8, bottom: 8, color: '#666' }}>{message.length}/1000</small>
+        </div>
 
-        <div className="suggestion-row " style={{ marginBottom: "10px", color: "#c41717ff" }}>
+        <div className="preview-box">
+          <h4>Preview</h4>
+          <div className="preview-card">
+            <div className="preview-title">{title || 'Tiêu đề (preview)'}</div>
+            <div className="preview-message">{message || 'Nội dung (preview)'}</div>
+            <div className="preview-meta">{category.toUpperCase()} • {type}</div>
+          </div>
+        </div>
+
+        <div className="suggestion-row">
           {suggestionMap[category].map((sug, idx) => (
-            <button type="button" key={idx} onClick={() => handleSuggestion(category, idx)}>
+            <button type="button" key={idx} className="suggestion-btn" onClick={() => handleSuggestion(category, idx)}>
               {sug.title}
             </button>
           ))}
         </div>
 
-        <select value={type} onChange={e => setType(e.target.value as NotificationItem["type"])} className="form-select">
+        <div className="form-row">
+          <select value={type} onChange={e => setType(e.target.value as NotificationItem["type"])} className="form-select">
           <option value="system">System</option>
           <option value="order">Order</option>
           <option value="promotion">Promotion</option>
@@ -184,9 +235,25 @@ const AdminNotificationPage: React.FC = () => {
           <option value="engagement">Engagement</option>
         </select>
 
-        <button type="submit" className="btn-submit" disabled={loading}>Gửi thông báo</button>
+          <div style={{ minWidth: 160 }}>
+            <button type="submit" className="btn-submit" disabled={loading}>Gửi thông báo</button>
+          </div>
+        </div>
         {error && <div className="error-msg">{error}</div>}
       </form>
+
+      {showBroadcastConfirm && (
+        <div className="broadcast-confirm-overlay">
+          <div className="broadcast-confirm">
+            <h3>Xác nhận gửi tới toàn bộ người dùng</h3>
+            <p>Bạn sắp gửi thông báo tới tất cả users (trừ admin). Đây là hành động không thể hoàn tác.</p>
+            <div className="confirm-actions">
+              <button onClick={() => setShowBroadcastConfirm(false)} className="btn-cancel">Hủy</button>
+              <button onClick={() => doSend({ title, message, category, type, link, image, confirmBroadcast: true })} className="btn-confirm" disabled={loading}>Xác nhận và gửi</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <h2 className="section-title">Notifications đã gửi</h2>
       {loading ? (
@@ -222,13 +289,30 @@ const AdminNotificationPage: React.FC = () => {
                   {item.image && <img src={item.image} alt="notification" className="notification-img" />}
                   <div className="notification-actions">
                     <button onClick={() => startEdit(item)} className="btn-edit">Sửa</button>
-                    <button onClick={() => handleDelete(item._id)} className="btn-delete">Xóa</button>
+                    <div style={{ display: 'inline-block', position: 'relative' }}>
+                      <button onClick={() => setConfirmDeleteId(item._id)} className="btn-delete">Xóa</button>
+                      {confirmDeleteId === item._id && (
+                        <div className="confirm-bubble">
+                          <div>Bạn có chắc?</div>
+                          <div className="confirm-actions">
+                            <button className="btn-cancel" onClick={() => setConfirmDeleteId(null)}>Hủy</button>
+                            <button className="btn-confirm" onClick={() => { handleDelete(item._id); setConfirmDeleteId(null); }}>Xác nhận</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
             </li>
           ))}
         </ul>
+      )}
+      {undoInfo && (
+        <div className="undo-toast">
+          <span>Thông báo đã được xóa.</span>
+          <button onClick={() => handleUndo(undoInfo.id)}>Undo</button>
+        </div>
       )}
     </div>
   );

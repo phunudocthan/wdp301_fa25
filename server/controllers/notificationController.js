@@ -3,7 +3,10 @@ exports.adminListSentNotifications = async (req, res) => {
   try {
     if (req.user.role !== "admin")
       return res.status(403).json({ msg: "Forbidden" });
-    const notifications = await Notification.find({ createdBy: req.user.id })
+    const showDeleted = req.query.showDeleted === 'true';
+  const filter = { createdBy: req.user.id };
+    if (!showDeleted) filter.deleted = { $ne: true };
+    const notifications = await Notification.find(filter)
       .sort({ createdAt: -1 })
       .limit(100);
     res.json({ notifications: notifications.map(formatNotification) });
@@ -18,7 +21,7 @@ exports.adminCreateNotification = async (req, res) => {
     if (req.user.role !== "admin")
       return res.status(403).json({ msg: "Forbidden" });
 
-    const { message, title, category = "system", type, link, image, meta, userId } =
+    const { message, title, category = "system", type, link, image, meta, userId, confirmBroadcast } =
       req.body || {};
 
     if (!message?.trim()) return res.status(400).json({ msg: "Message is required" });
@@ -31,6 +34,11 @@ exports.adminCreateNotification = async (req, res) => {
     const normalizedType = allowedTypes.includes(type) ? type : normalizedCategory;
 
     const Notification = require("../models/Notification");
+
+    // require explicit confirmation when admin is sending to all users
+    if (!userId && !confirmBroadcast) {
+      return res.status(400).json({ msg: "confirmBroadcast is required when sending to all users" });
+    }
 
     const notification = await Notification.create({
       title: title.trim(),
@@ -105,6 +113,19 @@ exports.adminUpdateNotification = async (req, res) => {
         .status(404)
         .json({ msg: "Notification not found or not owned by admin" });
     }
+    // emit update to affected user(s)
+    const io = req.app.get("io");
+    const formatted = formatNotification(notification);
+    if (io && formatted) {
+      if (formatted.userId) {
+        io.to(formatted.userId.toString()).emit("notification:updated", formatted);
+      } else {
+        // broadcast to non-admin users
+        const User = require("../models/User");
+        const users = await User.find({ role: { $ne: "admin" } }, "_id");
+        users.forEach((u) => io.to(u._id.toString()).emit("notification:updated", formatted));
+      }
+    }
     res.json({ notification: formatNotification(notification) });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -117,16 +138,69 @@ exports.adminDeleteNotification = async (req, res) => {
     if (req.user.role !== "admin")
       return res.status(403).json({ msg: "Forbidden" });
     const { notificationId } = req.params;
-    const notification = await Notification.findOneAndDelete({
-      _id: notificationId,
-      createdBy: req.user.id,
-    });
+    // soft-delete instead of hard delete
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, createdBy: req.user.id },
+      { deleted: true, deletedAt: new Date(), deletedBy: req.user.id },
+      { new: true }
+    );
+
     if (!notification) {
       return res
         .status(404)
         .json({ msg: "Notification not found or not owned by admin" });
     }
-    res.json({ msg: "Notification deleted" });
+
+    const io = req.app.get("io");
+    const formatted = formatNotification(notification);
+    if (io && formatted) {
+      if (formatted.userId) {
+        io.to(formatted.userId.toString()).emit("notification:deleted", { _id: formatted._id });
+      } else {
+        const User = require("../models/User");
+        const users = await User.find({ role: { $ne: "admin" } }, "_id");
+        users.forEach((u) => io.to(u._id.toString()).emit("notification:deleted", { _id: formatted._id }));
+      }
+    }
+
+    res.json({ msg: "Notification soft-deleted" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Admin restore previously soft-deleted notification
+exports.adminRestoreNotification = async (req, res) => {
+  try {
+    if (req.user.role !== "admin")
+      return res.status(403).json({ msg: "Forbidden" });
+
+    const { notificationId } = req.params;
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, createdBy: req.user.id, deleted: true },
+      { deleted: false, deletedAt: null, deletedBy: null },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res
+        .status(404)
+        .json({ msg: "Notification not found or not owned by admin, or not deleted" });
+    }
+
+    const io = req.app.get("io");
+    const formatted = formatNotification(notification);
+    if (io && formatted) {
+      if (formatted.userId) {
+        io.to(formatted.userId.toString()).emit("notification:restored", formatted);
+      } else {
+        const User = require("../models/User");
+        const users = await User.find({ role: { $ne: "admin" } }, "_id");
+        users.forEach((u) => io.to(u._id.toString()).emit("notification:restored", formatted));
+      }
+    }
+
+    res.json({ notification: formatNotification(notification) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -157,7 +231,8 @@ const formatNotification = (notification) => {
 
 exports.listNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find()
+    // return only non-deleted notifications
+    const notifications = await Notification.find({ deleted: { $ne: true } })
       .sort({ createdAt: -1 })
       .limit(100);
 
@@ -197,9 +272,7 @@ exports.markNotificationRead = async (req, res) => {
 exports.getNotificationDetail = async (req, res) => {
   try {
     const { notificationId } = req.params;
-    const notification = await Notification.findOne({
-      _id: notificationId,
-    });
+    const notification = await Notification.findOne({ _id: notificationId, deleted: { $ne: true } });
     if (!notification) {
       return res.status(404).json({ msg: "Notification not found" });
     }

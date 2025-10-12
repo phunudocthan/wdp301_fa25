@@ -75,7 +75,6 @@ interface ProfileProps {
 
 
 const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
-  const [showPasswords, setShowPasswords] = useState({ old: false, new: false });
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<LocalUser>({

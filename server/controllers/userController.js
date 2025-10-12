@@ -234,6 +234,13 @@ exports.createAddress = async (req, res) => {
       return res.status(400).json({ msg: 'Street is required' });
     }
 
+    // Normalize and validate phone if present
+    const phoneValue = phone && typeof phone === 'string' ? phone.trim() : (user && user.phone) || '';
+    const phoneRegex = /^0\d{9}$/;
+    if (phone && phone.trim() && !phoneRegex.test(phone.trim())) {
+      return res.status(400).json({ msg: 'Phone must be 10 digits and start with 0' });
+    }
+
     const user = await User.findById(req.user.id).select('addresses address name phone');
     if (!user) return res.status(404).json({ msg: 'User not found' });
 
@@ -242,7 +249,7 @@ exports.createAddress = async (req, res) => {
     const addressPayload = {
       label: label && label.trim() ? label.trim() : undefined,
       recipientName: recipientName && recipientName.trim() ? recipientName.trim() : user.name,
-      phone: phone && phone.trim() ? phone.trim() : user.phone,
+      phone: phone && phone.trim() ? phone.trim() : phoneValue,
       street: street.trim(),
       city: city?.trim() || '',
       state: state?.trim() || '',
@@ -305,15 +312,23 @@ exports.updateAddress = async (req, res) => {
     if (street && street.trim().length === 0) {
       return res.status(400).json({ msg: 'Street cannot be empty' });
     }
+    // validate phone if provided
+    const phoneRegex = /^0\d{9}$/;
+    if (typeof phone !== 'undefined' && phone !== null) {
+      if (String(phone).trim() && !phoneRegex.test(String(phone).trim())) {
+        return res.status(400).json({ msg: 'Phone must be 10 digits and start with 0' });
+      }
+    }
 
-    if (typeof label !== 'undefined') address.label = label;
-    if (typeof recipientName !== 'undefined') address.recipientName = recipientName;
-    if (typeof phone !== 'undefined') address.phone = phone;
-    if (typeof street !== 'undefined') address.street = street;
-    if (typeof city !== 'undefined') address.city = city;
-    if (typeof state !== 'undefined') address.state = state;
-    if (typeof postalCode !== 'undefined') address.postalCode = postalCode;
-    if (typeof country !== 'undefined') address.country = country;
+    // assign trimmed/normalized values
+    if (typeof label !== 'undefined') address.label = label && String(label).trim() ? String(label).trim() : undefined;
+    if (typeof recipientName !== 'undefined') address.recipientName = recipientName && String(recipientName).trim() ? String(recipientName).trim() : undefined;
+    if (typeof phone !== 'undefined') address.phone = phone && String(phone).trim() ? String(phone).trim() : undefined;
+    if (typeof street !== 'undefined') address.street = street && String(street).trim() ? String(street).trim() : address.street;
+    if (typeof city !== 'undefined') address.city = city && String(city).trim() ? String(city).trim() : '';
+    if (typeof state !== 'undefined') address.state = state && String(state).trim() ? String(state).trim() : '';
+    if (typeof postalCode !== 'undefined') address.postalCode = postalCode && String(postalCode).trim() ? String(postalCode).trim() : '';
+    if (typeof country !== 'undefined') address.country = country && String(country).trim() ? String(country).trim() : address.country;
 
     if (setAsDefault) {
       user.addresses.forEach((addr) => {

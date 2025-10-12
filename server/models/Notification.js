@@ -51,6 +51,20 @@ const NotificationSchema = new mongoose.Schema(
       enum: ["unread", "read"],
       default: "unread",
     },
+    // soft-delete fields
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      required: false,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
