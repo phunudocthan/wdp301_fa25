@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
-import "./../styles/home.scss";
 import Header from "../components/common/Header";
+import HeroSlider from "../components/HeroSlider/HeroSlider";
+import "./../styles/home.scss";
 
 interface Product {
   _id: string;
@@ -45,29 +46,12 @@ export default function Home() {
 
   return (
     <div className="homepage">
+      {/* Header */}
       <Header />
 
-      {/* Avatar góc phải dẫn tới /profile */}
-      <div className="fixed top-4 right-4 z-50">
-        <div
-          onClick={handleAvatarClick}
-          className="bg-blue-600 text-white rounded-full h-10 w-10 flex items-center justify-center cursor-pointer hover:bg-blue-700"
-          title="Trang cá nhân"
-        >
-
-        </div>
-      </div>
-
-      {/* Hero Banner */}
-      <section className="hero">
-        <div className="hero-content">
-          <h2>Chào mừng bạn đến với LEGOs!</h2>
-          <p>Khám phá thế giới lắp ráp đầy sáng tạo – nơi trí tưởng tượng không có giới hạn.</p>
-        </div>
-        <div className="hero-image">
-          <img src="/banner-transformers.png" alt="Transformers" />
-        </div>
-      </section>
+    
+      {/* 🔥 Hero Slider (banner tự động chạy) */}
+      <HeroSlider />
 
       {/* Tabs nổi bật */}
       <section className="trending">
@@ -84,7 +68,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Sản phẩm */}
+      {/* Danh sách sản phẩm */}
       <section className="perfect-set">
         <h2>Find the perfect set</h2>
         <div className="set-tabs">

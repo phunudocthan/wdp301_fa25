@@ -54,5 +54,22 @@ router.get("/", async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 });
+//detail
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Lego.findById(req.params.id)
+      .populate("themeId", "name description")
+      .populate("ageRangeId", "rangeLabel minAge maxAge")
+      .populate("difficultyId", "label level")
+      .populate("createdBy", "name email role");
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    return res.json(product);
+  } catch (err) {
+    console.error("❌ Error fetching product:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 module.exports = router;

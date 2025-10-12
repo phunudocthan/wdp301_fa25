@@ -9,12 +9,14 @@ import AuthDemo from "./components/common/AuthDemo";
 
 // Pages
 import HomePage from "./pages/Home";
+import FeaturedPage from "./pages/FeaturedPage";
+import PopularPage from "./pages/PopularPage";
+import GamingPage from "./pages/GamingPage";
 import Shop from "./pages/Shop";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProfilePage from "./views/ProfilePage";
 import ProfileAdminPage from "./components/ProfileNew";
-
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import VerifyEmailPage from "./views/VerifyEmailPage";
@@ -27,7 +29,10 @@ import AdminNotificationPage from "./views/AdminNotificationPage";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
+
+// Styles
 import "bootstrap/dist/css/bootstrap.min.css";
+import ProductDetail from "./pages/ProductDetail";
 
 export default function App() {
   const { user } = useAuth();
@@ -35,15 +40,21 @@ export default function App() {
   return (
     <AuthProvider>
       <div className="app-shell">
-        {/* Navigation */}
+        {/* Header luôn hiển thị cho mọi trang */}
 
         <main className="app-main">
           <Routes>
-            {/* Redirect root */}
+            {/* 🔁 Điều hướng mặc định */}
             <Route path="/" element={<Navigate to="/login" replace />} />
 
-            {/* Public routes */}
+            {/* 🌍 Public routes */}
             <Route path="/home" element={<HomePage />} />
+            <Route path="/home/featured" element={<FeaturedPage />} />
+            <Route path="/home/popular" element={<PopularPage />} />
+            <Route path="/home/gaming" element={<GamingPage />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+
+            
             <Route path="/shop" element={<Shop />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -53,7 +64,7 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth-demo" element={<AuthDemo />} />
 
-            {/* Protected routes */}
+            {/* 👤 User protected routes */}
             <Route
               path="/profile"
               element={
@@ -62,15 +73,20 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Protected routes */}
+
             <Route
               path="/profileAdmin"
               element={
                 <ProtectedRoute>
-                  <ProfileAdminPage />
+                  {user ? (
+                    <ProfileAdminPage user={user} />
+                  ) : (
+                    <div>User not found.</div>
+                  )}
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/addresses"
               element={
@@ -79,6 +95,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/notifications"
               element={
@@ -88,7 +105,7 @@ export default function App() {
               }
             />
 
-            {/* Admin routes */}
+            {/* 🛠️ Admin routes */}
             <Route
               path="/admin"
               element={
@@ -97,6 +114,17 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/admin/notifications"
+              element={
+                <ProtectedRoute>
+                  <AdminNotificationPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 👥 User dashboard */}
             <Route
               path="/user"
               element={
@@ -105,18 +133,9 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-     
-              <Route
-                path="/admin/notifications"
-                element={
-                  <ProtectedRoute>
-                    <AdminNotificationPage />
-                  </ProtectedRoute>
-                }
-              />
-       
 
-         
+            {/* 🚫 404 fallback */}
+            <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </main>
       </div>
