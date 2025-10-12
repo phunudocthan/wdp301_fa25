@@ -62,7 +62,7 @@ export default function Shop() {
             ))}
           </div>
         ) : (
-          <p>Không tìm thấy sản phẩm nào.</p>
+          <p>Not found product.</p>
         )}
       </div>
     </>

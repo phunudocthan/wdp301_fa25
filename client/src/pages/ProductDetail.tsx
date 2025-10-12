@@ -54,8 +54,8 @@ export default function ProductDetail() {
     fetchProduct();
   }, [id]);
 
-  if (loading) return <p className="loading">Đang tải sản phẩm...</p>;
-  if (!product) return <p className="notfound">Không tìm thấy sản phẩm.</p>;
+  if (loading) return <p className="loading">Loading...</p>;
+  if (!product) return <p className="notfound">Not found product.</p>;
 
   return (
     <>
