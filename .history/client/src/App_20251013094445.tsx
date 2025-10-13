@@ -26,8 +26,6 @@ import ForgotPasswordPage from "./views/ForgotPasswordPage";
 import AddressBookPage from "./views/AddressBookPage";
 import NotificationsPage from "./views/NotificationsPage";
 import AdminNotificationPage from "./views/AdminNotificationPage";
-import OrdersList from "./pages/admin/OrdersList";
-import OrderDetail from "./pages/admin/OrderDetail";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -126,24 +124,6 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <AdminNotificationPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/orders"
-              element={
-                <ProtectedRoute>
-                  <OrdersList />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/orders/:id"
-              element={
-                <ProtectedRoute>
-                  <OrderDetail />
                 </ProtectedRoute>
               }
             />

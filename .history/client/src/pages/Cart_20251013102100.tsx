@@ -74,7 +74,10 @@ export default function Cart() {
             <div className="summary-row"><span>Giảm giá</span><span>0</span></div>
             <div className="summary-row total"><span>Tổng cộng</span><span>{total.toLocaleString()} Đ</span></div>
 
+            <div className="agree">
+            
           
+            </div>
 
             <Button type="primary" className="checkout-btn" block onClick={() => navigate('/checkout')}>Thanh toán ngay</Button>
 
