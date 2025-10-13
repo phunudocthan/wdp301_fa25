@@ -19,7 +19,10 @@ const AdminDashboard: React.FC = () => {
           </p>
 
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div
+              className="bg-blue-50 p-4 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+              onClick={() => navigate("/admin/products")}
+            >
               <h3 className="font-semibold text-blue-800">Quản lý sản phẩm</h3>
               <p className="text-blue-600 text-sm">
                 Thêm, sửa, xóa sản phẩm Lego
@@ -52,16 +55,43 @@ const AdminDashboard: React.FC = () => {
                 Xử lý và theo dõi đơn hàng
               </p>
             </div>
+
+            <div
+              className="bg-yellow-50 p-4 rounded-lg cursor-pointer hover:bg-yellow-100 transition-colors"
+              onClick={() => navigate("/admin/categories")}
+            >
+              <h3 className="font-semibold text-yellow-800">
+                Quản lý danh mục
+              </h3>
+              <p className="text-yellow-600 text-sm">
+                Thêm, sửa, xóa danh mục sản phẩm
+              </p>
+            </div>
           </div>
         </div>
-        <button
-          onClick={() => {
-            navigate("/admin/notifications");
-          }}
-          className="mt-6 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-        Management notifications
-        </button>
+
+        <div className="flex gap-4 mt-6">
+          <button
+            onClick={() => navigate("/admin/products")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Quản lý sản phẩm
+          </button>
+
+          <button
+            onClick={() => navigate("/admin/notifications")}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Quản lý thông báo
+          </button>
+
+          <button
+            onClick={() => navigate("/admin/categories")}
+            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+          >
+            Quản lý danh mục
+          </button>
+        </div>
       </div>
     </div>
   );

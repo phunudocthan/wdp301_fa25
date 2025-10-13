@@ -1,15 +1,28 @@
-// 📁 src/pages/Shop.tsx
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
-import axiosInstance from "../api/axiosInstance";
+import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
 import Header from "../components/common/Header";
-import { Card, Row, Col, Spin, Empty, Button, Input, Typography, Pagination } from "antd";
+import {
+  Card,
+  Row,
+  Col,
+  Spin,
+  Empty,
+  Button,
+  Input,
+  Typography,
+  Pagination,
+  Select,
+  Space,
+  Slider,
+} from "antd";
 import { ShoppingCartOutlined } from "@ant-design/icons";
 import "../styles/shop.scss";
 import imagesDefault from "../../../client/public/images/1827380.png";
 
 const { Title } = Typography;
 const { Meta } = Card;
+const { Option } = Select;
 
 interface Product {
   _id: string;
@@ -23,30 +36,53 @@ export default function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(8); // số sản phẩm mỗi trang
+  const [pageSize] = useState(8);
+
+  // --- Filter/sort/search ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<string>();
+  const [status, setStatus] = useState<string>();
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const search = queryParams.get("search") || "";
 
+  // --- Gọi API ---
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+
+      // Lấy từ khóa từ URL nếu có
+      const urlSearch = new URLSearchParams(location.search).get("search") || "";
+      const finalSearch = searchTerm || urlSearch;
+
+      if (finalSearch) params.append("search", finalSearch);
+      if (status) params.append("status", status);
+      if (sortBy) params.append("sortBy", sortBy);
+      if (priceRange[0] > 0) params.append("minPrice", priceRange[0].toString());
+      if (priceRange[1] < 1000) params.append("maxPrice", priceRange[1].toString());
+
+      const res = await axiosInstance.get(`/products?${params.toString()}`);
+      setProducts(res.data.products || []);
+    } catch (err) {
+      console.error("❌ Error fetching products:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Gọi API mỗi khi filter/search/sort thay đổi ---
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const res = await axiosInstance.get(`/products?search=${search}`);
-        setProducts(res.data.products || []);
-      } catch (err) {
-        console.error("❌ Error fetching products:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const delay = setTimeout(() => {
+      fetchProducts();
+    }, 400);
+    return () => clearTimeout(delay);
+  }, [searchTerm, sortBy, status, priceRange, location.search]);
 
-    fetchProducts();
-  }, [search]);
-  // Tính toán các sản phẩm cho trang hiện tại
+  // --- Pagination ---
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const displayedProducts = products.slice(startIndex, endIndex);
+
   return (
     <>
       <Header />
@@ -55,6 +91,62 @@ export default function Shop() {
           List products
         </Title>
 
+        {/* --- Bộ lọc / tìm kiếm / sắp xếp --- */}
+        <Space
+          style={{
+            marginBottom: 24,
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <Input
+            placeholder="Search product..."
+            allowClear
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: 250 }}
+          />
+
+          <Space>
+            <Select
+              placeholder="Filter by status"
+              allowClear
+              style={{ width: 180 }}
+              onChange={(value) => setStatus(value)}
+            >
+              <Option value="active">Active</Option>
+              <Option value="inactive">Inactive</Option>
+            </Select>
+
+            <Select
+              placeholder="Sort by"
+              allowClear
+              style={{ width: 180 }}
+              onChange={(value) => setSortBy(value)}
+            >
+              <Option value="price_asc">Price: Low → High</Option>
+              <Option value="price_desc">Price: High → Low</Option>
+              <Option value="newest">Newest</Option>
+            </Select>
+
+            <div style={{ width: 200 }}>
+              <span style={{ fontSize: 13 }}>Price range ($)</span>
+              <Slider
+                range
+                min={0}
+                max={1000}
+                step={10}
+                defaultValue={[0, 1000]}
+                onAfterChange={(value) =>
+                  setPriceRange(value as [number, number])
+                }
+              />
+            </div>
+          </Space>
+        </Space>
+
+        {/* --- Danh sách sản phẩm --- */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "50px" }}>
             <Spin size="large" tip="Đang tải sản phẩm..." />
@@ -62,7 +154,7 @@ export default function Shop() {
         ) : products.length > 0 ? (
           <>
             <Row gutter={[24, 24]}>
-              {products.map((p) => (
+              {displayedProducts.map((p) => (
                 <Col
                   key={p._id}
                   xs={24}
@@ -83,7 +175,7 @@ export default function Shop() {
                       <Link to={`/product/${p._id}`}>
                         <img
                           alt={p.name}
-                          src={p.images?.[0] || imagesDefault}
+                          src={getFullImageURL(p.images?.[0])}
                           style={{
                             height: 220,
                             objectFit: "cover",
@@ -113,12 +205,21 @@ export default function Shop() {
                       block
                       style={{ marginTop: "12px", borderRadius: 8 }}
                     >
-                      Add carts                  </Button>
+                      Add to cart
+                    </Button>
                   </Card>
                 </Col>
               ))}
             </Row>
-            <div style={{ textAlign: "center", marginTop: "30px", display: 'flex', justifyContent: 'center' }}>
+
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: "30px",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}

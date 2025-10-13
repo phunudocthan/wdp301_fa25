@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axiosInstance from "../api/axiosInstance";
+import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
 import Header from "../components/common/Header";
 import {
   Package,
@@ -71,7 +71,7 @@ export default function ProductDetail() {
               {product.images?.map((img, idx) => (
                 <img
                   key={idx}
-                  src={img}
+                  src={getFullImageURL(img)}
                   alt={`thumb-${idx}`}
                   className={`thumbnail ${selectedImg === img ? "active" : ""}`}
                   onClick={() => setSelectedImg(img)}
@@ -79,7 +79,8 @@ export default function ProductDetail() {
               ))}
             </div>
             <div className="main-image">
-              <img src={selectedImg || "/placeholder.png"} alt={product.name} />
+              <img src={getFullImageURL(product.images?.[0])}
+                alt={product.name} />
             </div>
           </div>
 
@@ -117,8 +118,8 @@ export default function ProductDetail() {
               <span>{quantity}</span>
               <button onClick={() => setQuantity(quantity + 1)}>+</button>
             </div>
-           
-<button className="add-btn">Add to Bag</button>
+
+            <button className="add-btn">Add to Bag</button>
             {/* === Product Details beside Add to Bag === */}
             <div className="product-meta inline">
               <div className="meta-grid">
