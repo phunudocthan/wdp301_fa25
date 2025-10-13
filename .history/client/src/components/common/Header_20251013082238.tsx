@@ -115,14 +115,7 @@ export default function Header() {
               <FaBell className="notification-icon" />
             </div>
             <FaHeart className="icon" />
-            <div
-              className="icon cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('Header: cart icon clicked, navigating to /cart');
-                navigate('/cart');
-              }}
-            >
+            <div className="icon cursor-pointer" onClick={(e) => { e.stopPropagation(); navigate('/cart'); }}>
               <FaShoppingBag />
               <span className="cart-count">{cart.items.length}</span>
             </div>

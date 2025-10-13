@@ -114,9 +114,7 @@ export default function Shop() {
                       icon={<ShoppingCartOutlined />}
                       block
                       style={{ marginTop: "12px", borderRadius: 8 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      onClick={() => {
                         try {
                           addToCart({
                             id: p._id,

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import Header from "../components/common/Header";
-import { Card, Row, Col, Spin, Empty, Button, Typography, Pagination, message } from "antd";
+import { Card, Row, Col, Spin, Empty, Button, Input, Typography, Pagination, message } from "antd";
 import { ShoppingCartOutlined } from "@ant-design/icons";
 import "../styles/shop.scss";
 import imagesDefault from "../../../client/public/images/1827380.png";
@@ -114,9 +114,7 @@ export default function Shop() {
                       icon={<ShoppingCartOutlined />}
                       block
                       style={{ marginTop: "12px", borderRadius: 8 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      onClick={() => {
                         try {
                           addToCart({
                             id: p._id,

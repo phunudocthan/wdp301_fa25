@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import Header from "../components/common/Header";
@@ -30,7 +30,6 @@ export default function ProductDetail() {
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
-  const navigate = useNavigate();
   const [showDesc, setShowDesc] = useState(false);
 
   useEffect(() => {
@@ -114,9 +113,7 @@ export default function ProductDetail() {
            
             <button
               className="add-btn"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+              onClick={() => {
                 try {
                   addToCart({
                     id: product._id,
@@ -126,8 +123,6 @@ export default function ProductDetail() {
                     quantity,
                   });
                   message.success(`${product.name} đã được thêm vào giỏ hàng`);
-                  // Redirect user to cart page so they can review items
-                  navigate('/cart');
                 } catch (err) {
                   console.error('Add to cart error', err);
                   message.error('Không thể thêm sản phẩm vào giỏ hàng');

@@ -114,9 +114,7 @@ export default function ProductDetail() {
            
             <button
               className="add-btn"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+              onClick={() => {
                 try {
                   addToCart({
                     id: product._id,

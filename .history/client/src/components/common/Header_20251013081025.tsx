@@ -88,8 +88,8 @@ export default function Header() {
           <NavLink to="/notifications">Notifications</NavLink>
         </nav>
 
-  {/* --- RIGHT: Search, Icons, Avatar --- */}
-  <div className="header-right" onClick={(e) => e.stopPropagation()}>
+        {/* --- RIGHT: Search, Icons, Avatar --- */}
+        <div className="header-right">
           {/* Search box */}
           <form className="search-box" onSubmit={handleSearchSubmit}>
             <FaSearch className="search-icon" />
@@ -115,14 +115,7 @@ export default function Header() {
               <FaBell className="notification-icon" />
             </div>
             <FaHeart className="icon" />
-            <div
-              className="icon cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('Header: cart icon clicked, navigating to /cart');
-                navigate('/cart');
-              }}
-            >
+            <div className="icon cursor-pointer" onClick={() => navigate('/cart')}>
               <FaShoppingBag />
               <span className="cart-count">{cart.items.length}</span>
             </div>

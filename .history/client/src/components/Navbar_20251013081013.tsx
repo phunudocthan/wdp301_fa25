@@ -72,6 +72,8 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
           {/* Right Side */}
           <div className="flex items-center space-x-4">
             {/* Cart */}
+            <button className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors">
+            </button>
             <button
               onClick={() => navigate('/cart')}
               className="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors"
