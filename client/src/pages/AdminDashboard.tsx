@@ -3,94 +3,69 @@ import { useNavigate } from "react-router-dom";
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+
+  const quickLinks = [
+    {
+      title: "Manage products",
+      description: "Create, edit, and publish LEGO sets",
+      tone: "bg-blue-50 text-blue-800",
+      action: () => navigate("/admin/products"),
+    },
+    {
+      title: "Manage users",
+      description: "Review customer accounts and permissions",
+      tone: "bg-green-50 text-green-800",
+      action: () => navigate("/user"),
+    },
+    {
+      title: "Revenue insights",
+      description: "Track sales performance and KPIs",
+      tone: "bg-purple-50 text-purple-800",
+      action: () => navigate("/admin"),
+    },
+    {
+      title: "Manage orders",
+      description: "Process and monitor order lifecycles",
+      tone: "bg-orange-50 text-orange-800",
+      action: () => navigate("/admin/orders"),
+    },
+    {
+      title: "Manage categories",
+      description: "Organise catalog collections and tags",
+      tone: "bg-yellow-50 text-yellow-800",
+      action: () => navigate("/admin/categories"),
+    },
+    {
+      title: "Notifications",
+      description: "Send announcements and system alerts",
+      tone: "bg-red-50 text-red-800",
+      action: () => navigate("/admin/notifications"),
+    },
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
-          Admin Dashboard
-        </h1>
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-800 mb-3">Admin dashboard</h1>
+        <p className="text-gray-600 mb-6">
+          Welcome back! Use the shortcuts below to jump straight into the most common admin
+          workflows.
+        </p>
 
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Chào mừng Admin!
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Đây là trang quản trị dành cho Admin. Bạn có thể quản lý:
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div
-              className="bg-blue-50 p-4 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
-              onClick={() => navigate("/admin/products")}
-            >
-              <h3 className="font-semibold text-blue-800">Quản lý sản phẩm</h3>
-              <p className="text-blue-600 text-sm">
-                Thêm, sửa, xóa sản phẩm Lego
-              </p>
-            </div>
-
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-green-800">
-                Quản lý người dùng
-              </h3>
-              <p className="text-green-600 text-sm">
-                Xem và quản lý tài khoản khách hàng
-              </p>
-            </div>
-
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-purple-800">
-                Báo cáo doanh thu
-              </h3>
-              <p className="text-purple-600 text-sm">
-                Thống kê và phân tích bán hàng
-              </p>
-            </div>
-
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-orange-800">
-                Quản lý đơn hàng
-              </h3>
-              <p className="text-orange-600 text-sm">
-                Xử lý và theo dõi đơn hàng
-              </p>
-            </div>
-
-            <div
-              className="bg-yellow-50 p-4 rounded-lg cursor-pointer hover:bg-yellow-100 transition-colors"
-              onClick={() => navigate("/admin/categories")}
-            >
-              <h3 className="font-semibold text-yellow-800">
-                Quản lý danh mục
-              </h3>
-              <p className="text-yellow-600 text-sm">
-                Thêm, sửa, xóa danh mục sản phẩm
-              </p>
-            </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {quickLinks.map((item) => (
+              <button
+                key={item.title}
+                type="button"
+                onClick={item.action}
+                className={`${item.tone} p-5 rounded-lg text-left shadow-sm hover:shadow transition-all`}
+              >
+                <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                <p className="text-sm text-gray-600">{item.description}</p>
+              </button>
+            ))}
           </div>
-        </div>
-
-        <div className="flex gap-4 mt-6">
-          <button
-            onClick={() => navigate("/admin/products")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Quản lý sản phẩm
-          </button>
-
-          <button
-            onClick={() => navigate("/admin/notifications")}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Quản lý thông báo
-          </button>
-
-          <button
-            onClick={() => navigate("/admin/categories")}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-          >
-            Quản lý danh mục
-          </button>
         </div>
       </div>
     </div>

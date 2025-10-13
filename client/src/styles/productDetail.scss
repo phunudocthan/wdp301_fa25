@@ -1,0 +1,316 @@
+.product-detail-page {
+  padding: 2rem 1rem;
+
+  .product-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  // ================= IMAGE SECTION =================
+  .image-section {
+    flex: 1 1 50%; // 🔹 tăng từ 40% → 50%
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; // 🔹 bố cục dọc: ảnh trên - thumbnail dưới
+    gap: 1rem;
+    max-width: 640px;
+    margin: 0 auto;
+
+    .main-image {
+      order: 1; // 🔹 ảnh chính nằm trên
+      width: 100%;
+      display: flex;
+      justify-content: center;
+
+      img {
+        width: 100%;
+        max-width: 560px;
+        height: auto;
+        border-radius: 12px;
+        background: #fff;
+        object-fit: contain;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .thumbnail-list {
+      order: 2; // 🔹 thumbnail xuống dưới
+      display: flex;
+      flex-direction: row; // 🔹 sắp xếp ngang
+      justify-content: center;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.8rem; // 🔹 tạo khoảng cách với ảnh chính
+
+      .thumbnail {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: scale(1.05);
+        }
+
+        &.active {
+          border-color: #f7b600;
+        }
+      }
+    }
+  }
+
+  // ================= RESPONSIVE =================
+  @media (max-width: 992px) {
+    .image-section {
+      flex: 1 1 100%;
+      max-width: 100%;
+      padding: 0 1rem;
+
+      .main-image img {
+        width: 90%;
+        max-width: 460px;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .image-section {
+      flex: 1 1 100%;
+      justify-content: center;
+
+      .main-image img {
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .thumbnail-list {
+        flex-wrap: wrap;
+      }
+    }
+
+    .info-section {
+      flex: 1 1 100%;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .image-section {
+      .main-image img {
+        width: 100%;
+        max-width: 360px;
+      }
+    }
+  }
+
+  // ================= PRODUCT INFO =================
+  .title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-top: 0.3rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .rating {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+
+    .review-count {
+      font-size: 0.85rem;
+      color: #555;
+      margin-left: 0.4rem;
+    }
+  }
+
+  .price {
+    color: #d32f2f;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+
+  .stock {
+    color: #2e7d32;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  // ================= QUANTITY & BUTTON =================
+  .quantity-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1.3rem;
+      font-weight: 500;
+      line-height: 1;
+      color: #000;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #f2f2f2;
+        border-color: #999;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    span {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #222;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    span.limit {
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: #999;
+    }
+  }
+
+  .add-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: #f27c00;
+    color: #000;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 50px;
+    padding: 0.55rem 1.6rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-top: 0.8rem;
+    margin-bottom: 1.5rem;
+
+    svg,
+    .icon {
+      font-size: 1.1rem;
+    }
+
+    &:hover {
+      background-color: #da6e00;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  // ================= META INFORMATION =================
+  .product-meta.inline {
+    background: #fafafa;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    margin-bottom: 1.2rem;
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.7rem 1rem;
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 6px;
+        background: #fff;
+        border: 1px solid #eee;
+        transition: 0.2s;
+
+        &:hover {
+          background: #fffaf1;
+          border-color: #f7b600;
+        }
+
+        .icon {
+          color: #f7b600;
+        }
+
+        .label {
+          font-weight: 600;
+          font-size: 0.85rem;
+          color: #333;
+        }
+
+        .value {
+          font-size: 0.9rem;
+          color: #555;
+        }
+      }
+    }
+  }
+
+  // ================= DESCRIPTION =================
+  .description-section {
+    border-top: 1px solid #e0e0e0;
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+
+    .desc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #f7b600;
+      }
+
+      h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+    }
+
+    .desc-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.35s ease;
+
+      &.open {
+        max-height: 400px;
+        margin-top: 0.5rem;
+      }
+
+      p {
+        font-size: 0.95rem;
+        color: #444;
+        line-height: 1.6;
+      }
+    }
+  }
+}
