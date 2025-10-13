@@ -1,0 +1,57 @@
+@startuml BackendPackage
+title Backend Package Overview
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam ArrowColor #444444
+skinparam ArrowFontSize 12
+skinparam package {
+  BorderColor #222222
+  BackgroundColor #FFFFFF
+  FontSize 16
+}
+skinparam defaultFontName Arial
+
+package "Backend" {
+  package "routes" as routes
+  package "controllers" as controllers
+  package "config" as config
+  package "middleware" as middleware
+  package "services" as services
+  package "models" as models
+  package "utils" as utils
+  package "node_modules" as node_modules
+
+  routes -[hidden]-> controllers
+  controllers -[hidden]-> config
+  middleware -[hidden]-> services
+  services -[hidden]-> models
+  utils -[hidden]-> node_modules
+  routes -[hidden]-> middleware
+  controllers -[hidden]-> services
+  config -[hidden]-> models
+  middleware -[hidden]-> utils
+  services -[hidden]-> node_modules
+}
+
+routes ..> controllers : <<import>>
+routes ..> middleware : <<import>>
+
+controllers ..> config : <<import>>
+controllers ..> services : <<import>>
+controllers ..> middleware : <<import>>
+controllers ..> utils : <<import>>
+
+middleware ..> utils : <<import>>
+
+services ..> utils : <<import>>
+services ..> models : <<import>>
+services ..> node_modules : <<import>>
+
+utils ..> node_modules : <<import>>
+models ..> node_modules : <<import>>
+config ..> node_modules : <<import>>
+
+@enduml

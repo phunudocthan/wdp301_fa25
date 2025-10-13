@@ -35,6 +35,11 @@ import AdminProductDetail from "./pages/AdminProductDetail";
 import AdminProductEdit from "./pages/AdminProductEdit";
 import OrdersList from "./pages/admin/OrdersList";
 import OrderDetail from "./pages/admin/OrderDetail";
+import AdminRevenueDashboard from "./views/AdminRevenueDashboard";
+import AdminOrdersDashboard from "./views/AdminOrdersDashboard";
+import AdminUsersPage from "./views/AdminUsersPage";
+import AdminUserDetailPage from "./views/AdminUserDetailPage";
+import AdminProfile from "./pages/AdminProfile";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -42,7 +47,6 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 // Styles
 import "bootstrap/dist/css/bootstrap.min.css";
 
-// Wrapper for ProfileAdminPage to provide user prop
 function ProfileAdminWrapper() {
   const { user } = useAuth();
 
@@ -128,7 +132,7 @@ function AppContent() {
             }
           />
 
-          {/* Admin routes */}
+          {/* Admin overview */}
           <Route
             path="/admin"
             element={
@@ -138,6 +142,52 @@ function AppContent() {
             }
           />
           <Route
+            path="/admin/profile"
+            element={
+              <ProtectedRoute>
+                <AdminProfile />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin analytics */}
+          <Route
+            path="/admin/dashboard/revenue"
+            element={
+              <ProtectedRoute>
+                <AdminRevenueDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard/orders"
+            element={
+              <ProtectedRoute>
+                <AdminOrdersDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin user management */}
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users/:id"
+            element={
+              <ProtectedRoute>
+                <AdminUserDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin notifications */}
+          <Route
             path="/admin/notifications"
             element={
               <ProtectedRoute>
@@ -145,6 +195,8 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
+  {/* Admin orders */}
           <Route
             path="/admin/orders"
             element={
@@ -161,6 +213,8 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
+          {/* Admin product management */}
           <Route
             path="/admin/products"
             element={
