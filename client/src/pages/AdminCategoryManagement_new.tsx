@@ -3,11 +3,12 @@ import {
   Plus,
   Edit,
   Trash2,
+  Eye,
+  EyeOff,
   Search,
   Filter,
   ChevronDown,
   ChevronRight,
-  Power,
 } from "lucide-react";
 import categoryAdminAPI, {
   Category,
@@ -50,13 +51,10 @@ const AdminCategoryManagement: React.FC = () => {
         search: searchTerm || undefined,
         isActive:
           statusFilter === "all" ? undefined : statusFilter === "active",
-        parentId: "", // Chỉ lấy danh mục cha (không có parentId)
       };
 
       const response = await categoryAdminAPI.getCategories(params);
-      // Lọc chỉ lấy danh mục cha và gọi API riêng để lấy danh mục con khi cần
-      const parentCategories = response.data.filter((cat) => !cat.parentId);
-      setCategories(parentCategories);
+      setCategories(response.data);
       setTotalPages(response.pagination.pages);
       setTotalCategories(response.pagination.total);
     } catch (error) {
@@ -98,36 +96,12 @@ const AdminCategoryManagement: React.FC = () => {
     }
   };
 
-  // Load subcategories for a parent category
-  const loadSubcategories = async (parentId: string) => {
-    try {
-      const response = await categoryAdminAPI.getCategories({
-        parentId: parentId,
-        limit: 100, // Lấy nhiều subcategories
-      });
-
-      // Cập nhật categories để thêm subcategories
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat._id === parentId ? { ...cat, subcategories: response.data } : cat
-        )
-      );
-    } catch (error) {
-      console.error("Error loading subcategories:", error);
-    }
-  };
-
-  const toggleExpanded = async (categoryId: string) => {
+  const toggleExpanded = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
     if (newExpanded.has(categoryId)) {
       newExpanded.delete(categoryId);
     } else {
       newExpanded.add(categoryId);
-      // Load subcategories nếu chưa có
-      const category = categories.find((cat) => cat._id === categoryId);
-      if (category && !category.subcategories) {
-        await loadSubcategories(categoryId);
-      }
     }
     setExpandedCategories(newExpanded);
   };
@@ -136,25 +110,16 @@ const AdminCategoryManagement: React.FC = () => {
     const hasSubcategories =
       category.subcategories && category.subcategories.length > 0;
     const isExpanded = expandedCategories.has(category._id);
-    // Để tạm thời hiển thị nút expand cho danh mục cha (có thể có subcategories)
-    const mightHaveSubcategories = level === 0; // Chỉ danh mục cha có thể có con
 
     return (
       <React.Fragment key={category._id}>
         <tr className={level > 0 ? "subcategory-row" : ""}>
           <td style={{ paddingLeft: `${level * 20 + 12}px` }}>
             <div className="category-info">
-              {mightHaveSubcategories && (
+              {hasSubcategories && (
                 <button
                   onClick={() => toggleExpanded(category._id)}
                   className="expand-btn"
-                  title={
-                    hasSubcategories
-                      ? `${
-                          hasSubcategories ? category.subcategories?.length : 0
-                        } danh mục con`
-                      : "Xem danh mục con"
-                  }
                 >
                   {isExpanded ? (
                     <ChevronDown size={16} />
@@ -171,14 +136,7 @@ const AdminCategoryManagement: React.FC = () => {
                 />
               )}
               <div className="category-details">
-                <h4>
-                  {category.name}
-                  {level === 0 && hasSubcategories && (
-                    <span className="subcategory-count">
-                      {category.subcategories?.length} con
-                    </span>
-                  )}
-                </h4>
+                <h4>{category.name}</h4>
                 <p>{category.slug}</p>
               </div>
             </div>
@@ -207,11 +165,7 @@ const AdminCategoryManagement: React.FC = () => {
                 }`}
                 title={category.isActive ? "Tắt hoạt động" : "Bật hoạt động"}
               >
-                {category.isActive ? (
-                  <Power color="green" size={14} />
-                ) : (
-                  <Power color="gray" size={14} />
-                )}
+                {category.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
               <button
                 onClick={() => setEditingCategory(category)}
