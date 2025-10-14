@@ -8,6 +8,11 @@ const Difficulty = require("../models/Difficulty");
  * @route   GET /api/admin/products
  * @access  Private (Admin)
  */
+/**
+ * @desc    Lấy danh sách tất cả sản phẩm (Admin)
+ * @route   GET /api/admin/products
+ * @access  Private (Admin)
+ */
 const getAllProducts = async (req, res) => {
   try {
     const {
@@ -86,6 +91,8 @@ const getAllProducts = async (req, res) => {
     });
   }
 };
+
+
 
 /**
  * @desc    Lấy thông tin một sản phẩm theo ID

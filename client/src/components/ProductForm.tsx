@@ -96,6 +96,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
       setAgeRanges(ageRangesData);
       setDifficulties(difficultiesData);
       setCategories(categoriesData.data);
+      console.log("Loaded categories:", categoriesData.data);
     } catch (err: any) {
       setError("Không thể tải dữ liệu form");
     }
@@ -126,13 +127,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
     try {
       console.log("Form data before submit:", formData);
       console.log("Selected categories:", selectedCategories);
+
+      // Đảm bảo categories được cập nhật vào formData trước khi gửi
+      const finalFormData = {
+        ...formData,
+        categories: selectedCategories.filter(
+          (cat) => cat && cat.trim() !== ""
+        ),
+      };
+
+      console.log("Final form data with categories:", finalFormData);
+
       if (isEditing && product) {
         await ProductAdminAPI.updateProduct(
           product._id,
-          formData as ProductUpdateData
+          finalFormData as ProductUpdateData
         );
       } else {
-        await ProductAdminAPI.createProduct(formData);
+        await ProductAdminAPI.createProduct(finalFormData);
       }
       onClose();
     } catch (err: any) {
