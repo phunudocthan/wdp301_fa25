@@ -1,5 +1,6 @@
 const express = require("express");
 const {
+  getOverviewStats,
   getRevenueStats,
   getOrderStats,
   listUsers,
@@ -12,6 +13,7 @@ const router = express.Router();
 
 router.use(requireAuth, requireRole("admin"));
 
+router.get("/dashboard/overview", getOverviewStats);
 router.get("/dashboard/revenue", getRevenueStats);
 router.get("/dashboard/orders", getOrderStats);
 

@@ -28,7 +28,6 @@ import type {
   Address,
 } from "../types/user";
 import { useNavigate } from "react-router-dom";
-import Header from "./common/Header";
 
 const legoThemes = [
   "LEGO City",
@@ -73,9 +72,11 @@ interface ProfileProps {
   onUpdateUser?: (user: UserType) => void;
 }
 
-
 const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
-  const [showPasswords, setShowPasswords] = useState({ old: false, new: false });
+  const [showPasswords, setShowPasswords] = useState({
+    old: false,
+    new: false,
+  });
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<LocalUser>({
@@ -222,7 +223,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
             postalCode: "",
             country: "",
           },
-          // favoriteThemes: updatedUser?.favoriteThemes || [],
+          favoriteThemes: updatedUser?.favoriteThemes || [],
           _id: updatedUser?._id,
           lastLogin: updatedUser?.lastLogin,
           createdAt: updatedUser?.createdAt,
@@ -315,339 +316,337 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
       .join(", ");
   };
 
-  return (<>      <Header/>
+  return (
+    <>
+      <div className="profile-container">
+        {errorMsg && <div className="error-message">{errorMsg}</div>}
 
-    <div className="profile-container">
-      {errorMsg && <div className="error-message">{errorMsg}</div>}
+        <div className="profile-header">
+          <div className="profile-banner"></div>
 
-      <div className="profile-header">
-        <div className="profile-banner"></div>
-
-        <div className="profile-info">
-          <div className="profile-avatar">
-            <img src={editData.avatar} alt="Profile" />
-            {isEditing && (
-              <label className="avatar-upload-btn" title="Thay đổi avatar">
-                <Camera className="h-4 w-4" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  style={{ display: "none" }}
-                  aria-label="Upload avatar"
-                />
-              </label>
-            )}
-          </div>
-
-          <div className="profile-details">
-            <h1>{editData.name}</h1>
-            <p>{editData.email}</p>
-
-            <div className="profile-badges">
-              <div className="profile-badge role">
-                <Shield className="h-4 w-4" />
-                <span>{roleLabels[editData.role]}</span>
-              </div>
-              <div className="profile-badge status">
-                <span>{statusLabels[editData.status]}</span>
-              </div>
-              <div className="profile-badge joined">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  Tham gia từ:{" "}
-                  {editData.createdAt
-                    ? new Date(editData.createdAt).toLocaleDateString("vi-VN")
-                    : ""}
-                </span>
-              </div>
+          <div className="profile-info">
+            <div className="profile-avatar">
+              <img src={editData.avatar} alt="Profile" />
+              {isEditing && (
+                <label className="avatar-upload-btn" title="Thay đổi avatar">
+                  <Camera className="h-4 w-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    style={{ display: "none" }}
+                    aria-label="Upload avatar"
+                  />
+                </label>
+              )}
             </div>
 
-            <div className="profile-actions">
-              {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="btn-primary"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  Chỉnh sửa
-                </button>
-              ) : (
-                <>
+            <div className="profile-details">
+              <h1>{editData.name}</h1>
+              <p>{editData.email}</p>
+
+              <div className="profile-badges">
+                <div className="profile-badge role">
+                  <Shield className="h-4 w-4" />
+                  <span>{roleLabels[editData.role]}</span>
+                </div>
+                <div className="profile-badge status">
+                  <span>{statusLabels[editData.status]}</span>
+                </div>
+                <div className="profile-badge joined">
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    Tham gia từ:{" "}
+                    {editData.createdAt
+                      ? new Date(editData.createdAt).toLocaleDateString("vi-VN")
+                      : ""}
+                  </span>
+                </div>
+              </div>
+
+              <div className="profile-actions">
+                {!isEditing ? (
                   <button
-                    onClick={handleSave}
-                    disabled={isLoading}
+                    onClick={() => setIsEditing(true)}
                     className="btn-primary"
                   >
-                    {isLoading ? (
-                      <div className="loading-spinner"></div>
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    Lưu
+                    <Edit3 className="h-4 w-4" />
+                    Chỉnh sửa
                   </button>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="btn-secondary"
-                  >
-                    <X className="h-4 w-4" />
-                    Hủy
-                  </button>
-                </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      className="btn-primary"
+                    >
+                      {isLoading ? (
+                        <div className="loading-spinner"></div>
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      Lưu
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="btn-secondary"
+                    >
+                      <X className="h-4 w-4" />
+                      Hủy
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-content">
+          <div className="profile-card">
+            <div className="card-header">
+              <User className="card-icon" />
+              <h3>Thông tin cá nhân</h3>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Họ và tên</label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="name"
+                  value={editData.name}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Nhập họ và tên"
+                />
+              ) : (
+                <div className="form-input" style={{ background: "#f8f9fa" }}>
+                  {editData.name}
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <Mail
+                  className="h-4 w-4"
+                  style={{ display: "inline", marginRight: "0.5rem" }}
+                />
+                Email
+              </label>
+              <input
+                type="email"
+                value={editData.email}
+                disabled
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <Phone
+                  className="h-4 w-4"
+                  style={{ display: "inline", marginRight: "0.5rem" }}
+                />
+                Số điện thoại
+              </label>
+              {isEditing ? (
+                <input
+                  type="tel"
+                  name="phone"
+                  value={editData.phone}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Nhập số điện thoại"
+                />
+              ) : (
+                <div className="form-input" style={{ background: "#f8f9fa" }}>
+                  {editData.phone}
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <MapPin
+                  className="h-4 w-4"
+                  style={{ display: "inline", marginRight: "0.5rem" }}
+                />
+                Địa chỉ
+              </label>
+              {isEditing ? (
+                <div className="form-grid">
+                  <input
+                    type="text"
+                    name="address.street"
+                    value={editData.address?.street || ""}
+                    onChange={handleInputChange}
+                    placeholder="Đường"
+                    className="form-input"
+                  />
+                  <input
+                    type="text"
+                    name="address.city"
+                    value={editData.address?.city || ""}
+                    onChange={handleInputChange}
+                    placeholder="Thành phố"
+                    className="form-input"
+                  />
+                  <input
+                    type="text"
+                    name="address.state"
+                    value={editData.address?.state || ""}
+                    onChange={handleInputChange}
+                    placeholder="Tỉnh/Thành"
+                    className="form-input"
+                  />
+                  <input
+                    type="text"
+                    name="address.postalCode"
+                    value={editData.address?.postalCode || ""}
+                    onChange={handleInputChange}
+                    placeholder="Mã bưu chính"
+                    className="form-input"
+                  />
+                </div>
+              ) : (
+                <div className="form-input" style={{ background: "#f8f9fa" }}>
+                  {renderAddress(editData.address)}
+                </div>
               )}
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="profile-content">
-        <div className="profile-card">
-          <div className="card-header">
-            <User className="card-icon" />
-            <h3>Thông tin cá nhân</h3>
+        <div className="profile-content" style={{ marginTop: "2rem" }}>
+          <div className="profile-card">
+            <div className="card-header">
+              <Edit3 className="card-icon" />
+              <h3>Thống kê</h3>
+            </div>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <div className="stat-value">12</div>
+                <div className="stat-label">Đơn hàng</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">8</div>
+                <div className="stat-label">Yêu thích</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">2,450</div>
+                <div className="stat-label">Điểm tích lũy</div>
+              </div>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Họ và tên</label>
-            {isEditing ? (
-              <input
-                type="text"
-                name="name"
-                value={editData.name}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Nhập họ và tên"
-              />
-            ) : (
-              <div className="form-input" style={{ background: "#f8f9fa" }}>
-                {editData.name}
+          <div className="profile-card">
+            <div className="card-header">
+              <Calendar className="card-icon" />
+              <h3>Hoạt động gần đây</h3>
+            </div>
+            <div className="activity-list">
+              <div className="activity-item">
+                <div className="activity-dot blue"></div>
+                <div className="activity-content">
+                  <h4>Mua LEGO City Fire Station</h4>
+                  <p>2 ngày trước</p>
+                </div>
+              </div>
+              <div className="activity-item">
+                <div className="activity-dot green"></div>
+                <div className="activity-content">
+                  <h4>Thêm vào yêu thích: Creator Expert</h4>
+                  <p>5 ngày trước</p>
+                </div>
+              </div>
+              <div className="activity-item">
+                <div className="activity-dot orange"></div>
+                <div className="activity-content">
+                  <h4>Đánh giá sản phẩm Technic</h4>
+                  <p>1 tuần trước</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-card" style={{ marginTop: "2rem" }}>
+          <div className="card-header">
+            <Shield className="card-icon" />
+            <h3>Bảo mật</h3>
+          </div>
+
+          <div className="password-section">
+            <label className="form-label">Đổi mật khẩu</label>
+            <div className="password-grid">
+              {/* Mật khẩu cũ */}
+              <div className="relative">
+                <input
+                  type={showPasswords.old ? "text" : "password"}
+                  placeholder="Mật khẩu cũ"
+                  value={passwords.oldPassword}
+                  onChange={(e) =>
+                    setPasswords((p) => ({ ...p, oldPassword: e.target.value }))
+                  }
+                  className="form-input pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPasswords((p) => ({ ...p, old: !p.old }))
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  {showPasswords.old ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              {/* Mật khẩu mới */}
+              <div className="relative">
+                <input
+                  type={showPasswords.new ? "text" : "password"}
+                  placeholder="Mật khẩu mới"
+                  value={passwords.newPassword}
+                  onChange={(e) =>
+                    setPasswords((p) => ({ ...p, newPassword: e.target.value }))
+                  }
+                  className="form-input pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPasswords((p) => ({ ...p, new: !p.new }))
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={handleChangePassword}
+              className="btn-primary"
+              style={{ marginTop: "1rem" }}
+            >
+              Đổi mật khẩu
+            </button>
+
+            {passwordMsg && (
+              <div
+                className={
+                  passwordMsg.toLowerCase().includes("success")
+                    ? "success-message"
+                    : "error-message"
+                }
+              >
+                {passwordMsg}
               </div>
             )}
           </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              <Mail
-                className="h-4 w-4"
-                style={{ display: "inline", marginRight: "0.5rem" }}
-              />
-              Email
-            </label>
-            <input
-              type="email"
-              value={editData.email}
-              disabled
-              className="form-input"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              <Phone
-                className="h-4 w-4"
-                style={{ display: "inline", marginRight: "0.5rem" }}
-              />
-              Số điện thoại
-            </label>
-            {isEditing ? (
-              <input
-                type="tel"
-                name="phone"
-                value={editData.phone}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Nhập số điện thoại"
-              />
-            ) : (
-              <div className="form-input" style={{ background: "#f8f9fa" }}>
-                {editData.phone}
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              <MapPin
-                className="h-4 w-4"
-                style={{ display: "inline", marginRight: "0.5rem" }}
-              />
-              Địa chỉ
-            </label>
-            {isEditing ? (
-              <div className="form-grid">
-                <input
-                  type="text"
-                  name="address.street"
-                  value={editData.address?.street || ""}
-                  onChange={handleInputChange}
-                  placeholder="Đường"
-                  className="form-input"
-                />
-                <input
-                  type="text"
-                  name="address.city"
-                  value={editData.address?.city || ""}
-                  onChange={handleInputChange}
-                  placeholder="Thành phố"
-                  className="form-input"
-                />
-                <input
-                  type="text"
-                  name="address.state"
-                  value={editData.address?.state || ""}
-                  onChange={handleInputChange}
-                  placeholder="Tỉnh/Thành"
-                  className="form-input"
-                />
-                <input
-                  type="text"
-                  name="address.postalCode"
-                  value={editData.address?.postalCode || ""}
-                  onChange={handleInputChange}
-                  placeholder="Mã bưu chính"
-                  className="form-input"
-                />
-              </div>
-            ) : (
-              <div className="form-input" style={{ background: "#f8f9fa" }}>
-                {renderAddress(editData.address)}
-              </div>
-            )}
-          </div>
         </div>
       </div>
-
-
-      <div className="profile-content" style={{ marginTop: "2rem" }}>
-        <div className="profile-card">
-          <div className="card-header">
-            <Edit3 className="card-icon" />
-            <h3>Thống kê</h3>
-          </div>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <div className="stat-value">12</div>
-              <div className="stat-label">Đơn hàng</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">8</div>
-              <div className="stat-label">Yêu thích</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">2,450</div>
-              <div className="stat-label">Điểm tích lũy</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="profile-card">
-          <div className="card-header">
-            <Calendar className="card-icon" />
-            <h3>Hoạt động gần đây</h3>
-          </div>
-          <div className="activity-list">
-            <div className="activity-item">
-              <div className="activity-dot blue"></div>
-              <div className="activity-content">
-                <h4>Mua LEGO City Fire Station</h4>
-                <p>2 ngày trước</p>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-dot green"></div>
-              <div className="activity-content">
-                <h4>Thêm vào yêu thích: Creator Expert</h4>
-                <p>5 ngày trước</p>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-dot orange"></div>
-              <div className="activity-content">
-                <h4>Đánh giá sản phẩm Technic</h4>
-                <p>1 tuần trước</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="profile-card" style={{ marginTop: "2rem" }}>
-        <div className="card-header">
-          <Shield className="card-icon" />
-          <h3>Bảo mật</h3>
-        </div>
-
-       <div className="password-section">
-  <label className="form-label">Đổi mật khẩu</label>
-  <div className="password-grid">
-    {/* Mật khẩu cũ */}
-    <div className="relative">
-      <input
-        type={showPasswords.old ? "text" : "password"}
-        placeholder="Mật khẩu cũ"
-        value={passwords.oldPassword}
-        onChange={(e) =>
-          setPasswords((p) => ({ ...p, oldPassword: e.target.value }))
-        }
-        className="form-input pr-10"
-      />
-      <button
-        type="button"
-        onClick={() =>
-          setShowPasswords((p) => ({ ...p, old: !p.old }))
-        }
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-      >
-        {showPasswords.old ? <EyeOff size={18} /> : <Eye size={18} />}
-      </button>
-    </div>
-
-    {/* Mật khẩu mới */}
-    <div className="relative">
-      <input
-        type={showPasswords.new ? "text" : "password"}
-        placeholder="Mật khẩu mới"
-        value={passwords.newPassword}
-        onChange={(e) =>
-          setPasswords((p) => ({ ...p, newPassword: e.target.value }))
-        }
-        className="form-input pr-10"
-      />
-      <button
-        type="button"
-        onClick={() =>
-          setShowPasswords((p) => ({ ...p, new: !p.new }))
-        }
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-      >
-        {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
-      </button>
-    </div>
-  </div>
-
-  <button
-    onClick={handleChangePassword}
-    className="btn-primary"
-    style={{ marginTop: "1rem" }}
-  >
-    Đổi mật khẩu
-  </button>
-
-  {passwordMsg && (
-    <div
-      className={
-        passwordMsg.toLowerCase().includes("success")
-          ? "success-message"
-          : "error-message"
-      }
-    >
-      {passwordMsg}
-    </div>
-  )}
-</div>
-
-      </div>
-    </div>
     </>
   );
 };

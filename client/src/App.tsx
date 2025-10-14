@@ -1,9 +1,10 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/context/AuthContext";
 import { useTokenExpirationCheck } from "./hooks/useAuthHooks";
 import { SessionNotifications } from "./components/SessionNotifications";
 
 // Common UI
+import Header from "./components/common/Header";
 import AuthDemo from "./components/common/AuthDemo";
 
 // Pages
@@ -59,9 +60,24 @@ function ProfileAdminWrapper() {
 
 function AppContent() {
   useTokenExpirationCheck();
+  const location = useLocation();
+
+  // Pages that should NOT have header
+  const pagesWithoutHeader = [
+    "/login",
+    "/register",
+    "/verify-email",
+    "/resend-verification",
+    "/forgot-password",
+    "/reset-password",
+    "/",
+  ];
+
+  const shouldShowHeader = !pagesWithoutHeader.includes(location.pathname);
 
   return (
     <div className="app-shell">
+      {shouldShowHeader && <Header />}
       <SessionNotifications />
 
       <main className="app-main">
@@ -196,7 +212,7 @@ function AppContent() {
             }
           />
 
-  {/* Admin orders */}
+          {/* Admin orders */}
           <Route
             path="/admin/orders"
             element={

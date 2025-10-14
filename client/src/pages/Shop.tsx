@@ -2,8 +2,17 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
-import Header from "../components/common/Header";
-import { Card, Row, Col, Spin, Empty, Button, Typography, Pagination, message } from "antd";
+import {
+  Card,
+  Row,
+  Col,
+  Spin,
+  Empty,
+  Button,
+  Typography,
+  Pagination,
+  message,
+} from "antd";
 import { ShoppingCartOutlined } from "@ant-design/icons";
 import "../styles/shop.scss";
 import imagesDefault from "../../../client/public/images/1827380.png";
@@ -51,7 +60,6 @@ export default function Shop() {
   const displayedProducts = products.slice(startIndex, endIndex);
   return (
     <>
-      <Header />
       <div className="shop-container" style={{ padding: "20px 50px" }}>
         <Title level={2} style={{ textAlign: "center", marginBottom: "30px" }}>
           List products
@@ -125,7 +133,9 @@ export default function Shop() {
                             image: p.images?.[0] || imagesDefault,
                             quantity: 1,
                           });
-                          message.success(`${p.name} đã được thêm vào giỏ hàng`);
+                          message.success(
+                            `${p.name} đã được thêm vào giỏ hàng`
+                          );
                         } catch (err) {
                           console.error("Add to cart error", err);
                           message.error("Không thể thêm sản phẩm vào giỏ hàng");
@@ -138,7 +148,14 @@ export default function Shop() {
                 </Col>
               ))}
             </Row>
-            <div style={{ textAlign: "center", marginTop: "30px", display: 'flex', justifyContent: 'center' }}>
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: "30px",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}

@@ -1,34 +1,40 @@
-import { NavLink, useNavigate } from "react-router-dom";
 import {
-  FaSearch,
-  FaHeart,
-  FaShoppingBag,
   FaBell,
   FaChevronDown,
-  FaUser,
+  FaHeart,
+  FaSearch,
+  FaShoppingBag,
   FaSignOutAlt,
+  FaUser,
 } from "react-icons/fa";
-import { useState, useRef, useEffect } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { fetchNotifications } from "../../api/notifications";
 import logo from "/logo.png";
 import "../../styles/layout.scss";
-import { fetchNotifications } from "../../api/notifications";
 
 export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [query, setQuery] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const [numberNotifications, setNumberNotifications] = useState(0);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, user } = useAuth();
   const { cart } = useCart();
 
-  const name = user?.name || localStorage.getItem("name") || "User";
+  const name = useMemo(
+    () => user?.name || localStorage.getItem("name") || "User",
+    [user?.name]
+  );
   const avatar = user?.avatar || localStorage.getItem("avatar");
+  const isAdmin = user?.role === "admin";
+  const isAdminSection = isAdmin && location.pathname.startsWith("/admin");
 
-  // Đóng dropdown khi click ra ngoài
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -42,9 +48,9 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Lấy số thông báo chưa đọc
+  // Load unread notifications count
   useEffect(() => {
-    const load = async () => {
+    const loadNotifications = async () => {
       try {
         const list = await fetchNotifications();
         setNumberNotifications(
@@ -54,7 +60,7 @@ export default function Header() {
         console.warn("Unable to load notifications");
       }
     };
-    load();
+    loadNotifications();
   }, []);
 
   const handleLogout = () => {
@@ -63,12 +69,17 @@ export default function Header() {
     navigate("/login");
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (query.trim().length > 0) {
-      navigate(`/shop?search=${encodeURIComponent(query)}`);
+    if (query.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(query.trim())}`);
       setQuery("");
     }
+  };
+
+  const handleProfileClick = () => {
+    setShowDropdown(false);
+    navigate(isAdmin ? "/profileAdmin" : "/profile");
   };
 
   return (
@@ -82,15 +93,87 @@ export default function Header() {
 
         {/* --- CENTER: Navigation --- */}
         <nav className="nav">
-          <NavLink to="/shop">Shop</NavLink>
-          <NavLink to="/home">Home</NavLink>
-          <NavLink to="/addresses">Address Book</NavLink>
-          <NavLink to="/notifications">Notifications</NavLink>
+          {isAdminSection ? (
+            <>
+              <NavLink
+                to="/admin"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/admin/dashboard/revenue"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Revenue
+              </NavLink>
+              <NavLink
+                to="/admin/dashboard/orders"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Order Stats
+              </NavLink>
+              <NavLink
+                to="/admin/orders"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Orders
+              </NavLink>
+              <NavLink
+                to="/admin/products"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Products
+              </NavLink>
+              <NavLink
+                to="/admin/categories"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Categories
+              </NavLink>
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Users
+              </NavLink>
+              <NavLink
+                to="/admin/notifications"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Notifications
+              </NavLink>
+
+              <button
+                onClick={() => navigate("/shop")}
+                className="shop-toggle-btn"
+                title="Switch to Customer Shop View"
+              >
+                Shop View
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/shop">Shop</NavLink>
+              <NavLink to="/home">Home</NavLink>
+              <NavLink to="/addresses">Address Book</NavLink>
+              <NavLink to="/notifications">Notifications</NavLink>
+
+              {isAdmin && (
+                <button
+                  onClick={() => navigate("/admin")}
+                  className="admin-toggle-btn"
+                  title="Switch to Admin Dashboard"
+                >
+                  Admin Panel
+                </button>
+              )}
+            </>
+          )}
         </nav>
 
-  {/* --- RIGHT: Search, Icons, Avatar --- */}
-  <div className="header-right" onClick={(e) => e.stopPropagation()}>
-          {/* Search box */}
+        {/* --- RIGHT: Search, Icons, Avatar --- */}
+        <div className="header-right" onClick={(e) => e.stopPropagation()}>
           <form className="search-box" onSubmit={handleSearchSubmit}>
             <FaSearch className="search-icon" />
             <input
@@ -101,7 +184,6 @@ export default function Header() {
             />
           </form>
 
-          {/* Icons */}
           <div className="icons">
             <div
               className="notification-wrapper"
@@ -119,8 +201,7 @@ export default function Header() {
               className="icon cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                console.log('Header: cart icon clicked, navigating to /cart');
-                navigate('/cart');
+                navigate("/cart");
               }}
             >
               <FaShoppingBag />
@@ -128,10 +209,9 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Avatar & Dropdown */}
           <div className="relative user-menu" ref={dropdownRef}>
             <div
-              onClick={() => setShowDropdown(!showDropdown)}
+              onClick={() => setShowDropdown((prev) => !prev)}
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded-full px-2 py-1 transition"
               title="User Menu"
             >
@@ -164,10 +244,7 @@ export default function Header() {
                 </div>
 
                 <button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    navigate("/profileAdmin");
-                  }}
+                  onClick={handleProfileClick}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                 >
                   <FaUser className="text-gray-500" />

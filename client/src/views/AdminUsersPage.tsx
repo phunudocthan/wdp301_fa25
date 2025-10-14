@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { adminApi, AdminUserListResponse } from "../api/admin";
-import AdminNav from "./AdminNav";
 import { useAuth } from "../components/context/AuthContext";
 import "../styles/AdminDashboard.css";
 
@@ -108,7 +107,6 @@ const AdminUsersPage: React.FC = () => {
 
   return (
     <div className="admin-page">
-      <AdminNav />
       <h1>User directory</h1>
       <p className="admin-subtitle">
         Browse every account, inspect details, and lock access in one place.

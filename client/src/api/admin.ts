@@ -38,6 +38,21 @@ export interface OrderDashboardResponse {
   }>;
 }
 
+export interface AdminOverviewResponse {
+  revenue: {
+    last30Days: number;
+  };
+  orders: {
+    orders: number;
+    revenue: number;
+    statusBreakdown: Record<string, OrderStatusInfo>;
+  };
+  users: {
+    total: number;
+    byStatus: Record<string, number>;
+  };
+}
+
 export interface AdminUserListParams {
   page?: number;
   limit?: number;
@@ -75,6 +90,11 @@ export interface AdminUserDetailResponse {
 }
 
 export const adminApi = {
+  getOverview: () =>
+    axiosInstance
+      .get<AdminOverviewResponse>("/admin/dashboard/overview")
+      .then((res) => res.data),
+
   getRevenueDashboard: () =>
     axiosInstance
       .get<RevenueDashboardResponse>("/admin/dashboard/revenue")

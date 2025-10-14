@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { adminApi, RevenueDashboardResponse } from "../api/admin";
-import AdminNav from "./AdminNav";
 import { useAuth } from "../components/context/AuthContext";
 import "../styles/AdminDashboard.css";
 
@@ -85,7 +84,6 @@ const AdminRevenueDashboard: React.FC = () => {
 
   return (
     <div className="admin-page">
-      <AdminNav />
       <h1>Revenue insights</h1>
       <p className="admin-subtitle">
         Stay on top of store performance to make decisions with confidence.

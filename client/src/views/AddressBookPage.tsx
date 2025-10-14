@@ -9,7 +9,6 @@ import {
   AddressPayload,
 } from "../api/user";
 import type { UserAddress } from "../types/user";
-import Header from "../components/common/Header";
 import "../styles/AddressBookPage.scss";
 
 const emptyAddressForm: AddressPayload = {
@@ -26,7 +25,9 @@ const emptyAddressForm: AddressPayload = {
 const AddressBookPage: React.FC = () => {
   // luôn khởi tạo [] để không lỗi prev is not iterable
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
-  const [formData, setFormData] = useState<AddressPayload>({ ...emptyAddressForm });
+  const [formData, setFormData] = useState<AddressPayload>({
+    ...emptyAddressForm,
+  });
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,7 +55,8 @@ const AddressBookPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }; useEffect(() => {
+  };
+  useEffect(() => {
     fetchAddresses();
   }, []);
 
@@ -66,7 +68,12 @@ const AddressBookPage: React.FC = () => {
     const { name, value, type } = target;
     const checked = (target as HTMLInputElement).checked;
     // sanitize phone: remove non-digit
-    const newValue = name === 'phone' ? String(value).replace(/\D/g, '').slice(0, 10) : (type === 'checkbox' ? checked : value);
+    const newValue =
+      name === "phone"
+        ? String(value).replace(/\D/g, "").slice(0, 10)
+        : type === "checkbox"
+        ? checked
+        : value;
     setFormData((prev) => ({
       ...prev,
       [name]: newValue,
@@ -76,7 +83,8 @@ const AddressBookPage: React.FC = () => {
     const fieldError = validateField(name, newValue);
     setFieldErrors((prev) => {
       const copy = { ...prev };
-      if (fieldError) copy[name] = fieldError; else delete copy[name];
+      if (fieldError) copy[name] = fieldError;
+      else delete copy[name];
       return copy;
     });
   };
@@ -84,33 +92,37 @@ const AddressBookPage: React.FC = () => {
   // validate helpers
   const phoneRegex = /^0\d{9}$/;
   const validateField = (name: string, value: any) => {
-    const v = value === undefined || value === null ? '' : String(value);
-    if (name === 'recipientName') {
-      if (!v.trim()) return 'Recipient name is required';
+    const v = value === undefined || value === null ? "" : String(value);
+    if (name === "recipientName") {
+      if (!v.trim()) return "Recipient name is required";
     }
-    if (name === 'phone') {
-      if (!v.trim()) return 'Phone is required';
-      if (!phoneRegex.test(v)) return 'Phone must be 10 digits and start with 0';
+    if (name === "phone") {
+      if (!v.trim()) return "Phone is required";
+      if (!phoneRegex.test(v))
+        return "Phone must be 10 digits and start with 0";
     }
-    if (name === 'street') {
-      if (!v.trim()) return 'Street is required';
+    if (name === "street") {
+      if (!v.trim()) return "Street is required";
     }
-    return '';
+    return "";
   };
 
   const validateAll = (data: AddressPayload) => {
     const errors: Record<string, string> = {};
-    const r = validateField('recipientName', data.recipientName);
+    const r = validateField("recipientName", data.recipientName);
     if (r) errors.recipientName = r;
-    const p = validateField('phone', data.phone);
+    const p = validateField("phone", data.phone);
     if (p) errors.phone = p;
-    const s = validateField('street', data.street);
+    const s = validateField("street", data.street);
     if (s) errors.street = s;
     return errors;
   };
 
-  const isFormValid = Object.keys(fieldErrors).length === 0 &&
-    !!formData.recipientName && phoneRegex.test(String(formData.phone)) && !!formData.street;
+  const isFormValid =
+    Object.keys(fieldErrors).length === 0 &&
+    !!formData.recipientName &&
+    phoneRegex.test(String(formData.phone)) &&
+    !!formData.street;
 
   // 📌 Sửa địa chỉ
   const handleEdit = (address: UserAddress) => {
@@ -143,8 +155,10 @@ const AddressBookPage: React.FC = () => {
       setFieldErrors(errors);
       // focus first invalid
       const first = Object.keys(errors)[0];
-      const el = document.getElementsByName(first)[0] as HTMLElement | undefined;
-      if (el && typeof el.focus === 'function') el.focus();
+      const el = document.getElementsByName(first)[0] as
+        | HTMLElement
+        | undefined;
+      if (el && typeof el.focus === "function") el.focus();
       setSubmitting(false);
       return;
     }
@@ -155,12 +169,16 @@ const AddressBookPage: React.FC = () => {
         setAddresses((prev) => [...(prev || []), result.address]);
         setMessage("Address added successfully!");
       } else if (mode === "edit" && editingId) {
-        const payload: Partial<AddressPayload> & { setAsDefault?: boolean } = { ...formData };
+        const payload: Partial<AddressPayload> & { setAsDefault?: boolean } = {
+          ...formData,
+        };
         if (formData.isDefault) payload.setAsDefault = true;
         const result = await updateAddress(editingId, payload);
         fetchAddresses();
         setAddresses((prev) =>
-          (prev || []).map((addr) => (addr._id === editingId ? result.address : addr))
+          (prev || []).map((addr) =>
+            addr._id === editingId ? result.address : addr
+          )
         );
         setMessage("Address updated successfully!");
       }
@@ -196,7 +214,10 @@ const AddressBookPage: React.FC = () => {
   // archive flow handled via confirm modal (openConfirm -> confirmRemove)
 
   // inline confirm target (shows small bubble next to Remove)
-  const [confirmTarget, setConfirmTarget] = useState<{ id: string; label?: string } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    id: string;
+    label?: string;
+  } | null>(null);
 
   const openConfirm = (id: string, label?: string) => {
     setConfirmTarget({ id, label });
@@ -223,7 +244,6 @@ const AddressBookPage: React.FC = () => {
 
   return (
     <>
-      <Header />
       <div className="address-page">
         <div className="address-header">
           <div>
@@ -253,8 +273,9 @@ const AddressBookPage: React.FC = () => {
               addresses.map((address) => (
                 <div
                   key={address._id}
-                  className={`card address-card ${address.isDefault ? "default" : ""
-                    }`}
+                  className={`card address-card ${
+                    address.isDefault ? "default" : ""
+                  }`}
                 >
                   <div className="address-info">
                     <h3>
@@ -268,14 +289,22 @@ const AddressBookPage: React.FC = () => {
                     <p>{address.recipientName}</p>
                     <p>{address.phone}</p>
                     <p>
-                      {[address.street, address.city, address.state, address.country]
+                      {[
+                        address.street,
+                        address.city,
+                        address.state,
+                        address.country,
+                      ]
                         .filter(Boolean)
                         .join(", ")}
                     </p>
                   </div>
                   <div className="address-actions">
                     <div className="action-row">
-                      <button className="btn btn-edit" onClick={() => handleEdit(address)}>
+                      <button
+                        className="btn btn-edit"
+                        onClick={() => handleEdit(address)}
+                      >
                         <Edit size={16} /> Edit
                       </button>
                       {!address.isDefault && (
@@ -287,20 +316,36 @@ const AddressBookPage: React.FC = () => {
                           <Star size={14} /> Default
                         </button>
                       )}
-                      <div style={{ position: 'relative' }}>
+                      <div style={{ position: "relative" }}>
                         <button
                           className="btn btn-remove"
-                          onClick={() => openConfirm(address._id!, address.label)}
+                          onClick={() =>
+                            openConfirm(address._id!, address.label)
+                          }
                           disabled={actionLoading}
                         >
                           <Trash2 size={14} /> Remove
                         </button>
                         {confirmTarget?.id === address._id && (
                           <div className="confirm-bubble">
-                            <div className="confirm-text">Remove "{confirmTarget?.label || ''}"?</div>
+                            <div className="confirm-text">
+                              Remove "{confirmTarget?.label || ""}"?
+                            </div>
                             <div className="confirm-actions">
-                              <button className="btn btn-default" onClick={() => closeConfirm()} disabled={actionLoading}>Cancel</button>
-                              <button className="btn btn-remove" onClick={() => confirmRemove()} disabled={actionLoading}>Yes</button>
+                              <button
+                                className="btn btn-default"
+                                onClick={() => closeConfirm()}
+                                disabled={actionLoading}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                className="btn btn-remove"
+                                onClick={() => confirmRemove()}
+                                disabled={actionLoading}
+                              >
+                                Yes
+                              </button>
                             </div>
                           </div>
                         )}
@@ -368,7 +413,9 @@ const AddressBookPage: React.FC = () => {
                   placeholder="0xxxxxxxxx"
                   aria-invalid={!!fieldErrors.phone}
                 />
-                {fieldErrors.phone && <div className="field-error">{fieldErrors.phone}</div>}
+                {fieldErrors.phone && (
+                  <div className="field-error">{fieldErrors.phone}</div>
+                )}
               </label>
 
               <label htmlFor="street">
@@ -381,7 +428,9 @@ const AddressBookPage: React.FC = () => {
                   placeholder="123 Example St"
                   aria-invalid={!!fieldErrors.street}
                 />
-                {fieldErrors.street && <div className="field-error">{fieldErrors.street}</div>}
+                {fieldErrors.street && (
+                  <div className="field-error">{fieldErrors.street}</div>
+                )}
               </label>
 
               <div className="grid-2">
@@ -418,7 +467,7 @@ const AddressBookPage: React.FC = () => {
                     placeholder="Vietnam"
                   />
                 </label>
-                <div style={{alignSelf: 'center'}}></div>
+                <div className="align-self-center"></div>
               </div>
 
               <label className="checkbox">
@@ -427,7 +476,7 @@ const AddressBookPage: React.FC = () => {
                   name="isDefault"
                   checked={!!formData.isDefault}
                   onChange={handleChange}
-                />{' '}
+                />{" "}
                 Set as default
               </label>
 
@@ -436,7 +485,11 @@ const AddressBookPage: React.FC = () => {
 
               <div className="help">Phone format: 0xxxxxxxxx</div>
 
-              <button type="submit" className="btn-primary" disabled={submitting || !isFormValid}>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={submitting || !isFormValid}
+              >
                 <Save size={18} />{" "}
                 {mode === "edit" ? "Save changes" : "Save address"}
               </button>

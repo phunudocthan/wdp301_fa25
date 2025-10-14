@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
-import Header from "../components/common/Header";
 import HeroSlider from "../components/HeroSlider/HeroSlider";
 import "./../styles/home.scss";
 
@@ -18,13 +17,10 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(true);
 
   const location = useLocation();
-  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const search = params.get("search") || "";
 
-  const handleAvatarClick = () => {
-    navigate("/profile");
-  };
+  // removed unused handleAvatarClick (navigation handled elsewhere)
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -46,10 +42,6 @@ export default function Home() {
 
   return (
     <div className="homepage">
-      {/* Header */}
-      <Header />
-
-    
       {/* 🔥 Hero Slider (banner tự động chạy) */}
       <HeroSlider />
 

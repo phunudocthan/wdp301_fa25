@@ -10,7 +10,6 @@ import {
 } from "../api/notifications";
 import { apiBaseURL } from "../api/axiosInstance";
 import { storage } from "../lib/storage";
-import Header from "../components/common/Header";
 import "../styles/NotificationsPage.scss";
 
 Modal.setAppElement("#root"); // quan trọng, để accessibility
@@ -20,11 +19,15 @@ const socketEndpoint = apiBaseURL.replace(/\/api$/, "");
 const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   // connection status is tracked but not used in UI; keep ref via ref if needed later
-  const connectionStatusRef = useRef<"connecting" | "connected" | "disconnected">("connecting");
+  const connectionStatusRef = useRef<
+    "connecting" | "connected" | "disconnected"
+  >("connecting");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<NotificationItem | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [detailMissingMessage, setDetailMissingMessage] = useState<string | null>(null);
+  const [detailMissingMessage, setDetailMissingMessage] = useState<
+    string | null
+  >(null);
   const socketRef = useRef<Socket | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -65,15 +68,20 @@ const NotificationsPage: React.FC = () => {
     });
     socketRef.current = socket;
 
-  socket.on("connect", () => (connectionStatusRef.current = "connected"));
-  socket.on("disconnect", () => (connectionStatusRef.current = "disconnected"));
+    socket.on("connect", () => (connectionStatusRef.current = "connected"));
+    socket.on(
+      "disconnect",
+      () => (connectionStatusRef.current = "disconnected")
+    );
 
     socket.on("notification:new", (payload: NotificationItem) => {
       setNotifications((prev) => {
         const exists = prev.some((item) => item._id === payload._id);
         if (exists) {
           return prev.map((item) =>
-            item._id === payload._id ? { ...payload, status: payload.status || "unread" } : item
+            item._id === payload._id
+              ? { ...payload, status: payload.status || "unread" }
+              : item
           );
         }
         return [payload, ...prev];
@@ -81,7 +89,11 @@ const NotificationsPage: React.FC = () => {
     });
 
     socket.on("notification:updated", (payload: NotificationItem) => {
-      setNotifications((prev) => prev.map((item) => (item._id === payload._id ? { ...item, ...payload } : item)));
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item._id === payload._id ? { ...item, ...payload } : item
+        )
+      );
     });
 
     socket.on("notification:deleted", ({ _id }: { _id: string }) => {
@@ -94,7 +106,8 @@ const NotificationsPage: React.FC = () => {
       setNotifications((prev) => {
         // if exists, replace, otherwise insert at top
         const exists = prev.some((p) => p._id === payload._id);
-        if (exists) return prev.map((p) => (p._id === payload._id ? payload : p));
+        if (exists)
+          return prev.map((p) => (p._id === payload._id ? payload : p));
         return [payload, ...prev];
       });
     });
@@ -109,7 +122,9 @@ const NotificationsPage: React.FC = () => {
     try {
       const updated = await markNotificationRead(id);
       setNotifications((prev) =>
-        prev.map((item) => (item._id === updated._id ? { ...item, status: updated.status } : item))
+        prev.map((item) =>
+          item._id === updated._id ? { ...item, status: updated.status } : item
+        )
       );
     } catch (err) {
       console.error("Failed to mark notification read", err);
@@ -127,7 +142,10 @@ const NotificationsPage: React.FC = () => {
     } catch (err: any) {
       // if not found or removed, show friendly message
       setDetail(null);
-      setDetailMissingMessage(err?.response?.data?.msg || "Thông báo này đã bị thu hồi hoặc không tồn tại.");
+      setDetailMissingMessage(
+        err?.response?.data?.msg ||
+          "Thông báo này đã bị thu hồi hoặc không tồn tại."
+      );
     } finally {
       setLoadingDetail(false);
     }
@@ -135,7 +153,6 @@ const NotificationsPage: React.FC = () => {
 
   return (
     <>
-      <Header />
       <div className="notifications-page">
         <div className="notifications-header">
           <h1>
@@ -152,18 +169,41 @@ const NotificationsPage: React.FC = () => {
 
         <div className="notifications-list">
           {filteredNotifications.map((notification) => (
-            <div key={notification._id} className={`card notification ${notification.status === 'unread' ? 'unread' : ''}`}>
-              <div className="notification-content" onClick={() => handleShowDetail(notification._id)}>
+            <div
+              key={notification._id}
+              className={`card notification ${
+                notification.status === "unread" ? "unread" : ""
+              }`}
+            >
+              <div
+                className="notification-content"
+                onClick={() => handleShowDetail(notification._id)}
+              >
                 <div className="notification-meta">
-                  <span className={`category ${notification.category}`}>{notification.category}</span>
-                  <small className="tag-new">{notification.createdAt ? new Date(notification.createdAt).toLocaleString() : ''}</small>
+                  <span className={`category ${notification.category}`}>
+                    {notification.category}
+                  </span>
+                  <small className="tag-new">
+                    {notification.createdAt
+                      ? new Date(notification.createdAt).toLocaleString()
+                      : ""}
+                  </small>
                 </div>
                 <h3>{notification.title}</h3>
                 <p>{notification.message}</p>
-                {notification.link && <a href={notification.link} target="_blank" rel="noreferrer">View more</a>}
+                {notification.link && (
+                  <a href={notification.link} target="_blank" rel="noreferrer">
+                    View more
+                  </a>
+                )}
               </div>
               <div className="notification-actions">
-                <button className="btn-read" onClick={() => handleMarkRead(notification._id)}>Mark read</button>
+                <button
+                  className="btn-read"
+                  onClick={() => handleMarkRead(notification._id)}
+                >
+                  Mark read
+                </button>
               </div>
             </div>
           ))}
@@ -175,10 +215,25 @@ const NotificationsPage: React.FC = () => {
           contentLabel="Notification Detail"
           style={{
             overlay: { backgroundColor: "rgba(0,0,0,0.5)" },
-            content: { maxWidth: "500px", maxHeight: "300px", margin: "auto", borderRadius: "8px", padding: "20px", position: "absolute", zIndex: 1001 },
+            content: {
+              maxWidth: "500px",
+              maxHeight: "300px",
+              margin: "auto",
+              borderRadius: "8px",
+              padding: "20px",
+              position: "absolute",
+              zIndex: 1001,
+            },
           }}
         >
-          <button onClick={() => { setSelectedId(null); setDetail(null); setDetailMissingMessage(null); }} style={{ float: "right" }}>
+          <button
+            className="modal-close-btn"
+            onClick={() => {
+              setSelectedId(null);
+              setDetail(null);
+              setDetailMissingMessage(null);
+            }}
+          >
             ×
           </button>
           {loadingDetail ? (

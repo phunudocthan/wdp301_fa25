@@ -1,8 +1,15 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
-import Header from "../components/common/Header";
-import { Settings, User, Layers, Calendar, Box, Palette, Star } from "lucide-react";
+import {
+  Settings,
+  User,
+  Layers,
+  Calendar,
+  Box,
+  Palette,
+  Star,
+} from "lucide-react";
 import "../styles/productDetail.scss";
 import { message } from "antd";
 import { useCart } from "../components/context/CartContext";
@@ -53,9 +60,13 @@ export default function ProductDetail() {
 
   return (
     <>
-      <Header />
       <div className="product-detail-page">
-        <button className="back-btn" onClick={() => window.history.back()}>
+        <button
+          className="back-btn"
+          onClick={() => window.history.back()}
+          title="Go back"
+          aria-label="Go back"
+        >
           <ArrowLeftOutlined />
         </button>
         <div className="product-container">
@@ -111,7 +122,7 @@ export default function ProductDetail() {
               <span>{quantity}</span>
               <button onClick={() => setQuantity(quantity + 1)}>+</button>
             </div>
-           
+
             <button
               className="add-btn"
               onClick={(e) => {
@@ -122,15 +133,16 @@ export default function ProductDetail() {
                     id: product._id,
                     name: product.name,
                     price: product.price,
-                    image: selectedImg || product.images?.[0] || '/placeholder.png',
+                    image:
+                      selectedImg || product.images?.[0] || "/placeholder.png",
                     quantity,
                   });
                   message.success(`${product.name} đã được thêm vào giỏ hàng`);
                   // Redirect user to cart page so they can review items
-                  navigate('/cart');
+                  navigate("/cart");
                 } catch (err) {
-                  console.error('Add to cart error', err);
-                  message.error('Không thể thêm sản phẩm vào giỏ hàng');
+                  console.error("Add to cart error", err);
+                  message.error("Không thể thêm sản phẩm vào giỏ hàng");
                 }
               }}
             >
@@ -187,7 +199,6 @@ export default function ProductDetail() {
                     <span className="value">{product.stock} items</span>
                   </div>
                 </div>
-
 
                 <div className="meta-item">
                   <Calendar size={16} className="icon" />

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { adminApi, OrderDashboardResponse } from "../api/admin";
-import AdminNav from "./AdminNav";
 import { useAuth } from "../components/context/AuthContext";
 import "../styles/AdminDashboard.css";
 
@@ -71,7 +70,6 @@ const AdminOrdersDashboard: React.FC = () => {
 
   return (
     <div className="admin-page">
-      <AdminNav />
       <h1>Order overview</h1>
       <p className="admin-subtitle">
         Track fulfilment progress and spot issues across every status.

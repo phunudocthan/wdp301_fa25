@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { adminApi, AdminUserDetailResponse } from "../api/admin";
-import AdminNav from "./AdminNav";
 import { useAuth } from "../components/context/AuthContext";
 import "../styles/AdminDashboard.css";
 
@@ -61,7 +60,6 @@ const AdminUserDetailPage: React.FC = () => {
 
   return (
     <div className="admin-page">
-      <AdminNav />
       <button className="admin-button is-secondary" onClick={() => navigate(-1)} style={{ marginBottom: 16 }}>
         Back
       </button>

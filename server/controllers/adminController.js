@@ -100,6 +100,93 @@ const aggregateRevenueByDate = async ({ startDate, groupFormat }) => {
   }, {});
 };
 
+exports.getOverviewStats = async (req, res) => {
+  try {
+    const monthDays = generateSequentialDates(30);
+    const startDate = monthDays[0];
+
+    const [revenueMap, orderAgg, userAgg] = await Promise.all([
+      aggregateRevenueByDate({
+        startDate,
+        groupFormat: "%Y-%m-%d",
+      }),
+      Order.aggregate([
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+            revenue: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $in: ["$status", REVENUE_STATUSES] },
+                      {
+                        $not: [
+                          { $in: ["$paymentStatus", ["failed", "refunded"]] },
+                        ],
+                      },
+                    ],
+                  },
+                  "$total",
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      ]),
+      User.aggregate([
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const revenueTotal = Object.values(revenueMap).reduce(
+      (acc, value) => acc + Number(value || 0),
+      0
+    );
+
+    const orderTotals = orderAgg.reduce(
+      (acc, entry) => {
+        acc.orders += entry.count;
+        acc.revenue += Number(entry.revenue || 0);
+        acc.statusBreakdown[entry._id] = {
+          count: entry.count,
+          revenue: Number(entry.revenue || 0),
+        };
+        return acc;
+      },
+      { orders: 0, revenue: 0, statusBreakdown: {} }
+    );
+
+    const userTotals = userAgg.reduce(
+      (acc, entry) => {
+        const key = entry._id || "unknown";
+        acc.byStatus[key] = entry.count;
+        acc.total += entry.count;
+        return acc;
+      },
+      { total: 0, byStatus: {} }
+    );
+
+    res.json({
+      revenue: {
+        last30Days: revenueTotal,
+      },
+      orders: orderTotals,
+      users: userTotals,
+    });
+  } catch (error) {
+    console.error("getOverviewStats error:", error);
+    res.status(500).json({ message: "Failed to fetch overview stats" });
+  }
+};
+
 exports.getRevenueStats = async (req, res) => {
   try {
     const weekDays = generateSequentialDates(7);

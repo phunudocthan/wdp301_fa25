@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { restoreNotification } from "../api/notifications";
-import AdminNav from "./AdminNav";
 import "./../styles/AdminNotificationPage.css";
 
 interface NotificationItem {
@@ -250,7 +249,6 @@ const AdminNotificationPage: React.FC = () => {
 
   return (
     <div className="admin-container">
-      <AdminNav />
       <h1 className="admin-title">Quản lý Notification</h1>
 
       <form onSubmit={handleSend} className="admin-form">
