@@ -41,12 +41,16 @@ export default function Shop() {
   const [sortBy, setSortBy] = useState<string>();
   const [theme, setTheme] = useState<string>();
   const [category, setCategory] = useState<string>();
+  const [themes, setThemes] = useState<any[]>([]);
+  const [ageRanges, setAgeRanges] = useState<any[]>([]);
+  const [difficulties, setDifficulties] = useState<any[]>([]);
+
   const [difficulty, setDifficulty] = useState<string>();
   const [ageRange, setAgeRange] = useState<string>();
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const location = useLocation();
 
-  // --- Gọi API ---
+  // --- Fetch Products ---
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -69,6 +73,12 @@ export default function Shop() {
       } else if (sortBy === "price_desc") {
         params.append("sortBy", "price");
         params.append("sortOrder", "desc");
+      } else if (sortBy === "name_asc") {
+        params.append("sortBy", "name");
+        params.append("sortOrder", "asc");
+      } else if (sortBy === "name_desc") {
+        params.append("sortBy", "name");
+        params.append("sortOrder", "desc");
       } else if (sortBy === "newest") {
         params.append("sortBy", "createdAt");
         params.append("sortOrder", "desc");
@@ -89,6 +99,21 @@ export default function Shop() {
       setLoading(false);
     }
   };
+
+  // --- Get Filters Meta ---
+  useEffect(() => {
+    const fetchFilterMeta = async () => {
+      try {
+        const res = await axiosInstance.get("/products/filters/meta");
+        setThemes(res.data.data.themes || []);
+        setAgeRanges(res.data.data.ageRanges || []);
+        setDifficulties(res.data.data.difficulties || []);
+      } catch (err) {
+        console.error("❌ Error fetching filter meta:", err);
+      }
+    };
+    fetchFilterMeta();
+  }, []);
 
   // --- Gọi API mỗi khi filter/search/sort thay đổi ---
   useEffect(() => {
@@ -129,16 +154,17 @@ export default function Shop() {
           />
 
           <Space>
-
             <Select
               placeholder="Difficulty"
               allowClear
               style={{ width: 150 }}
               onChange={(value) => setDifficulty(value)}
             >
-              <Option value="easy">Easy</Option>
-              <Option value="medium">Medium</Option>
-              <Option value="hard">Hard</Option>
+              {difficulties.map((difficulty) => (
+                <Option key={difficulty._id} value={difficulty._id}>
+                  {difficulty.label}
+                </Option>
+              ))}
             </Select>
 
             <Select
@@ -147,9 +173,11 @@ export default function Shop() {
               style={{ width: 150 }}
               onChange={(value) => setAgeRange(value)}
             >
-              <Option value="5-8">5–8</Option>
-              <Option value="9-12">9–12</Option>
-              <Option value="13+">13+</Option>
+              {ageRanges.map((range) => (
+                <Option key={range._id} value={range._id}>
+                  {range.rangeLabel}
+                </Option>
+              ))}
             </Select>
 
             <Select
@@ -161,6 +189,8 @@ export default function Shop() {
               <Option value="price_asc">Price: Low → High</Option>
               <Option value="price_desc">Price: High → Low</Option>
               <Option value="newest">Newest</Option>
+              <Option value="name_asc">Name: A → Z</Option>
+              <Option value="name_desc">Name: Z → A</Option>
             </Select>
 
             <div style={{ width: 200 }}>

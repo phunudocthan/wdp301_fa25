@@ -49,7 +49,6 @@ export default function HeroSlider() {
                 <div className="content">
                   <h1>{s.title}</h1>
                   <p>{s.subtitle}</p>
-                  <button>{s.button}</button>
                 </div>
               </div>
             </div>

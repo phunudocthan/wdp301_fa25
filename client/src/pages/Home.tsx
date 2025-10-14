@@ -95,13 +95,13 @@ export default function Home() {
       if (!categoryId) {
         // 🟢 Load all products when clicking "All"
         const res = await axiosInstance.get("/products");
-        const products = extractArray(res.data);
+        const products =  res.data?.data?.products
         setFilteredProducts(products);
         return;
       }
 
       const res = await axiosInstance.get(`/products/caterory_list/${categoryId}`);
-      const products = extractArray(res.data);
+      const products = res.data?.data
       setFilteredProducts(products);
 
       if (products.length === 0) {
@@ -127,7 +127,9 @@ export default function Home() {
     if (Array.isArray(data.products)) return data.products;
     return [];
   };
-
+  useEffect(() => {
+    fetchProductByCategory(null);
+  }, []);
   // 🔹 Pagination
   const safeProducts = Array.isArray(filteredProducts) ? filteredProducts : [];
   const paginatedProducts = safeProducts.slice(
@@ -163,7 +165,8 @@ export default function Home() {
             style={{
               borderRadius: 10,
               padding: "10px 16px",
-              flexShrink: 0,
+              flexShrink: 0, width: 140,
+              height: 180,
               fontWeight: 500,
             }}
           >
@@ -180,12 +183,20 @@ export default function Home() {
                 borderRadius: 10,
                 padding: "10px 16px",
                 flexShrink: 0,
+                width: 140,
+                height: 180,
+                color: "#fff",
+                // Set background image using inline style
+                backgroundImage: `url(${getFullImageURL(c.image)})`, // Use the proper CSS syntax for background-image
+                backgroundSize: 'cover',  // Optional, to cover the button area with the image
+                backgroundPosition: 'center', // Optional, to center the image within the button
                 fontWeight: 500,
               }}
             >
               {c.name}
             </Button>
           ))}
+
         </div>
       </section>
 
