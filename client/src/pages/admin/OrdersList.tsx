@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Popconfirm, Tag, notification } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Table, Button, Popconfirm, Tag, notification, message, Select } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import axiosInstance from '../../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
-import { EyeOutlined, CheckOutlined, CloseOutlined, SwapRightOutlined, ShoppingOutlined } from '@ant-design/icons';
+import { EyeOutlined, CloseOutlined, SwapRightOutlined, ShoppingOutlined } from '@ant-design/icons';
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -22,6 +22,16 @@ type Order = {
   createdAt?: string;
 };
 
+const STATUS_OPTIONS = [
+  { label: 'All statuses', value: 'all' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Confirmed', value: 'confirmed' },
+  { label: 'Shipped', value: 'shipped' },
+  { label: 'Delivered', value: 'delivered' },
+  { label: 'Cancelled', value: 'canceled' },
+  { label: 'Refunded', value: 'refunded' },
+];
+
 const OrdersList: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,12 +39,21 @@ const OrdersList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const navigate = useNavigate();
 
-  const fetchOrders = async (p = page, limit = pageSize) => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get(`/orders?page=${p}&limit=${limit}`);
+      const params: Record<string, unknown> = {
+        page,
+        limit: pageSize,
+      };
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+
+      const res = await axiosInstance.get('/orders', { params });
       // server returns { items, total, page, pageSize }
       const items = res.data.items || [];
       // normalize customer field: if userId present show id or name/email if available
@@ -49,12 +68,11 @@ const OrdersList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, statusFilter]);
 
   useEffect(() => {
-    fetchOrders(1, pageSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchOrders();
+  }, [fetchOrders]);
 
   const handleChangeStatus = async (id: string, nextStatus: string) => {
     try {
@@ -67,7 +85,7 @@ const OrdersList: React.FC = () => {
         placement: 'topRight',
         duration: 3,
       });
-      fetchOrders(page, pageSize);
+      fetchOrders();
     } catch (err: any) {
       notification.error({
         message: 'Update failed',
@@ -163,9 +181,25 @@ const OrdersList: React.FC = () => {
     },
   ];
 
+  const handleStatusFilterChange = (value: string) => {
+    setPage((prev) => (prev === 1 ? prev : 1));
+    setStatusFilter(value);
+  };
+
   return (
     <div className="admin-container p-4">
-      <h2 className="text-xl font-semibold mb-4">Orders</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 className="text-xl font-semibold">Orders</h2>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Filter by status:</span>
+          <Select
+            value={statusFilter}
+            style={{ width: 180 }}
+            onChange={handleStatusFilterChange}
+            options={STATUS_OPTIONS}
+          />
+        </div>
+      </div>
       <Table
         rowKey={(r) => r._id}
         columns={columns}
@@ -178,7 +212,6 @@ const OrdersList: React.FC = () => {
           onChange: (p, size) => {
             setPage(p);
             setPageSize(size || 10);
-            fetchOrders(p, size || 10);
           },
         }}
       />
