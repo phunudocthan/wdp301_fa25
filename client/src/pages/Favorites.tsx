@@ -12,6 +12,7 @@ import {
   message,
 } from "antd";
 import {
+  ArrowLeftOutlined,
   HeartFilled,
   HeartOutlined,
   ShoppingCartOutlined,
@@ -21,6 +22,9 @@ import { useCart } from "../components/context/CartContext";
 import type { FavoriteProduct } from "../api/favorites";
 import imagesDefault from "../../../client/public/images/1827380.png";
 import { resolveAssetUrl } from "../utils/assets";
+import { ArrowLeftRightIcon } from "lucide-react";
+import Header from "../components/common/Header";
+import Footer from "../components/common/Footer";
 
 const { Title } = Typography;
 const { Meta } = Card;
@@ -135,102 +139,111 @@ const FavoritesPage = () => {
   const hasFavorites = favorites.length > 0;
 
   return (
-    <div style={containerStyle}>
-      <div style={{ textAlign: "center", marginBottom: 32 }}>
-        <Title level={2}>Danh sách yêu thích</Title>
-        <p style={{ color: "#666", maxWidth: 520, margin: "0 auto" }}>
-          Lưu lại các bộ LEGO bạn yêu thích để tiện theo dõi và mua sắm sau.
-        </p>
-      </div>
+    <>
+      <Header />
 
-      {hasFavorites ? (
-        <Row gutter={[24, 24]}>
-          {favorites.map((item) => (
-            <Col
-              key={item.id}
-              xs={24}
-              sm={12}
-              md={8}
-              lg={6}
-              style={{ display: "flex", justifyContent: "center" }}
-            >
-              <Card
-                hoverable
-                style={cardStyle}
-                cover={
-                  <Link to={`/product/${item.id}`}>
-                    <img
-                      alt={item.name}
-                      src={resolveAssetUrl(item.images?.[0]) || imagesDefault}
-                      style={{
-                        height: 220,
-                        objectFit: "cover",
-                        width: "100%",
-                      }}
-                    />
-                  </Link>
-                }
+      <div style={containerStyle}>
+        <Button type="link" style={{ marginBottom: 24 }} onClick={() => window.history.back()}>
+          <ArrowLeftOutlined />
+
+        </Button>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <Title level={2}>Danh sách yêu thích</Title>
+          <p style={{ color: "#666", maxWidth: 520, margin: "0 auto" }}>
+            Lưu lại các bộ LEGO bạn yêu thích để tiện theo dõi và mua sắm sau.
+          </p>
+        </div>
+
+        {hasFavorites ? (
+          <Row gutter={[24, 24]}>
+            {favorites.map((item) => (
+              <Col
+                key={item.id}
+                xs={24}
+                sm={12}
+                md={8}
+                lg={6}
+                style={{ display: "flex", justifyContent: "center" }}
               >
-                <Meta
-                  title={
+                <Card
+                  hoverable
+                  style={cardStyle}
+                  cover={
                     <Link to={`/product/${item.id}`}>
-                      <span style={{ color: "#1677ff" }}>{item.name}</span>
+                      <img
+                        alt={item.name}
+                        src={resolveAssetUrl(item.images?.[0]) || imagesDefault}
+                        style={{
+                          height: 220,
+                          objectFit: "cover",
+                          width: "100%",
+                        }}
+                      />
                     </Link>
                   }
-                  description={
-                    <div style={{ marginTop: "8px" }}>
-                      <b style={{ fontSize: "16px", color: "#000" }}>
-                        ${Number(item.price || 0).toFixed(2)}
-                      </b>
-                    </div>
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() => handleToggleFavorite(item)}
-                  disabled={isPending(item.id)}
-                  style={{
-                    ...favoriteButtonStyle,
-                    cursor: isPending(item.id) ? "not-allowed" : "pointer",
-                    opacity: isPending(item.id) ? 0.6 : 1,
-                  }}
                 >
-                  {favoriteSet.has(item.id) ? (
-                    <HeartFilled style={{ color: "#f5222d" }} />
-                  ) : (
-                    <HeartOutlined style={{ color: "#555" }} />
-                  )}
-                </button>
-                <Button
-                  type="primary"
-                  icon={<ShoppingCartOutlined />}
-                  block
-                  style={{ marginTop: "12px", borderRadius: 8 }}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    handleAddToCart(item);
-                  }}
-                >
-                  Thêm vào giỏ
-                </Button>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      ) : (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "50vh",
-          }}
-        >
-          <Empty description="Bạn chưa có sản phẩm yêu thích nào." />
-        </div>
-      )}
-    </div>
+                  <Meta
+                    title={
+                      <Link to={`/product/${item.id}`}>
+                        <span style={{ color: "#1677ff" }}>{item.name}</span>
+                      </Link>
+                    }
+                    description={
+                      <div style={{ marginTop: "8px" }}>
+                        <b style={{ fontSize: "16px", color: "#000" }}>
+                          ${Number(item.price || 0).toFixed(2)}
+                        </b>
+                      </div>
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleToggleFavorite(item)}
+                    disabled={isPending(item.id)}
+                    style={{
+                      ...favoriteButtonStyle,
+                      cursor: isPending(item.id) ? "not-allowed" : "pointer",
+                      opacity: isPending(item.id) ? 0.6 : 1,
+                    }}
+                  >
+                    {favoriteSet.has(item.id) ? (
+                      <HeartFilled style={{ color: "#f5222d" }} />
+                    ) : (
+                      <HeartOutlined style={{ color: "#555" }} />
+                    )}
+                  </button>
+                  <Button
+                    type="primary"
+                    icon={<ShoppingCartOutlined />}
+                    block
+                    style={{ marginTop: "12px", borderRadius: 8 }}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      handleAddToCart(item);
+                    }}
+                  >
+                    Thêm vào giỏ
+                  </Button>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "50vh",
+            }}
+          >
+            <Empty description="Bạn chưa có sản phẩm yêu thích nào." />
+          </div>
+        )}
+      </div>      <Footer />
+
+    </>
   );
 };
 

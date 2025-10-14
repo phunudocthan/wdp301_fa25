@@ -14,6 +14,10 @@ import {
 } from "../api/axiosInstance";
 import { storage } from "../lib/storage";
 import "../styles/NotificationsPage.scss";
+import { Button } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import Header from "../components/common/Header";
+import Footer from "../components/common/Footer";
 
 Modal.setAppElement("#root"); // quan trọng, để accessibility
 
@@ -159,7 +163,7 @@ const NotificationsPage: React.FC = () => {
       setDetail(null);
       setDetailMissingMessage(
         err?.response?.data?.msg ||
-          "Thông báo này đã bị thu hồi hoặc không tồn tại."
+        "Thông báo này đã bị thu hồi hoặc không tồn tại."
       );
     } finally {
       setLoadingDetail(false);
@@ -168,6 +172,11 @@ const NotificationsPage: React.FC = () => {
 
   return (
     <>
+    <Header/>
+      <Button type="link" style={{ marginBottom: 24 }} onClick={() => window.history.back()}>
+        <ArrowLeftOutlined />
+
+      </Button>
       <div className="notifications-page">
         <div className="notifications-header">
           <h1>
@@ -186,9 +195,8 @@ const NotificationsPage: React.FC = () => {
           {filteredNotifications.map((notification) => (
             <div
               key={notification._id}
-              className={`card notification ${
-                notification.status === "unread" ? "unread" : ""
-              }`}
+              className={`card notification ${notification.status === "unread" ? "unread" : ""
+                }`}
             >
               <div
                 className="notification-content"
@@ -272,6 +280,7 @@ const NotificationsPage: React.FC = () => {
           )}
         </Modal>
       </div>
+      <Footer/>
     </>
   );
 };

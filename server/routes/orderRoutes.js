@@ -25,6 +25,33 @@ router.post('/', requireAuth, async (req, res) => {
     // calculate total server-side
     const total = items.reduce((s, it) => s + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
 
+    // Voucher logic
+    let appliedVoucher = null;
+    if (voucherId) {
+      const Voucher = require('../models/Voucher');
+      appliedVoucher = await Voucher.findById(voucherId);
+      if (!appliedVoucher) {
+        return res.status(400).json({ error: 'Voucher không tồn tại.' });
+      }
+      if (appliedVoucher.status !== 'active') {
+        return res.status(400).json({ error: 'Voucher không hoạt động.' });
+      }
+      if (new Date() > appliedVoucher.expiryDate) {
+        return res.status(400).json({ error: 'Voucher đã hết hạn.' });
+      }
+      // Đếm số đơn đã dùng voucher này (tổng thể)
+      const Order = require('../models/Order');
+      const usedCount = await Order.countDocuments({ voucherId });
+      if (usedCount >= appliedVoucher.usageLimit) {
+        return res.status(400).json({ error: 'Voucher đã hết lượt sử dụng.' });
+      }
+      // Kiểm tra số lần user đã dùng voucher này
+      const userUsedCount = await Order.countDocuments({ userId: req.user._id, voucherId });
+      if (appliedVoucher.usagePerUser && userUsedCount >= appliedVoucher.usagePerUser) {
+        return res.status(400).json({ error: `Bạn đã sử dụng voucher này tối đa ${appliedVoucher.usagePerUser} lần.` });
+      }
+    }
+
     const order = new Order({
       userId: req.user._id,
       items: items.map((it) => ({ legoId: it.legoId, quantity: it.quantity, price: it.price })),
@@ -36,6 +63,16 @@ router.post('/', requireAuth, async (req, res) => {
     });
 
     await order.save();
+
+    // Nếu có voucher, sau khi tạo đơn thành công, kiểm tra lại usageLimit và cập nhật nếu cần
+    if (voucherId) {
+      const Voucher = require('../models/Voucher');
+      const usedCount = await Order.countDocuments({ voucherId });
+      // Nếu đã đủ lượt thì chuyển trạng thái voucher sang 'expired'
+      if (usedCount >= appliedVoucher.usageLimit) {
+        await Voucher.findByIdAndUpdate(voucherId, { status: 'expired' });
+      }
+    }
 
     res.status(201).json({ order });
   } catch (err) {

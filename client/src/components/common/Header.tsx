@@ -13,6 +13,8 @@ import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import logo from "/logo.png";
 import "../../styles/layout.scss";
+import { Switch, Tooltip } from "antd";
+import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
 
 export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -32,7 +34,20 @@ export default function Header() {
   const avatar = user?.avatar || localStorage.getItem("avatar");
   const isAdmin = user?.role === "admin";
   const isAdminSection = isAdmin && location.pathname.startsWith("/admin");
+  const [isDarkMode, setIsDarkMode] = useState(
+    localStorage.getItem("theme") === "dark"
+  );
 
+  // Toggle theme
+  const toggleTheme = (checked: boolean) => {
+    setIsDarkMode(checked);
+    localStorage.setItem("theme", checked ? "dark" : "light");
+  };
+
+  // Apply attribute for custom CSS
+  useEffect(() => {
+    document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -132,6 +147,12 @@ export default function Header() {
               >
                 Notifications
               </NavLink>
+              <NavLink
+                to="/admin/vouchers"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Vouchers
+              </NavLink>
             </>
           ) : (
             <>
@@ -139,6 +160,7 @@ export default function Header() {
               <NavLink to="/home">Home</NavLink>
               <NavLink to="/addresses">Address Book</NavLink>
               <NavLink to="/notifications">Notifications</NavLink>
+
             </>
           )}
         </nav>
@@ -207,9 +229,8 @@ export default function Header() {
                 )}
               </div>
               <FaChevronDown
-                className={`text-gray-600 text-xs transition-transform ${
-                  showDropdown ? "rotate-180" : ""
-                }`}
+                className={`text-gray-600 text-xs transition-transform ${showDropdown ? "rotate-180" : ""
+                  }`}
               />
             </div>
 

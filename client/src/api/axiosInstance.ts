@@ -169,6 +169,6 @@ export const getFullImageURL = (imgPath?: string) => {
   if (imgPath.startsWith("http")) return imgPath;
 
   // Bỏ /api nếu có, để lấy URL gốc (localhost:5000 hoặc domain)
-  const rootURL = baseURL.replace(/\/api$/, "");
+  const rootURL = getApiOriginURL();
   return `${rootURL}${imgPath}`;
 };

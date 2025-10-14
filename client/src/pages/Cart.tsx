@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../components/context/CartContext";
 import "../styles/cart.scss";
 import { Button, InputNumber, Divider, Modal, message } from "antd";
+import Header from "../components/common/Header";
+import Footer from "../components/common/Footer";
 
 export default function Cart() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -13,8 +15,9 @@ export default function Cart() {
   const total = subtotal - 0 + shipping;
 
   return (
-    <>        <button onClick={() => navigate(-1)}>Back</button>
+    <>
 
+      <Header /> <button onClick={() => navigate(-1)}>Back</button>
       <div className="cart-page" style={{ padding: "20px 50px" }}>
 
         <div className="cart-left">
@@ -123,6 +126,7 @@ export default function Cart() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

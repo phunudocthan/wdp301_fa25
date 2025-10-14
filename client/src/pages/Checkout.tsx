@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../components/context/CartContext";
 import { Input, Radio, Button, message, Modal } from "antd";
+import axios from "axios";
 import { getAddresses } from "../api/user";
 import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../components/context/AuthContext";
 import type { UserAddress } from "../types/user";
+import Header from "../components/common/Header";
 
 export default function Checkout() {
   const { cart, clearCart } = useCart();
@@ -55,6 +57,39 @@ export default function Checkout() {
 
   const subtotal = cart.items.reduce((s, it) => s + it.price * it.quantity, 0);
   const [voucherCode, setVoucherCode] = useState("");
+  const [voucherInfo, setVoucherInfo] = useState<any>(null);
+  const [discount, setDiscount] = useState(0);
+  const [voucherLoading, setVoucherLoading] = useState(false);
+console.log(voucherInfo);
+
+  // Xử lý áp dụng voucher
+  const handleApplyVoucher = async () => {
+    if (!voucherCode) {
+      message.warning("Vui lòng nhập mã voucher");
+      return;
+    }
+    setVoucherLoading(true);
+    try {
+      const res = await axiosInstance.get(`/vouchers/validate?code=${voucherCode}`);
+      if (res.data.valid) {
+        setVoucherInfo(res.data);
+        setDiscount(res.data.discountPercent || 0);
+        message.success(`Áp dụng voucher thành công: Giảm ${res.data.discountPercent}%`);
+      } else {
+        setVoucherInfo(null);
+        setDiscount(0);
+        message.error(res.data.message || "Voucher không hợp lệ");
+      }
+    } catch (err: any) {
+      setVoucherInfo(null);
+      setDiscount(0);
+      message.error(err?.response?.data?.message || "Không thể kiểm tra voucher");
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const totalAfterDiscount = Math.round(subtotal * (1 - discount / 100));
 
   const handleSubmit = async () => {
     // require either a selected saved address or entered address fields
@@ -83,7 +118,7 @@ export default function Checkout() {
       })),
       shippingAddress: { name, phone, address: customerAddress },
       paymentMethod: payment,
-      voucherId: voucherCode || undefined,
+      voucherId: voucherInfo?.id || undefined,
     };
 
     try {
@@ -139,6 +174,7 @@ export default function Checkout() {
 
   return (
     <>
+      <Header /> <button onClick={() => navigate(-1)}>Back</button>
       <div style={{ padding: 24, display: "flex", gap: 24 }}>
         <div
           style={{ flex: 1, background: "#fff", padding: 20, borderRadius: 8 }}
@@ -246,12 +282,12 @@ export default function Checkout() {
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value)}
                   placeholder="Nhập mã giảm giá"
+                  disabled={voucherLoading}
                 />
                 <Button
-                  onClick={() => {
-                    // Placeholder: voucher application will be implemented by dev later
-                    message.info("Khu vực mã giảm giá: dev sẽ tích hợp sau.");
-                  }}
+                  loading={voucherLoading}
+                  type="primary"
+                  onClick={handleApplyVoucher}
                 >
                   Áp dụng
                 </Button>
@@ -266,6 +302,11 @@ export default function Checkout() {
             >
               Tạm tính <span>{subtotal.toLocaleString()} Đ</span>
             </div>
+            {discount > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#16a34a", fontWeight: 500 }}>
+                Giảm giá ({discount}%) <span>-{(subtotal - totalAfterDiscount).toLocaleString()} Đ</span>
+              </div>
+            )}
             <div
               style={{
                 display: "flex",
@@ -273,7 +314,7 @@ export default function Checkout() {
                 fontWeight: 700,
               }}
             >
-              Tổng cộng <span>{subtotal.toLocaleString()} Đ</span>
+              Tổng cộng <span>{totalAfterDiscount.toLocaleString()} Đ</span>
             </div>
           </div>
         </div>

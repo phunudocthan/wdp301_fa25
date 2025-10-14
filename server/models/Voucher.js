@@ -23,6 +23,12 @@ const VoucherSchema = new mongoose.Schema({
     required: true,
     min: 1
   },
+  usagePerUser: {
+    type: Number,
+    required: false,
+    min: 1,
+    default: 1
+  },
   status: {
     type: String,
     enum: ['active', 'expired', 'disabled'],

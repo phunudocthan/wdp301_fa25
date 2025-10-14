@@ -58,6 +58,14 @@ const AdminVoucherManagement = () => {
         }
     };
 
+    // Thống kê nhanh
+    const activeCount = vouchers.filter(v => v.status === 'active').length;
+    const soonExpireCount = vouchers.filter(v => {
+        if (!v.expiryDate) return false;
+        const days = dayjs(v.expiryDate).diff(dayjs(), 'day');
+        return v.status === 'active' && days >= 0 && days <= 7;
+    }).length;
+
 // ...existing code...
 
     useEffect(() => {
@@ -147,6 +155,7 @@ const AdminVoucherManagement = () => {
         { title: "Code", dataIndex: "code", key: "code" },
         { title: "Discount (%)", dataIndex: "discountPercent", key: "discountPercent" },
         { title: "Usage Limit", dataIndex: "usageLimit", key: "usageLimit" },
+        { title: "Used", dataIndex: "usedCount", key: "usedCount", render: (val: any) => val ?? 0 },
         { title: "Status", dataIndex: "status", key: "status",
             render: (text: string, record: any) => (
                 <Select
@@ -160,7 +169,13 @@ const AdminVoucherManagement = () => {
                 </Select>
             )
         },
-        { title: "Expiry Date", dataIndex: "expiryDate", key: "expiryDate" },
+        { title: "Expiry Date", dataIndex: "expiryDate", key: "expiryDate",
+            render: (date: string, record: any) => {
+                const days = dayjs(date).diff(dayjs(), 'day');
+                const soon = record.status === 'active' && days >= 0 && days <= 7;
+                return <span style={soon ? { color: '#d97706', fontWeight: 600 } : {}}>{dayjs(date).format('DD/MM/YYYY')}{soon ? ' (Sắp hết hạn)' : ''}</span>;
+            }
+        },
         {
             title: "Actions",
             key: "actions",
@@ -205,7 +220,11 @@ const AdminVoucherManagement = () => {
                     <Title level={4} style={{ marginBottom: 24 }}>
                         Voucher Management
                     </Title>
-                    <div style={{ marginBottom: 16, color: '#555' }}>Total vouchers: {total}</div>
+                    <div style={{ display: 'flex', gap: 32, marginBottom: 16 }}>
+                        <div style={{ color: '#555' }}>Tổng số voucher: <b>{total}</b></div>
+                        <div style={{ color: '#16a34a' }}>Đang hoạt động: <b>{activeCount}</b></div>
+                        <div style={{ color: '#d97706' }}>Sắp hết hạn (≤7 ngày): <b>{soonExpireCount}</b></div>
+                    </div>
                     <Space style={{ marginBottom: 16, flexWrap: "wrap" }}>
                         <Input
                             placeholder="Search by code"

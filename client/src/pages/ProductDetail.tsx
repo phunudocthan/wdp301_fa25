@@ -17,6 +17,7 @@ import { useCart } from "../components/context/CartContext";
 import { ArrowLeftOutlined, HeartFilled, HeartOutlined } from "@ant-design/icons";
 import { useFavorites } from "../components/context/FavoritesContext";
 import { resolveAssetUrl } from "../utils/assets";
+import Footer from "../components/common/Footer";
 interface Product {
   _id: string;
   name: string;
@@ -98,6 +99,7 @@ export default function ProductDetail() {
 
   return (
     <>
+    <Header/>
       <div className="product-detail-page">
         <button
           className="back-btn"
@@ -313,6 +315,7 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+      <Footer/>
     </>
   );
 }

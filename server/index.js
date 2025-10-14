@@ -205,6 +205,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const voucherRoutes = require("./routes/voucherRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const recentlyViewedRoutes = require("./routes/recentlyViewedRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -217,6 +218,7 @@ app.use("/api/vouchers", voucherRoutes);
 app.use("/api/legos", (req, res) =>
   res.json({ message: "LEGO routes coming soon..." })
 );
+app.use("/recently-viewed", recentlyViewedRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 

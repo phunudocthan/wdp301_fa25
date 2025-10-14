@@ -522,6 +522,33 @@ const getUncategorizedProductsCount = async (req, res) => {
   }
 };
 
+ const getRecentlyViewedProducts = async (req, res) => {
+  try {
+    const ids = req.query.id?.split(",") || [];
+
+    if (!ids.length) {
+      return res.status(400).json({ message: "No product IDs provided" });
+    }
+
+    // Tìm các sản phẩm có id trong danh sách
+    const products = await Lego.find({ _id: { $in: ids } })
+      .select("name price images category") // chỉ lấy trường cần
+      .lean();
+
+    // Sắp xếp lại theo thứ tự trong localStorage
+    const orderedProducts = ids
+      .map((id) => products.find((p) => p._id.toString() === id))
+      .filter(Boolean);
+
+    res.status(200).json({
+      success: true,
+      data: { products: orderedProducts },
+    });
+  } catch (error) {
+    console.error("Error getRecentlyViewedProducts:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 module.exports = {
   getAllProducts,
   getProductById,
@@ -532,4 +559,5 @@ module.exports = {
   getProductStats,
   getProductByCategoryID,
   getUncategorizedProductsCount,
+  getRecentlyViewedProducts,
 };

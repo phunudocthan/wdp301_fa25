@@ -12,16 +12,11 @@ const {
   getProductStats,
   getUncategorizedProductsCount,
   getProductByCategoryID,
+  getRecentlyViewedProducts,
 } = require("../controllers/productController");
 
 const router = express.Router();
-<<<<<<< HEAD
-=======
-const Order = require("../models/Order");/**
- * @route   GET /api/products/admin/stats
- * @desc    Lấy thống kê sản phẩm (Admin)
- * @access  Private (Admin only)
- */
+
 const Theme = require("../models/Theme");
 const AgeRange = require("../models/AgeRange");
 const Difficulty = require("../models/Difficulty");
@@ -40,7 +35,6 @@ router.get("/admin/:id", requireAuth, requireRole("admin"), getProductById);
  * @access  Private (Admin only)
  */
 router.get("/admin", requireAuth, requireRole("admin"), getAllProducts);
->>>>>>> 118cd6a81b65fe42093cf0bc1610a2575b76f82c
 
 /**
  * @route   GET /api/products/best-sell
@@ -254,10 +248,7 @@ router.get("/:id", async (req, res) => {
 // ADMIN ROUTES - PRODUCT MANAGEMENT
 // ===============================
 
-<<<<<<< HEAD
 router.get("/admin/stats", requireAuth, requireRole("admin"), getProductStats);
-=======
->>>>>>> 118cd6a81b65fe42093cf0bc1610a2575b76f82c
 
 router.get(
   "/admin/uncategorized/count",
@@ -266,17 +257,14 @@ router.get(
   getUncategorizedProductsCount
 );
 
-<<<<<<< HEAD
 router.get("/admin", requireAuth, requireRole("admin"), getAllProducts);
 router.get("/admin/:id", requireAuth, requireRole("admin"), getProductById);
-=======
 
 /**
  * @route   POST /api/products/admin
  * @desc    Tạo sản phẩm mới (Admin)
  * @access  Private (Admin only)
  */
->>>>>>> 118cd6a81b65fe42093cf0bc1610a2575b76f82c
 router.post("/admin", requireAuth, requireRole("admin"), createProduct);
 router.put("/admin/:id", requireAuth, requireRole("admin"), updateProduct);
 router.patch(
@@ -381,5 +369,6 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+router.get("/recentlyViewedIds/view/recent", getRecentlyViewedProducts);
 
 module.exports = router;

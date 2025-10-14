@@ -16,8 +16,11 @@ import {
   Space,
   Slider,
   message,
+  Modal,
+  Popover,
 } from "antd";
 import {
+  ArrowLeftOutlined,
   HeartFilled,
   HeartOutlined,
   ShoppingCartOutlined,
@@ -27,6 +30,8 @@ import imagesDefault from "../../../client/public/images/1827380.png";
 import { useCart } from "../components/context/CartContext";
 import { useFavorites } from "../components/context/FavoritesContext";
 import { resolveAssetUrl } from "../utils/assets";
+import { Box, Layers, Palette, Settings, Star, User } from "lucide-react";
+import Footer from "../components/common/Footer";
 
 const { Title } = Typography;
 const { Meta } = Card;
@@ -185,7 +190,12 @@ export default function Shop() {
   };
   return (
     <>
+    <Header/>
       <div className="shop-container" style={{ padding: "20px 50px" }}>
+        <Button type="link" style={{ marginBottom: 24 }} onClick={() => window.history.back()}>
+          <ArrowLeftOutlined />
+
+        </Button>
         <Title level={2} style={{ textAlign: "center", marginBottom: "30px" }}>
           List products
         </Title>
@@ -280,102 +290,217 @@ export default function Shop() {
                   lg={6}
                   style={{ display: "flex", justifyContent: "center" }}
                 >
-                  <Card
-                    hoverable
-                    style={{
-                      width: 260,
-                      position: "relative",
-                      borderRadius: 12,
-                      overflow: "hidden",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    }}
-                    cover={
-                      <Link to={`/product/${p._id}`}>
+                  <Popover
+                    trigger="hover"
+                    placement="right"
+                    content={
+                      <div style={{ width: 300, padding: 10 }}>
                         <img
-                          alt={p.name}
                           src={getFullImageURL(p.images?.[0])}
+                          alt={p.name}
                           style={{
-                            height: 220,
-                            objectFit: "cover",
                             width: "100%",
+                            height: 160,
+                            objectFit: "cover",
+                            borderRadius: 10,
+                            marginBottom: 10,
                           }}
                         />
-                      </Link>
+                        <h3 style={{ marginBottom: 6, fontWeight: 600, fontSize: 16 }}>
+                          {p.name}
+                        </h3>
+
+                        {/* <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={16}
+                              fill={i < 4 ? "#FFD700" : "none"}
+                              stroke="#FFD700"
+                            />
+                          ))}
+                          <span style={{ fontSize: 12, color: "#888" }}>4.0 (7 reviews)</span>
+                        </div> */}
+
+                        <p style={{ fontSize: 16, fontWeight: "bold", color: "#1677ff", marginBottom: 6 }}>
+                          ${p.price.toFixed(2)}
+                        </p>
+                        <p style={{ fontSize: 13, color: p.stock > 0 ? "#28a745" : "#dc3545", marginBottom: 10 }}>
+                          {p.stock > 0 ? `In stock: ${p.stock}` : "Out of stock"}
+                        </p>
+
+                        {/* Info grid similar to ProductDetail */}
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "6px 10px",
+                            marginBottom: 12,
+                            fontSize: 12,
+                          }}
+                        >
+                          {p.themeId && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <Palette size={14} />
+                              <span>{p.themeId.name}</span>
+                            </div>
+                          )}
+                          {p.ageRangeId && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <User size={14} />
+                              <span>{p.ageRangeId.rangeLabel}</span>
+                            </div>
+                          )}
+                          {p.difficultyId && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <Settings size={14} />
+                              <span>{p.difficultyId.label}</span>
+                            </div>
+                          )}
+                          {p.pieces && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <Layers size={14} />
+                              <span>{p.pieces} pcs</span>
+                            </div>
+                          )}
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <Box size={14} />
+                            <span>{p.stock} left</span>
+                          </div>
+                        </div>
+
+                        {/* Short description */}
+                        <p style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>
+                          {p.description?.slice(0, 80) || "A creative LEGO set to spark imagination."}
+                        </p>
+
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<ShoppingCartOutlined />}
+                          block
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addToCart({
+                              id: p._id,
+                              name: p.name,
+                              price: p.price,
+                              image: p.images?.[0],
+                              quantity: 1,
+                            });
+                            message.success(`${p.name} đã được thêm vào giỏ hàng`);
+                          }}
+                        >
+                          Add to Bag
+                        </Button>
+                      </div>
+
                     }
                   >
-                    <Meta
-                      title={
-                        <Link to={`/product/${p._id}`}>
-                          <span style={{ color: "#1677ff" }}>{p.name}</span>
-                        </Link>
-                      }
-                      description={
-                        <div style={{ marginTop: "8px" }}>
-                          <b style={{ fontSize: "16px", color: "#000" }}>
-                            ${p.price.toFixed(2)}
-                          </b>
-                        </div>
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={(event) => handleToggleFavorite(event, p)}
-                      disabled={isPending(p._id)}
-                      style={{
-                        position: "absolute",
-                        top: 12,
-                        right: 12,
-                        width: 36,
-                        height: 36,
-                        borderRadius: "50%",
-                        border: "1px solid #f0f0f0",
-                        background: "#ffffff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
-                        cursor: isPending(p._id) ? "not-allowed" : "pointer",
-                        opacity: isPending(p._id) ? 0.6 : 1,
-                        transition: "transform 0.2s ease",
-                      }}
-                    >
-                      {favoriteIds.includes(p._id) ? (
-                        <HeartFilled style={{ color: "#f5222d" }} />
-                      ) : (
-                        <HeartOutlined style={{ color: "#555" }} />
-                      )}
-                    </button>
-                    <Button
-                      type="primary"
-                      icon={<ShoppingCartOutlined />}
-                      block
-                      style={{ marginTop: "12px", borderRadius: 8 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        try {
-                          addToCart({
-                            id: p._id,
-                            name: p.name,
-                            price: p.price,
-                            image: p.images?.[0] || imagesDefault,
-                            quantity: 1,
-                          });
-                          message.success(
-                            `${p.name} đã được thêm vào giỏ hàng`
-                          );
-                        } catch (err) {
-                          console.error("Add to cart error", err);
-                          message.error("Không thể thêm sản phẩm vào giỏ hàng");
+                    <Link to={`/product/${p._id}`}>
+                      <Card
+                        hoverable
+                        style={{
+                          width: 260,
+                          position: "relative",
+                          borderRadius: 12,
+                          overflow: "hidden",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                          transition: "transform 0.25s ease, box-shadow 0.25s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "scale(1.04)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 16px rgba(0,0,0,0.2)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "scale(1)";
+                          e.currentTarget.style.boxShadow =
+                            "0 2px 8px rgba(0,0,0,0.1)";
+                        }}
+                        cover={
+                          <img
+                            alt={p.name}
+                            src={getFullImageURL(p.images?.[0])}
+                            style={{
+                              height: 220,
+                              objectFit: "cover",
+                              width: "100%",
+                            }}
+                          />
                         }
-                      }}
-                    >
-                      Add to cart
-                    </Button>
-                  </Card>
+                      >
+                        <Meta
+                          title={<span style={{ color: "#1677ff" }}>{p.name}</span>}
+                          description={
+                            <div style={{ marginTop: "8px" }}>
+                              <b style={{ fontSize: "16px", color: "#000" }}>
+                                ${p.price.toFixed(2)}
+                              </b>
+                            </div>
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={(event) => handleToggleFavorite(event, p)}
+                          disabled={isPending(p._id)}
+                          style={{
+                            position: "absolute",
+                            top: 12,
+                            right: 12,
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            border: "1px solid #f0f0f0",
+                            background: "#ffffff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+                            cursor: isPending(p._id) ? "not-allowed" : "pointer",
+                            opacity: isPending(p._id) ? 0.6 : 1,
+                            transition: "transform 0.2s ease",
+                          }}
+                        >
+                          {favoriteIds.includes(p._id) ? (
+                            <HeartFilled style={{ color: "#f5222d" }} />
+                          ) : (
+                            <HeartOutlined style={{ color: "#555" }} />
+                          )}
+                        </button>
+                        <Button
+                          type="primary"
+                          icon={<ShoppingCartOutlined />}
+                          block
+                          style={{ marginTop: "12px", borderRadius: 8 }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            try {
+                              addToCart({
+                                id: p._id,
+                                name: p.name,
+                                price: p.price,
+                                image: p.images?.[0] || imagesDefault,
+                                quantity: 1,
+                              });
+                              message.success(`${p.name} đã được thêm vào giỏ hàng`);
+                            } catch (err) {
+                              console.error("Add to cart error", err);
+                              message.error("Không thể thêm sản phẩm vào giỏ hàng");
+                            }
+                          }}
+                        >
+                          Add to cart
+                        </Button>
+                      </Card>
+                    </Link>
+                  </Popover>
                 </Col>
               ))}
             </Row>
+
             <div
               style={{
                 textAlign: "center",
@@ -392,11 +517,16 @@ export default function Shop() {
                 showSizeChanger={false}
               />
             </div>
+
+
+
           </>
         ) : (
           <Empty description="Not found products." style={{ marginTop: "50px" }} />
         )}
       </div>
+      <Footer />
+
     </>
   );
 }

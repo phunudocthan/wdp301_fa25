@@ -10,6 +10,10 @@ import {
 } from "../api/user";
 import type { UserAddress } from "../types/user";
 import "../styles/AddressBookPage.scss";
+import { Button } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import Header from "../components/common/Header";
+import Footer from "../components/common/Footer";
 
 const emptyAddressForm: AddressPayload = {
   label: "",
@@ -72,8 +76,8 @@ const AddressBookPage: React.FC = () => {
       name === "phone"
         ? String(value).replace(/\D/g, "").slice(0, 10)
         : type === "checkbox"
-        ? checked
-        : value;
+          ? checked
+          : value;
     setFormData((prev) => ({
       ...prev,
       [name]: newValue,
@@ -243,8 +247,14 @@ const AddressBookPage: React.FC = () => {
   };
 
   return (
-    <>
+    <> 
+    <Header />
+    <Button type="link" style={{ marginBottom: 24 }} onClick={() => window.history.back()}>
+          <ArrowLeftOutlined />
+
+        </Button>
       <div className="address-page">
+       
         <div className="address-header">
           <div>
             <h1>
@@ -273,9 +283,8 @@ const AddressBookPage: React.FC = () => {
               addresses.map((address) => (
                 <div
                   key={address._id}
-                  className={`card address-card ${
-                    address.isDefault ? "default" : ""
-                  }`}
+                  className={`card address-card ${address.isDefault ? "default" : ""
+                    }`}
                 >
                   <div className="address-info">
                     <h3>
@@ -497,6 +506,7 @@ const AddressBookPage: React.FC = () => {
           </div>
         </div>
       </div>
+      <Footer/>
       {/* inline confirm bubbles are rendered next to each Remove button */}
     </>
   );

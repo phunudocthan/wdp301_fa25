@@ -43,6 +43,8 @@ import OrderDetail from "./pages/admin/OrderDetail";
 // ...existing code...
 import ProtectedRoute from "./routes/ProtectedRoute";
 import "bootstrap/dist/css/bootstrap.min.css";
+import AdminNotificationPage from "./views/AdminNotificationPage";
+import AdminVoucherStatistics from "./pages/AdminVoucherStatistics";
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;
@@ -68,10 +70,10 @@ function AppContent() {
     isAdmin ? <Navigate to="/admin" replace /> : element;
 
   return (
-    <div className="app-shell">
-      {shouldShowHeader && <Header />}
+    <div>
+      {isAdmin && shouldShowHeader && <Header />}
       <SessionNotifications />
-      <main className="app-main">
+      <main >
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={redirectIfAdmin(<HomePage />)} />
@@ -83,6 +85,7 @@ function AppContent() {
           <Route path="/cart" element={redirectIfAdmin(<Cart />)} />
           <Route path="/checkout" element={redirectIfAdmin(<Checkout />)} />
           <Route path="/order-success" element={redirectIfAdmin(<OrderSuccess />)} />
+          <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotificationPage /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -106,13 +109,14 @@ function AppContent() {
           <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
           <Route path="/admin/users/:id" element={<ProtectedRoute><AdminUserDetailPage /></ProtectedRoute>} />
           {/* Admin notifications */}
-          <Route path="/admin/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           {/* Admin orders */}
           <Route path="/admin/orders" element={<ProtectedRoute><OrdersList /></ProtectedRoute>} />
           <Route path="/admin/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
           {/* Admin product management */}
           <Route path="/admin/products" element={<ProtectedRoute><AdminProductManagement /></ProtectedRoute>} />
           <Route path="/admin/vouchers" element={<ProtectedRoute><AdminVoucherManagement /></ProtectedRoute>} />
+          <Route path="/admin/voucher-statistics" element={<ProtectedRoute><AdminVoucherStatistics /></ProtectedRoute>} />
           <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoryManagement /></ProtectedRoute>} />
           <Route path="/admin/products/edit/:id" element={<ProtectedRoute><AdminProductEdit /></ProtectedRoute>} />
           <Route path="/admin/products/:id" element={<ProtectedRoute><AdminProductDetail /></ProtectedRoute>} />

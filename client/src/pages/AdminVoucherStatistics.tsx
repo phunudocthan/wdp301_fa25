@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { Bar } from '@ant-design/charts';
 import { useAuth } from '../components/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import React from "react";
 
 const { Title } = Typography;
 
