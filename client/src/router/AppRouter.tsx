@@ -1,5 +1,4 @@
 
-
 // === 📁 src/router/AppRouter.tsx ===
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
@@ -17,6 +16,8 @@ import AdminProductDetail from '../pages/AdminProductDetail';
 import AdminProductEdit from '../pages/AdminProductEdit';
 import AdminVoucherStatistics from '../pages/AdminVoucherStatistics';
 import Shop from '../pages/Shop';
+import Cart from '../pages/Cart';
+import Favorites from '../pages/Favorites';
 import Register from '../pages/Register';
 import ProductDetail from '../pages/ProductDetail';
 import { useAuth } from '../components/context/AuthContext';
@@ -25,14 +26,33 @@ import ProtectedRoute from '../routes/ProtectedRoute';
 const AppRouter: React.FC = () => {
   const { user } = useAuth(); 
   const isAuthenticated = !!user;
+  const isAdmin = user?.role === 'admin';
+
+  const redirectIfAdmin = (element: JSX.Element) =>
+    isAdmin ? <Navigate to="/admin" replace /> : element;
 
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/shop" replace />} />
-      <Route path="/shop" element={<Shop />} />
-      <Route path="/product/:id" element={<ProductDetail />} />
+      <Route path="/shop" element={redirectIfAdmin(<Shop />)} />
+      <Route path="/cart" element={redirectIfAdmin(<Cart />)} />
+      <Route path="/product/:id" element={redirectIfAdmin(<ProductDetail />)} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/favorites"
+        element={
+          isAuthenticated ? (
+            redirectIfAdmin(
+              <ProtectedRoute>
+                <Favorites />
+              </ProtectedRoute>
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
 
       <Route
         path="/profile"

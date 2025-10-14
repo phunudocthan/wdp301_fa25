@@ -10,6 +10,9 @@ const {
   updateAddress,
   setDefaultAddress,
   archiveAddress,
+  listFavorites,
+  addFavorite,
+  removeFavorite,
 } = require('../controllers/userController');
 const { requireAuth } = require('../middleware/authMiddleware');
 const upload = require('../utils/multerConfig');
@@ -23,5 +26,8 @@ router.post('/addresses', requireAuth, createAddress);
 router.put('/addresses/:addressId', requireAuth, updateAddress);
 router.patch('/addresses/:addressId/default', requireAuth, setDefaultAddress);
 router.delete('/addresses/:addressId', requireAuth, archiveAddress);
+router.get('/favorites', requireAuth, listFavorites);
+router.post('/favorites/:productId', requireAuth, addFavorite);
+router.delete('/favorites/:productId', requireAuth, removeFavorite);
 
 module.exports = router;

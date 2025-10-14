@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../components/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import AdminNav from "../views/AdminNav";
-
 interface User {
   _id: string;
   name: string;

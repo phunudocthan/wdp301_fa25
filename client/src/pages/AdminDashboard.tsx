@@ -1,111 +1,176 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../components/context/AuthContext";
+import {
+  adminApi,
+  AdminOverviewResponse,
+  OrderStatusInfo,
+} from "../api/admin";
+import "../styles/AdminDashboard.css";
+
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const numberFormatter = new Intl.NumberFormat("en-US");
+
+const statusLabels: Record<string, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  shipped: "In transit",
+  delivered: "Delivered",
+  canceled: "Cancelled",
+  refunded: "Refunded",
+};
+
+const formatCurrency = (value: number) => currencyFormatter.format(value || 0);
+const formatNumber = (value: number) => numberFormatter.format(value || 0);
 
 const AdminDashboard: React.FC = () => {
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [overview, setOverview] = useState<AdminOverviewResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOverview = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const payload = await adminApi.getOverview();
+        setOverview(payload);
+      } catch (err: any) {
+        setError(err.message || "Unable to load dashboard overview.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOverview();
+  }, []);
+
+  const statusBreakdown = useMemo(() => {
+    if (!overview) return [];
+    const data = overview.orders.statusBreakdown || {};
+    const entries: Array<{
+      key: string;
+      label: string;
+      payload: OrderStatusInfo;
+    }> = [];
+
+    Object.keys(statusLabels).forEach((key) => {
+      if (data[key]) {
+        entries.push({
+          key,
+          label: statusLabels[key],
+          payload: data[key],
+        });
+      }
+    });
+
+    return entries;
+  }, [overview]);
+
+  if (user && user.role !== "admin") {
+    return <Navigate to="/profile" replace />;
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
-          Admin Dashboard
-        </h1>
+    <div className="admin-page">
+      <h1>Admin dashboard</h1>
+      <p className="admin-subtitle">
+        Revenue, orders, and user activity at a glance.
+      </p>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Welcome, Admin!
-          </h2>
-          <p className="text-gray-600 mb-4">
-            This is the admin dashboard. You can manage:
-          </p>
+      {loading && (
+        <div className="admin-section">
+          <div className="admin-empty-state">Loading overview...</div>
+        </div>
+      )}
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div
-              className="bg-blue-50 p-4 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
-              onClick={() => navigate("/admin/products")}
-            >
-              <h3 className="font-semibold text-blue-800">Product Management</h3>
-              <p className="text-blue-600 text-sm">
-                Create, edit, and remove LEGO products
-              </p>
-            </div>
-
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-green-800">
-                User Management
-              </h3>
-              <p className="text-green-600 text-sm">
-                View and manage customer accounts
-              </p>
-            </div>
-
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-purple-800">
-                Revenue Reports
-              </h3>
-              <p className="text-purple-600 text-sm">
-                Sales statistics and analysis
-              </p>
-            </div>
-
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-orange-800">
-                Order Management
-              </h3>
-              <p className="text-orange-600 text-sm">
-                Process and track orders
-              </p>
-            </div>
-
-            <div
-              className="bg-yellow-50 p-4 rounded-lg cursor-pointer hover:bg-yellow-100 transition-colors"
-              onClick={() => navigate("/admin/categories")}
-            >
-              <h3 className="font-semibold text-yellow-800">
-                Category Management
-              </h3>
-              <p className="text-yellow-600 text-sm">
-                Create, edit, and remove categories
-              </p>
-            </div>
-            <div
-              className="bg-pink-50 p-4 rounded-lg cursor-pointer hover:bg-pink-100 transition-colors"
-              onClick={() => navigate('/admin/vouchers')}
-            >
-              <h3 className="font-semibold text-pink-800">Voucher Management</h3>
-              <p className="text-pink-600 text-sm">Create, edit, remove and manage promotions</p>
-            </div>
+      {error && (
+        <div className="admin-section">
+          <div className="admin-empty-state" style={{ color: "#dc2626" }}>
+            {error}
           </div>
         </div>
+      )}
 
-        <div className="flex gap-4 mt-6">
-          <button
-            onClick={() => navigate("/admin/products")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Manage Products
-          </button>
+      {!loading && !error && overview && (
+        <>
+          <div className="admin-section">
+            <div className="admin-metric-grid">
+              <div className="admin-metric-card">
+                <div className="admin-metric-label">Revenue (30 days)</div>
+                <div className="admin-metric-value">
+                  {formatCurrency(overview.revenue.last30Days)}
+                </div>
+                <div className="admin-metric-helper">
+                  Recognised across the last 30 calendar days
+                </div>
+              </div>
+              <div className="admin-metric-card">
+                <div className="admin-metric-label">Total orders</div>
+                <div className="admin-metric-value">
+                  {formatNumber(overview.orders.orders)}
+                </div>
+                <div className="admin-metric-helper">
+                  Recognised revenue {formatCurrency(overview.orders.revenue)}
+                </div>
+              </div>
+              <div className="admin-metric-card">
+                <div className="admin-metric-label">Users</div>
+                <div className="admin-metric-value">
+                  {formatNumber(overview.users.total)}
+                </div>
+                <div className="admin-metric-helper">
+                  Active: {formatNumber(overview.users.byStatus["active"] || 0)} ·
+                  Locked: {formatNumber(overview.users.byStatus["locked"] || 0)}
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <button
-            onClick={() => navigate("/admin/notifications")}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Manage Notifications
-          </button>
-
-          <button
-            onClick={() => navigate("/admin/categories")}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-          >
-            Manage Categories
-          </button>
-          <button
-            onClick={() => navigate('/admin/vouchers')}
-            className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
-          >
-            Manage Vouchers
-          </button>
-        </div>
-      </div>
+          <div className="admin-section">
+            <div className="admin-section-header">
+              <h2>Order status overview</h2>
+            </div>
+            {statusBreakdown.length === 0 ? (
+              <div className="admin-empty-state">
+                No orders have been placed yet.
+              </div>
+            ) : (
+              <div className="admin-table-wrapper">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Orders</th>
+                      <th>Recognised revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statusBreakdown.map(({ key, label, payload }) => (
+                      <tr key={key}>
+                        <td>
+                          <span className={`admin-badge status-${key}`}>
+                            {label}
+                          </span>
+                        </td>
+                        <td>{formatNumber(payload.count)}</td>
+                        <td>{formatCurrency(payload.revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

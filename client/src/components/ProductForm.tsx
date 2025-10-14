@@ -328,7 +328,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="price">Giá (VND) *</label>
+              <label htmlFor="price">Giá (USD) *</label>
               <input
                 type="number"
                 id="price"

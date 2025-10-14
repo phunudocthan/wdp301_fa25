@@ -1,11 +1,8 @@
-import Header from "../components/common/Header";
 import "../styles/home.scss";
 
 export default function FeaturedPage() {
   return (
     <div className="homepage">
-      <Header />
-
       <section className="perfect-set">
         <h2>🌟 Featured LEGO Sets</h2>
         <p style={{ textAlign: "center" }}>
