@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import axiosInstance, { apiBaseURL } from "../api/axiosInstance";
+import { Modal } from 'antd';
 import AdminNav from "./AdminNav";
 import "./../styles/AdminNotificationPage.css"; // import CSS thuần
 
@@ -58,20 +59,21 @@ const AdminNotificationPage: React.FC = () => {
   const fetchSent = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get(`/notifications/admin/sent`, { withCredentials: true });
-      let notifications = res.data.notifications || [];
+        const res = await axiosInstance.get(`/notifications/admin/sent`, { withCredentials: true });
+        // fetchedNotifications typed to NotificationItem[] to avoid implicit any and shadowing
+        const fetchedNotifications: NotificationItem[] = (res.data.notifications as NotificationItem[]) || [];
 
-      // Lọc trùng theo title + message, giữ notification mới nhất
-      const map = new Map<string, typeof notifications[0]>();
-      notifications.forEach(n => {
-        const key = `${n.title.trim()}|${n.message.trim()}`;
-        const existing = map.get(key);
-        if (!existing || new Date(n.createdAt) > new Date(existing.createdAt)) {
-          map.set(key, n);
-        }
-      });
+        // Lọc trùng theo title + message, giữ notification mới nhất
+        const map = new Map<string, NotificationItem>();
+        fetchedNotifications.forEach((n: NotificationItem) => {
+          const key = `${n.title.trim()}|${n.message.trim()}`;
+          const existing = map.get(key);
+          if (!existing || new Date(n.createdAt || '') > new Date(existing.createdAt || '')) {
+            map.set(key, n);
+          }
+        });
 
-      setNotifications(Array.from(map.values()));
+        setNotifications(Array.from(map.values()));
     } catch (err: any) {
       setError(err?.response?.data?.msg || "Failed to load notifications");
     } finally {
@@ -113,16 +115,24 @@ const AdminNotificationPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Xác nhận xóa notification này?")) return;
-    setLoading(true);
-    try {
-      await axiosInstance.delete(`/notifications/admin/${id}`, { withCredentials: true });
-      fetchSent();
-    } catch (err: any) {
-      setError(err?.response?.data?.msg || "Xóa thất bại");
-    } finally {
-      setLoading(false);
-    }
+    Modal.confirm({
+      title: 'Xác nhận',
+      content: 'Xác nhận xóa notification này?',
+      okText: 'Xóa',
+      cancelText: 'Hủy',
+      okType: 'danger',
+      onOk: async () => {
+        setLoading(true);
+        try {
+          await axiosInstance.delete(`/notifications/admin/${id}`, { withCredentials: true });
+          fetchSent();
+        } catch (err: any) {
+          setError(err?.response?.data?.msg || "Xóa thất bại");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const startEdit = (item: NotificationItem) => {
