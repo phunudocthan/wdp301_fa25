@@ -1,8 +1,28 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import axiosInstance from "../api/axiosInstance";
-import "./../styles/home.scss"; // có thể tạo file riêng shop.scss
+import { useLocation, Link } from "react-router-dom";
+import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
 import Header from "../components/common/Header";
+import {
+  Card,
+  Row,
+  Col,
+  Spin,
+  Empty,
+  Button,
+  Input,
+  Typography,
+  Pagination,
+  Select,
+  Space,
+  Slider,
+} from "antd";
+import { ShoppingCartOutlined } from "@ant-design/icons";
+import "../styles/shop.scss";
+import imagesDefault from "../../../client/public/images/1827380.png";
+
+const { Title } = Typography;
+const { Meta } = Card;
+const { Option } = Select;
 
 interface Product {
   _id: string;
@@ -15,53 +35,207 @@ interface Product {
 export default function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(8);
 
-  // 📌 Lấy query từ URL (/shop?search=falcon)
+  // --- Filter/sort/search ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<string>();
+  const [status, setStatus] = useState<string>();
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const search = queryParams.get("search") || "";
 
+  // --- Gọi API ---
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+
+      // Lấy từ khóa từ URL nếu có
+      const urlSearch = new URLSearchParams(location.search).get("search") || "";
+      const finalSearch = searchTerm || urlSearch;
+
+      if (finalSearch) params.append("search", finalSearch);
+      if (status) params.append("status", status);
+      if (sortBy) params.append("sortBy", sortBy);
+      if (priceRange[0] > 0) params.append("minPrice", priceRange[0].toString());
+      if (priceRange[1] < 1000) params.append("maxPrice", priceRange[1].toString());
+
+      const res = await axiosInstance.get(`/products?${params.toString()}`);
+      setProducts(res.data.products || []);
+    } catch (err) {
+      console.error("❌ Error fetching products:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Gọi API mỗi khi filter/search/sort thay đổi ---
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const res = await axiosInstance.get(
-          `/products?search=${search}`
-        );
-        setProducts(res.data.products || []);
-      } catch (err) {
-        console.error("❌ Error fetching products:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const delay = setTimeout(() => {
+      fetchProducts();
+    }, 400);
+    return () => clearTimeout(delay);
+  }, [searchTerm, sortBy, status, priceRange, location.search]);
 
-    fetchProducts();
-  }, [search]);
+  // --- Pagination ---
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const displayedProducts = products.slice(startIndex, endIndex);
 
-  return ( <>  <Header />
-    <div className="shop-page container">
-   
-      <h2>Shop</h2>
+  return (
+    <>
+      <Header />
+      <div className="shop-container" style={{ padding: "20px 50px" }}>
+        <Title level={2} style={{ textAlign: "center", marginBottom: "30px" }}>
+          List products
+        </Title>
 
-      {loading ? (
-        <p>Loading products...</p>
-      ) : products.length > 0 ? (
-        <div className="product-grid">
-          {products.map((p) => (
-            <div key={p._id} className="product-card">
-              <img src={p.images?.[0] || "/placeholder.png"} alt={p.name} />
-              <h4>{p.name}</h4>
-              <p className="price">${p.price.toFixed(2)}</p>
-              <p>Status: {p.status}</p>
-              <button className="btn">Add to Bag</button>
+        {/* --- Bộ lọc / tìm kiếm / sắp xếp --- */}
+        <Space
+          style={{
+            marginBottom: 24,
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <Input
+            placeholder="Search product..."
+            allowClear
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: 250 }}
+          />
+
+          <Space>
+            <Select
+              placeholder="Filter by status"
+              allowClear
+              style={{ width: 180 }}
+              onChange={(value) => setStatus(value)}
+            >
+              <Option value="active">Active</Option>
+              <Option value="inactive">Inactive</Option>
+            </Select>
+
+            <Select
+              placeholder="Sort by"
+              allowClear
+              style={{ width: 180 }}
+              onChange={(value) => setSortBy(value)}
+            >
+              <Option value="price_asc">Price: Low → High</Option>
+              <Option value="price_desc">Price: High → Low</Option>
+              <Option value="newest">Newest</Option>
+            </Select>
+
+            <div style={{ width: 200 }}>
+              <span style={{ fontSize: 13 }}>Price range ($)</span>
+              <Slider
+                range
+                min={0}
+                max={1000}
+                step={10}
+                defaultValue={[0, 1000]}
+                onChangeComplete={(value) =>
+                  setPriceRange(value as [number, number])
+                }
+              />
             </div>
-          ))}
-        </div>
-      ) : (
-        <p>Không tìm thấy sản phẩm nào.</p>
-      )}
-    </div>
+          </Space>
+        </Space>
+
+        {/* --- Danh sách sản phẩm --- */}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "50px" }}>
+            <Spin size="large" />
+          </div>
+        ) : products.length > 0 ? (
+          <>
+            <Row gutter={[24, 24]}>
+              {displayedProducts.map((p) => (
+                <Col
+                  key={p._id}
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={6}
+                  style={{ display: "flex", justifyContent: "center" }}
+                >
+                  <Card
+                    hoverable
+                    style={{
+                      width: 260,
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                    cover={
+                      <Link to={`/product/${p._id}`}>
+                        <img
+                          alt={p.name}
+                          src={getFullImageURL(p.images?.[0])}
+                          style={{
+                            height: 220,
+                            objectFit: "cover",
+                            width: "100%",
+                          }}
+                        />
+                      </Link>
+                    }
+                  >
+                    <Meta
+                      title={
+                        <Link to={`/product/${p._id}`}>
+                          <span style={{ color: "#1677ff" }}>{p.name}</span>
+                        </Link>
+                      }
+                      description={
+                        <div style={{ marginTop: "8px" }}>
+                          <b style={{ fontSize: "16px", color: "#000" }}>
+                            ${p.price.toFixed(2)}
+                          </b>
+                        </div>
+                      }
+                    />
+                    <Button
+                      type="primary"
+                      icon={<ShoppingCartOutlined />}
+                      block
+                      style={{ marginTop: "12px", borderRadius: 8 }}
+                    >
+                      Add to cart
+                    </Button>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: "30px",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={products.length}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+              />
+            </div>
+          </>
+        ) : (
+          <Empty
+            description="Not found products."
+            style={{ marginTop: "50px" }}
+          />
+        )}
+      </div>
     </>
   );
 }

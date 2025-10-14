@@ -8,12 +8,15 @@ import AuthDemo from "./components/common/AuthDemo";
 
 // Pages
 import HomePage from "./pages/Home";
+import FeaturedPage from "./pages/FeaturedPage";
+import PopularPage from "./pages/PopularPage";
+import GamingPage from "./pages/GamingPage";
 import Shop from "./pages/Shop";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ProductDetail from "./pages/ProductDetail";
 import ProfilePage from "./views/ProfilePage";
 import ProfileAdminPage from "./components/ProfileNew";
-
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import VerifyEmailPage from "./views/VerifyEmailPage";
@@ -31,36 +34,34 @@ import AdminVoucherManagement from "./pages/AdminVoucherManagement";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
+
+// Styles
 import "bootstrap/dist/css/bootstrap.min.css";
 
 // Wrapper for ProfileAdminPage to provide user prop
 function ProfileAdminWrapper() {
   const { user } = useAuth();
-
-  if (!user) {
-    return <div>Loading...</div>;
-  }
-
+  if (!user) return <div>Loading...</div>;
   return <ProfileAdminPage user={user} />;
 }
 
 function AppContent() {
-  // Use hooks inside the AuthProvider
   useTokenExpirationCheck();
 
   return (
     <div className="app-shell">
       <SessionNotifications />
-
-      {/* Navigation */}
-
       <main className="app-main">
         <Routes>
-          {/* Redirect root */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* 🔁 Điều hướng mặc định */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
 
-          {/* Public routes */}
+          {/* 🌍 Public routes */}
           <Route path="/home" element={<HomePage />} />
+          <Route path="/home/featured" element={<FeaturedPage />} />
+          <Route path="/home/popular" element={<PopularPage />} />
+          <Route path="/home/gaming" element={<GamingPage />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -73,7 +74,7 @@ function AppContent() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth-demo" element={<AuthDemo />} />
 
-          {/* Protected routes */}
+          {/* 👤 User protected routes */}
           <Route
             path="/profile"
             element={
@@ -82,7 +83,6 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          {/* Protected routes */}
           <Route
             path="/profileAdmin"
             element={
@@ -108,7 +108,7 @@ function AppContent() {
             }
           />
 
-          {/* Admin routes */}
+          {/* 🛠️ Admin routes */}
           <Route
             path="/admin"
             element={
@@ -118,15 +118,6 @@ function AppContent() {
             }
           />
           <Route
-            path="/user"
-            element={
-              <ProtectedRoute>
-                <UserDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
             path="/admin/notifications"
             element={
               <ProtectedRoute>
@@ -134,7 +125,6 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/products"
             element={
@@ -143,7 +133,6 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/vouchers"
             element={
@@ -161,7 +150,6 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/products/edit/:id"
             element={
@@ -170,7 +158,6 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/products/:id"
             element={
@@ -179,6 +166,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
+          {/* 🚫 404 fallback */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </main>
     </div>

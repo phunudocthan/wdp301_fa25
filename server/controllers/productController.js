@@ -490,6 +490,29 @@ const getUncategorizedProductsCount = async (req, res) => {
       error: error.message,
     });
   }
+};const getProductByCategoryID = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const products = await Lego.find({ categories: id })
+      .populate("themeId", "name")
+      .populate("ageRangeId", "rangeLabel minAge maxAge")
+      .populate("difficultyId", "label level")
+      .populate("categories", "name slug")
+      .populate("createdBy", "username email");
+
+    res.json({
+      success: true,
+      data: products, // empty array if none
+      message: products.length === 0 ? "No products found in this category." : undefined,
+    });
+  } catch (error) {
+    console.error("Get products by category ID error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error when fetching products by category",
+      error: error.message,
+    });
+  }
 };
 
 module.exports = {
@@ -500,5 +523,6 @@ module.exports = {
   deleteProduct,
   updateProductStatus,
   getProductStats,
+  getProductByCategoryID,
   getUncategorizedProductsCount,
 };

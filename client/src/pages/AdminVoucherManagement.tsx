@@ -240,7 +240,14 @@ const AdminVoucherManagement = () => {
                     <Form.Item
                         name="discountPercent"
                         label="Discount (%)"
-                        rules={[{ required: true, message: "Please enter discount" }, { type: "number", min: 0, max: 100, message: "Discount must be 0-100" }]}
+                        rules={[{ required: true, message: "Please enter discount" }, {
+                            validator: (_, value) => {
+                                const num = Number(value);
+                                if (isNaN(num)) return Promise.reject("Discount must be a number");
+                                if (num < 0 || num > 100) return Promise.reject("Discount must be 0-100");
+                                return Promise.resolve();
+                            }
+                        }]}
                     >
                         <Input type="number" min={0} max={100} />
                     </Form.Item>

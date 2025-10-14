@@ -4,16 +4,18 @@ const categoryController = require("../controllers/categoryController");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 
 // Apply authentication to all routes
-router.use(requireAuth);
 
 // Public category routes (for display purposes)
 router.get("/tree", categoryController.getCategoryTree);
 
 // Admin-only routes
-router.use(requireRole("admin"));
 
 // CRUD routes
-router.get("/", categoryController.getCategories);
+router.get("/", requireAuth, requireRole("admin", "customer"), categoryController.getCategories);
+router.use(requireRole("admin"));
+
+router.use(requireAuth);
+
 router.get("/stats", categoryController.getCategoryStats);
 router.get("/:id", categoryController.getCategoryById);
 

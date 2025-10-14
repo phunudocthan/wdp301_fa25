@@ -63,3 +63,12 @@ axiosInstance.interceptors.response.use(
 );
 
 export default axiosInstance;
+// 🧩 Helper: Tạo link ảnh đầy đủ (dùng chung toàn dự án)
+export const getFullImageURL = (imgPath?: string) => {
+  if (!imgPath) return "/placeholder.png";
+  if (imgPath.startsWith("http")) return imgPath;
+
+  // Bỏ /api nếu có, để lấy URL gốc (localhost:5000 hoặc domain)
+  const rootURL = baseURL.replace(/\/api$/, "");
+  return `${rootURL}${imgPath}`;
+};
