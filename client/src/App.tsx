@@ -27,6 +27,7 @@ import AdminProductManagement from "./pages/AdminProductManagement";
 import AdminCategoryManagement from "./pages/AdminCategoryManagement";
 import AdminProductDetail from "./pages/AdminProductDetail";
 import AdminProductEdit from "./pages/AdminProductEdit";
+import AdminVoucherManagement from "./pages/AdminVoucherManagement";
 
 // Route protection
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -139,6 +140,15 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <AdminProductManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/vouchers"
+            element={
+              <ProtectedRoute>
+                <AdminVoucherManagement />
               </ProtectedRoute>
             }
           />

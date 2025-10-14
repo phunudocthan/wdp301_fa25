@@ -7,6 +7,7 @@ import ResendVerificationPage from '../views/ResendVerificationPage';
 import ResetPasswordPage from '../views/ResetPasswordPage';
 import AdminNotificationPage from '../views/AdminNotificationPage';
 import AdminProfile from '../pages/AdminProfile';
+import AdminVoucherManagement from '../pages/AdminVoucherManagement';
 import { useAuth } from '../components/context/AuthContext';
 
 interface AppRouterProps {
@@ -48,6 +49,7 @@ const AppRouter: React.FC<AppRouterProps> = ({ isAuthenticated }) => {
         <>
           <Route path="/admin/profile" element={<AdminProfile />} />
           <Route path="/admin/notifications" element={<AdminNotificationPage />} />
+          <Route path="/admin/vouchers" element={<AdminVoucherManagement />} />
         </>
       )}
     </Routes>

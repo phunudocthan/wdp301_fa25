@@ -9,5 +9,8 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      '/vouchers': 'http://localhost:5000',
+    },
   },
 });
