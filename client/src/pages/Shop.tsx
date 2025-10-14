@@ -36,7 +36,6 @@ interface Product {
   _id: string;
   name: string;
   price: number;
-  status: string;
   images?: string[];
 }
 
@@ -49,7 +48,14 @@ export default function Shop() {
   // --- Filter/sort/search ---
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<string>();
-  const [status, setStatus] = useState<string>();
+  const [theme, setTheme] = useState<string>();
+  const [category, setCategory] = useState<string>();
+  const [themes, setThemes] = useState<any[]>([]);
+  const [ageRanges, setAgeRanges] = useState<any[]>([]);
+  const [difficulties, setDifficulties] = useState<any[]>([]);
+
+  const [difficulty, setDifficulty] = useState<string>();
+  const [ageRange, setAgeRange] = useState<string>();
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -58,7 +64,7 @@ export default function Shop() {
   const { favoriteIds, toggleFavorite } = useFavorites();
   const [pendingFavorites, setPendingFavorites] = useState<string[]>([]);
 
-  // --- Gọi API ---
+  // --- Fetch Products ---
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -69,13 +75,38 @@ export default function Shop() {
       const finalSearch = searchTerm || urlSearch;
 
       if (finalSearch) params.append("search", finalSearch);
-      if (status) params.append("status", status);
-      if (sortBy) params.append("sortBy", sortBy);
+      if (theme) params.append("theme", theme);
+      if (category) params.append("category", category);
+      if (difficulty) params.append("difficulty", difficulty);
+      if (ageRange) params.append("ageRange", ageRange);
+
+      // Xử lý sort
+      if (sortBy === "price_asc") {
+        params.append("sortBy", "price");
+        params.append("sortOrder", "asc");
+      } else if (sortBy === "price_desc") {
+        params.append("sortBy", "price");
+        params.append("sortOrder", "desc");
+      } else if (sortBy === "name_asc") {
+        params.append("sortBy", "name");
+        params.append("sortOrder", "asc");
+      } else if (sortBy === "name_desc") {
+        params.append("sortBy", "name");
+        params.append("sortOrder", "desc");
+      } else if (sortBy === "newest") {
+        params.append("sortBy", "createdAt");
+        params.append("sortOrder", "desc");
+      }
+
+      // Lọc theo giá
       if (priceRange[0] > 0) params.append("minPrice", priceRange[0].toString());
-      if (priceRange[1] < 1000) params.append("maxPrice", priceRange[1].toString());
+      if (priceRange[1] < 1000)
+        params.append("maxPrice", priceRange[1].toString());
 
       const res = await axiosInstance.get(`/products?${params.toString()}`);
-      setProducts(res.data.products || []);
+
+      // Dữ liệu BE trả về dạng { success, data: { products, pagination } }
+      setProducts(res.data?.data?.products || []);
     } catch (err) {
       console.error("❌ Error fetching products:", err);
     } finally {
@@ -83,13 +114,28 @@ export default function Shop() {
     }
   };
 
+  // --- Get Filters Meta ---
+  useEffect(() => {
+    const fetchFilterMeta = async () => {
+      try {
+        const res = await axiosInstance.get("/products/filters/meta");
+        setThemes(res.data.data.themes || []);
+        setAgeRanges(res.data.data.ageRanges || []);
+        setDifficulties(res.data.data.difficulties || []);
+      } catch (err) {
+        console.error("❌ Error fetching filter meta:", err);
+      }
+    };
+    fetchFilterMeta();
+  }, []);
+
   // --- Gọi API mỗi khi filter/search/sort thay đổi ---
   useEffect(() => {
     const delay = setTimeout(() => {
       fetchProducts();
     }, 400);
     return () => clearTimeout(delay);
-  }, [searchTerm, sortBy, status, priceRange, location.search]);
+  }, [searchTerm, sortBy, theme, category, difficulty, ageRange, priceRange, location.search]);
 
   // --- Pagination ---
   const startIndex = (currentPage - 1) * pageSize;
@@ -163,13 +209,29 @@ export default function Shop() {
 
           <Space>
             <Select
-              placeholder="Filter by status"
+              placeholder="Difficulty"
               allowClear
-              style={{ width: 180 }}
-              onChange={(value) => setStatus(value)}
+              style={{ width: 150 }}
+              onChange={(value) => setDifficulty(value)}
             >
-              <Option value="active">Active</Option>
-              <Option value="inactive">Inactive</Option>
+              {difficulties.map((difficulty) => (
+                <Option key={difficulty._id} value={difficulty._id}>
+                  {difficulty.label}
+                </Option>
+              ))}
+            </Select>
+
+            <Select
+              placeholder="Age Range"
+              allowClear
+              style={{ width: 150 }}
+              onChange={(value) => setAgeRange(value)}
+            >
+              {ageRanges.map((range) => (
+                <Option key={range._id} value={range._id}>
+                  {range.rangeLabel}
+                </Option>
+              ))}
             </Select>
 
             <Select
@@ -181,6 +243,8 @@ export default function Shop() {
               <Option value="price_asc">Price: Low → High</Option>
               <Option value="price_desc">Price: High → Low</Option>
               <Option value="newest">Newest</Option>
+              <Option value="name_asc">Name: A → Z</Option>
+              <Option value="name_desc">Name: Z → A</Option>
             </Select>
 
             <div style={{ width: 200 }}>
@@ -330,10 +394,7 @@ export default function Shop() {
             </div>
           </>
         ) : (
-          <Empty
-            description="Not found products."
-            style={{ marginTop: "50px" }}
-          />
+          <Empty description="Not found products." style={{ marginTop: "50px" }} />
         )}
       </div>
     </>

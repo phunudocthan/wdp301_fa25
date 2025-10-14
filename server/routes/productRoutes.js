@@ -15,6 +15,32 @@ const {
 } = require("../controllers/productController");
 
 const router = express.Router();
+<<<<<<< HEAD
+=======
+const Order = require("../models/Order");/**
+ * @route   GET /api/products/admin/stats
+ * @desc    Lấy thống kê sản phẩm (Admin)
+ * @access  Private (Admin only)
+ */
+const Theme = require("../models/Theme");
+const AgeRange = require("../models/AgeRange");
+const Difficulty = require("../models/Difficulty");
+router.get("/admin/stats", requireAuth, requireRole("admin"), getProductStats);
+
+
+/**
+ * @route   GET /api/products/admin/:id
+ * @desc    Lấy chi tiết sản phẩm theo ID (Admin)
+ * @access  Private (Admin only)
+ */
+router.get("/admin/:id", requireAuth, requireRole("admin"), getProductById);
+/**
+ * @route   GET /api/products/admin
+ * @desc    Lấy tất cả sản phẩm với phân trang (Admin)
+ * @access  Private (Admin only)
+ */
+router.get("/admin", requireAuth, requireRole("admin"), getAllProducts);
+>>>>>>> 118cd6a81b65fe42093cf0bc1610a2575b76f82c
 
 /**
  * @route   GET /api/products/best-sell
@@ -58,11 +84,180 @@ const getBestSellProducts = async (req, res) => {
   }
 };
 
+router.get("/best-sell", getBestSellProducts);
+router.get("/caterory_list/:id", getProductByCategoryID);
+
+
+/**
+ * @route   GET /api/products
+ * @desc    Lấy danh sách sản phẩm (có hỗ trợ search + filter + sort)
+ * @access  Public
+ */
+
+router.get("/", async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      theme,
+      category,
+      minPrice,
+      maxPrice,
+      minPieces,
+      maxPieces,
+      ageRange,
+      difficulty,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // 🔍 Build filter
+    let filter = {};
+
+    // Tìm kiếm theo tên hoặc mô tả
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Lọc theo theme
+    if (theme) filter.themeId = theme;
+
+    // Lọc theo category
+    if (category) filter.categories = category;
+
+    // Lọc theo độ tuổi
+    if (ageRange) filter.ageRangeId = ageRange;
+
+    // Lọc theo độ khó
+    if (difficulty) filter.difficultyId = difficulty;
+
+    // Lọc theo giá
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    // Lọc theo số mảnh
+    if (minPieces || maxPieces) {
+      filter.pieces = {};
+      if (minPieces) filter.pieces.$gte = Number(minPieces);
+      if (maxPieces) filter.pieces.$lte = Number(maxPieces);
+    }
+
+    // 🔽 Sắp xếp: Validate the sort field and sort order
+    const validSortFields = ["createdAt", "price", "name", "pieces"];
+    if (!validSortFields.includes(sortBy)) {
+      sortBy = "createdAt"; // Default to createdAt if invalid field
+    }
+
+    const sort = {};
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+    // 🔄 Truy vấn dữ liệu
+    const products = await Lego.find(filter)
+      .populate("themeId", "name")
+      .populate("ageRangeId", "rangeLabel minAge maxAge")
+      .populate("difficultyId", "label level")
+      .populate("categories", "name slug")
+      .populate("createdBy", "username email")
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNum);
+
+    // Đếm tổng
+    const total = await Lego.countDocuments(filter);
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.json({
+      success: true,
+      data: {
+        products,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalProducts: total,
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get all products error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách sản phẩm",
+      error: error.message,
+    });
+  }
+});
+
+
+//get list themeId, ageRangeId, difficultyId
+router.get("/filters/meta", async (req, res) => {
+  try {
+    const themes = await Theme.find().select("_id name");
+    const ageRanges = await AgeRange.find().select("_id rangeLabel minAge maxAge");
+    const difficulties = await Difficulty.find().select("_id label level");
+    res.json({
+      success: true,
+      data: {
+        themes,
+        ageRanges,
+        difficulties,
+      },
+    });
+  } catch (error) {
+
+    console.error("Get filter meta error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy dữ liệu lọc",
+      error: error.message,
+    });
+  }
+});
+
+
+
+/**
+ * @route   GET /api/products/:id
+ * @desc    Lấy chi tiết sản phẩm theo ID
+ * @access  Public
+ */
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Lego.findById(req.params.id)
+      .populate("themeId", "name description")
+      .populate("ageRangeId", "rangeLabel minAge maxAge")
+      .populate("difficultyId", "label level")
+      .populate("createdBy", "name email role");
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    return res.json(product);
+  } catch (err) {
+    console.error("❌ Error fetching product:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 // ===============================
 // ADMIN ROUTES - PRODUCT MANAGEMENT
 // ===============================
 
+<<<<<<< HEAD
 router.get("/admin/stats", requireAuth, requireRole("admin"), getProductStats);
+=======
+>>>>>>> 118cd6a81b65fe42093cf0bc1610a2575b76f82c
 
 router.get(
   "/admin/uncategorized/count",
@@ -71,8 +266,17 @@ router.get(
   getUncategorizedProductsCount
 );
 
+<<<<<<< HEAD
 router.get("/admin", requireAuth, requireRole("admin"), getAllProducts);
 router.get("/admin/:id", requireAuth, requireRole("admin"), getProductById);
+=======
+
+/**
+ * @route   POST /api/products/admin
+ * @desc    Tạo sản phẩm mới (Admin)
+ * @access  Private (Admin only)
+ */
+>>>>>>> 118cd6a81b65fe42093cf0bc1610a2575b76f82c
 router.post("/admin", requireAuth, requireRole("admin"), createProduct);
 router.put("/admin/:id", requireAuth, requireRole("admin"), updateProduct);
 router.patch(
