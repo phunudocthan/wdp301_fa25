@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 import {
     Table,
     Button,
@@ -12,19 +14,20 @@ import {
     Typography,
     DatePicker,
 } from "antd";
+// ...existing code...
 import {
     PlusOutlined,
     EditOutlined,
     DeleteOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import VoucherAdminAPI from "../api/voucherAdmin";
 
 const { Option } = Select;
 const { Title } = Typography;
 
 const AdminVoucherManagement = () => {
-    const [vouchers, setVouchers] = useState([]);
+    const [vouchers, setVouchers] = useState<any[]>([]); // Nếu có type Voucher thì dùng: useState<Voucher[]>([])
     const [loading, setLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingVoucher, setEditingVoucher] = useState(null);
@@ -39,16 +42,14 @@ const AdminVoucherManagement = () => {
     const fetchVouchers = async (currentPage = 1) => {
         try {
             setLoading(true);
-            const res = await axios.get("/api/vouchers/admin", {
-                params: {
-                    search: searchTerm,
-                    status: statusFilter,
-                    page: currentPage,
-                    limit: pageSize,
-                },
+            const res = await VoucherAdminAPI.getVouchers({
+                search: searchTerm,
+                status: statusFilter === "all" ? undefined : statusFilter,
+                page: currentPage,
+                limit: pageSize,
             });
             setVouchers(res.data.vouchers || []);
-            setTotal(res.data.total || 0);
+            setTotal(res.data.pagination?.totalVouchers || 0);
         } catch (err) {
             console.error(err);
             message.error("Failed to load vouchers!");
@@ -56,6 +57,8 @@ const AdminVoucherManagement = () => {
             setLoading(false);
         }
     };
+
+// ...existing code...
 
     useEffect(() => {
         fetchVouchers();
@@ -67,8 +70,15 @@ const AdminVoucherManagement = () => {
 
     const openModal = (voucher = null) => {
         setEditingVoucher(voucher);
-        if (voucher) form.setFieldsValue(voucher);
-        else form.resetFields();
+        if (typeof voucher === 'object' && voucher !== null) {
+            const values = { ...voucher };
+            if (values.expiryDate) {
+                values.expiryDate = dayjs(values.expiryDate);
+            }
+            form.setFieldsValue(values);
+        } else {
+            form.resetFields();
+        }
         setIsModalVisible(true);
     };
 
@@ -77,7 +87,7 @@ const AdminVoucherManagement = () => {
             title: "Are you sure you want to delete this voucher?",
             onOk: async () => {
                 try {
-                    await axios.delete(`/api/vouchers/admin/${id}`);
+                    await VoucherAdminAPI.deleteVoucher(id);
                     message.success("Voucher deleted successfully!");
                     fetchVouchers(page);
                 } catch (err) {
@@ -97,17 +107,17 @@ const AdminVoucherManagement = () => {
             }
             // Ensure correct field names
             const payload = {
-                code: values.code,
+                code: String(values.code).toUpperCase().trim(),
                 discountPercent: Number(values.discountPercent),
                 usageLimit: Number(values.usageLimit),
                 status: values.status,
                 expiryDate: values.expiryDate,
             };
             if (editingVoucher && (editingVoucher as any)._id) {
-                await axios.put(`/api/vouchers/admin/${(editingVoucher as any)._id}`, payload);
+                await VoucherAdminAPI.updateVoucher((editingVoucher as any)._id, payload);
                 message.success("Voucher updated successfully!");
             } else {
-                await axios.post("/api/vouchers/admin", payload);
+                await VoucherAdminAPI.createVoucher(payload);
                 message.success("Voucher created successfully!");
             }
             setIsModalVisible(false);
@@ -122,11 +132,34 @@ const AdminVoucherManagement = () => {
         }
     };
 
+    const handleStatusChange = async (id: string, status: string) => {
+        try {
+            await VoucherAdminAPI.updateVoucherStatus(id, status);
+            message.success("Status updated!");
+            fetchVouchers(page);
+        } catch (err) {
+            console.error(err);
+            message.error("Failed to update status!");
+        }
+    };
+
     const columns = [
         { title: "Code", dataIndex: "code", key: "code" },
         { title: "Discount (%)", dataIndex: "discountPercent", key: "discountPercent" },
         { title: "Usage Limit", dataIndex: "usageLimit", key: "usageLimit" },
-        { title: "Status", dataIndex: "status", key: "status" },
+        { title: "Status", dataIndex: "status", key: "status",
+            render: (text: string, record: any) => (
+                <Select
+                    value={text}
+                    style={{ width: 120 }}
+                    onChange={status => handleStatusChange(record._id, status)}
+                >
+                    <Option value="active">Active</Option>
+                    <Option value="expired">Expired</Option>
+                    <Option value="disabled">Disabled</Option>
+                </Select>
+            )
+        },
         { title: "Expiry Date", dataIndex: "expiryDate", key: "expiryDate" },
         {
             title: "Actions",
@@ -149,26 +182,30 @@ const AdminVoucherManagement = () => {
         },
     ];
 
+    const navigate = useNavigate();
     return (
         <div style={{ background: "#f5f6fa", minHeight: "100vh", padding: "24px 0" }}>
-            <div
-                style={{
-                    maxWidth: 1200,
-                    margin: "0 auto",
-                    padding: "0 16px",
-                }}
-            >
-                <Card
-                    style={{
-                        borderRadius: 10,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                    }}
+            {/* Back Button */}
+            <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+                <Button
+                    onClick={() => navigate('/admin/dashboard')}
+                    style={{ background: '#e5e7eb', color: '#374151', borderRadius: 6 }}
                 >
+                    ← Quay về Admin Dashboard
+                </Button>
+                <Button
+                    onClick={() => navigate('/admin/voucher-statistics')}
+                    style={{ background: '#e5e7eb', color: '#374151', borderRadius: 6 }}
+                >
+                    Xem thống kê voucher
+                </Button>
+            </div>
+            <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 16px" }}>
+                <Card style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
                     <Title level={4} style={{ marginBottom: 24 }}>
                         Voucher Management
                     </Title>
                     <div style={{ marginBottom: 16, color: '#555' }}>Total vouchers: {total}</div>
-
                     <Space style={{ marginBottom: 16, flexWrap: "wrap" }}>
                         <Input
                             placeholder="Search by code"
@@ -197,7 +234,6 @@ const AdminVoucherManagement = () => {
                             Create Voucher
                         </Button>
                     </Space>
-
                     <Table
                         columns={columns}
                         dataSource={vouchers}
@@ -219,7 +255,6 @@ const AdminVoucherManagement = () => {
                     />
                 </Card>
             </div>
-
             {/* Modal */}
             <Modal
                 title={editingVoucher ? "Edit Voucher" : "Create Voucher"}
@@ -236,7 +271,6 @@ const AdminVoucherManagement = () => {
                     >
                         <Input />
                     </Form.Item>
-
                     <Form.Item
                         name="discountPercent"
                         label="Discount (%)"
@@ -258,7 +292,6 @@ const AdminVoucherManagement = () => {
                     >
                         <Input type="number" min={1} />
                     </Form.Item>
-
                     <Form.Item
                         name="status"
                         label="Status"
@@ -270,7 +303,6 @@ const AdminVoucherManagement = () => {
                             <Option value="disabled">Disabled</Option>
                         </Select>
                     </Form.Item>
-
                     <Form.Item
                         name="expiryDate"
                         label="Expiry Date"

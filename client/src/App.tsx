@@ -27,7 +27,7 @@ import AddressBookPage from "./views/AddressBookPage";
 import NotificationsPage from "./views/NotificationsPage";
 import AdminNotificationPage from "./views/AdminNotificationPage";
 import AdminProductManagement from "./pages/AdminProductManagement";
-import AdminCategoryManagement from "./pages/AdminCategoryManagement";
+import AdminCategoryManagement from "./pages/AdminCategoryManagement_new";
 import AdminProductDetail from "./pages/AdminProductDetail";
 import AdminProductEdit from "./pages/AdminProductEdit";
 import AdminVoucherManagement from "./pages/AdminVoucherManagement";

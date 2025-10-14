@@ -55,85 +55,8 @@ const getBestSellProducts = async (req, res) => {
   }
 };
 
-router.get("/best-sell", getBestSellProducts);
-router.get("/caterory_list/:id", getProductByCategoryID);
-
-
-/**
- * @route   GET /api/products
- * @desc    Lấy danh sách sản phẩm (có hỗ trợ search + filter + sort)
- * @access  Public
- */
-router.get("/", async (req, res) => {
-  try {
-    const { search, theme, minPrice, maxPrice, status, sortBy } = req.query;
-
-    let filter = {};
-
-    // 🔍 Search theo ký tự (tên hoặc mô tả)
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } }, // không phân biệt hoa thường
-        { description: { $regex: search, $options: "i" } },
-      ];
-    }
-
-
-    // 🎨 Filter theo themeId
-    if (theme) {
-      filter.themeId = theme;
-    }
-
-    // ✅ Filter theo status
-    if (status) {
-      filter.status = status;
-    }
-
-    // 💰 Filter theo price range
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
-    }
-
-    // ↕️ Sort
-    let sort = {};
-    if (sortBy === "price_asc") sort.price = 1;
-    if (sortBy === "price_desc") sort.price = -1;
-    if (sortBy === "newest") sort.createdAt = -1;
-
-    // 📦 Query Mongo
-    const products = await Lego.find(filter).sort(sort);
-
-    return res.json({
-      count: products.length,
-      products,
-    });
-  } catch (err) {
-    console.error("❌ Error fetching products:", err.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-//detail
-router.get("/:id", async (req, res) => {
-  try {
-    const product = await Lego.findById(req.params.id)
-      .populate("themeId", "name description")
-      .populate("ageRangeId", "rangeLabel minAge maxAge")
-      .populate("difficultyId", "label level")
-      .populate("createdBy", "name email role");
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-    return res.json(product);
-  } catch (err) {
-    console.error("❌ Error fetching product:", err.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
 // ===============================
-// ADMIN ROUTES - Quản lý sản phẩm
+// ADMIN ROUTES - Quản lý sản phẩm (PHẢI ĐẶT TRƯỚC /:id)
 // ===============================
 
 /**
@@ -201,5 +124,84 @@ router.patch(
  * @access  Private (Admin only)
  */
 router.delete("/admin/:id", requireAuth, requireRole("admin"), deleteProduct);
+
+// ===============================
+// PUBLIC ROUTES
+// ===============================
+
+router.get("/best-sell", getBestSellProducts);
+router.get("/caterory_list/:id", getProductByCategoryID);
+
+/**
+ * @route   GET /api/products
+ * @desc    Lấy danh sách sản phẩm (có hỗ trợ search + filter + sort)
+ * @access  Public
+ */
+router.get("/", async (req, res) => {
+  try {
+    const { search, theme, minPrice, maxPrice, status, sortBy } = req.query;
+
+    let filter = {};
+
+    // 🔍 Search theo ký tự (tên hoặc mô tả)
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } }, // không phân biệt hoa thường
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // 🎨 Filter theo themeId
+    if (theme) {
+      filter.themeId = theme;
+    }
+
+    // ✅ Filter theo status
+    if (status) {
+      filter.status = status;
+    }
+
+    // 💰 Filter theo price range
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    // ↕️ Sort
+    let sort = {};
+    if (sortBy === "price_asc") sort.price = 1;
+    if (sortBy === "price_desc") sort.price = -1;
+    if (sortBy === "newest") sort.createdAt = -1;
+
+    // 📦 Query Mongo
+    const products = await Lego.find(filter).sort(sort);
+
+    return res.json({
+      count: products.length,
+      products,
+    });
+  } catch (err) {
+    console.error("❌ Error fetching products:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+//detail
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Lego.findById(req.params.id)
+      .populate("themeId", "name description")
+      .populate("ageRangeId", "rangeLabel minAge maxAge")
+      .populate("difficultyId", "label level")
+      .populate("createdBy", "name email role");
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    return res.json(product);
+  } catch (err) {
+    console.error("❌ Error fetching product:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 module.exports = router;

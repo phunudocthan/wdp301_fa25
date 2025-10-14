@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ProductAdminAPI, {
   Product,
   ProductStatsResponse,
@@ -10,6 +11,7 @@ import ProductStats from "../components/ProductStats";
 import "../styles/AdminProductManagement.css";
 
 const AdminProductManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState<ProductStatsResponse["data"] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,6 +133,15 @@ const AdminProductManagement: React.FC = () => {
 
   return (
     <div className="admin-products">
+      {/* Back Button */}
+      <div className="mb-4">
+        <button
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-gray-700"
+          onClick={() => navigate('/admin/dashboard')}
+        >
+          ← Quay về Admin Dashboard
+        </button>
+      </div>
       <div className="admin-products-header">
         <h1>Quản lý sản phẩm</h1>
         <button className="btn btn-primary" onClick={handleCreateProduct}>

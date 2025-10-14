@@ -10,10 +10,12 @@ import ResendVerificationPage from '../views/ResendVerificationPage';
 import ResetPasswordPage from '../views/ResetPasswordPage';
 import AdminNotificationPage from '../views/AdminNotificationPage';
 import AdminProfile from '../pages/AdminProfile';
+import AdminDashboard from '../pages/AdminDashboard';
 import AdminVoucherManagement from '../pages/AdminVoucherManagement';
 import AdminProductManagement from '../pages/AdminProductManagement';
 import AdminProductDetail from '../pages/AdminProductDetail';
 import AdminProductEdit from '../pages/AdminProductEdit';
+import AdminVoucherStatistics from '../pages/AdminVoucherStatistics';
 import Shop from '../pages/Shop';
 import Register from '../pages/Register';
 import ProductDetail from '../pages/ProductDetail';
@@ -51,9 +53,11 @@ const AppRouter: React.FC = () => {
 
       {isAuthenticated && user?.role === 'admin' && (
         <>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
           <Route path="/admin/notifications" element={<AdminNotificationPage />} />
           <Route path="/admin/vouchers" element={<AdminVoucherManagement />} />
+          <Route path="/admin/voucher-statistics" element={<AdminVoucherStatistics />} />
           <Route path="/admin/products" element={<AdminProductManagement />} />
           <Route path="/admin/products/:id" element={<AdminProductDetail />} />
           <Route path="/admin/products/edit/:id" element={<AdminProductEdit />} />
