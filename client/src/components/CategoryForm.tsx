@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import categoryAdminAPI, { Category } from "../api/categoryAdmin";
+import { getApiOriginURL } from "../api/axiosInstance";
 
 interface CategoryFormProps {
   category?: Category | null;
@@ -41,7 +42,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       });
 
       if (category.image) {
-        setPreviewUrl(`http://localhost:5000${category.image}`);
+        setPreviewUrl(`${getApiOriginURL()}${category.image}`);
       }
     }
   }, [category]);
@@ -132,7 +133,15 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       }
 
       if (isEditing && category) {
-        await categoryAdminAPI.updateCategory(category._id, submitData);
+        console.log("Category object:", category);
+        console.log("Category ID:", category._id);
+        console.log("Category ID type:", typeof category._id);
+
+        // Đảm bảo ID là string
+        const categoryId = category._id?.toString() || category._id;
+        console.log("Processed category ID:", categoryId);
+
+        await categoryAdminAPI.updateCategory(categoryId, submitData);
       } else {
         await categoryAdminAPI.createCategory(submitData);
       }
@@ -148,28 +157,29 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            {isEditing ? "Sửa danh mục" : "Thêm danh mục mới"}
+    <div className="category-modal-overlay">
+      <div className="category-modal-container">
+        <div className="category-modal-header">
+          <h3 className="category-modal-title">
+            {isEditing ? "✏️ Sửa danh mục" : "➕ Thêm danh mục mới"}
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 focus:outline-none"
+            className="category-modal-close"
+            title="Đóng"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="category-modal-form">
           {/* Name */}
-          <div>
+          <div className="form-group">
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="form-label required"
             >
-              Tên danh mục <span className="text-red-500">*</span>
+              Tên danh mục
             </label>
             <input
               type="text"
@@ -177,17 +187,17 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="form-input"
               placeholder="Nhập tên danh mục..."
               required
             />
           </div>
 
           {/* Description */}
-          <div>
+          <div className="form-group">
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="form-label"
             >
               Mô tả
             </label>
@@ -197,16 +207,16 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               value={formData.description}
               onChange={handleInputChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="form-textarea"
               placeholder="Nhập mô tả danh mục..."
             />
           </div>
 
           {/* Parent Category */}
-          <div>
+          <div className="form-group">
             <label
               htmlFor="parentId"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="form-label"
             >
               Danh mục cha
             </label>
@@ -215,7 +225,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               name="parentId"
               value={formData.parentId}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="form-select"
             >
               <option value="">
                 Chọn danh mục cha (để trống nếu là danh mục gốc)
@@ -233,60 +243,64 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           </div>
 
           {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="form-group">
+            <label className="form-label">
               Hình ảnh danh mục
             </label>
 
-            {previewUrl ? (
-              <div className="relative inline-block">
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+            <div className="image-upload-section">
+              {previewUrl ? (
+                <div className="image-preview-container">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="image-preview"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="image-remove-btn"
+                    title="Xóa hình ảnh"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="image-placeholder">
+                  <ImageIcon className="w-8 h-8 text-gray-400" />
+                  <span className="image-placeholder-text">Chưa có hình ảnh</span>
+                </div>
+              )}
+
+              <div className="image-upload-controls">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
                 />
                 <button
                   type="button"
-                  onClick={removeImage}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="image-upload-btn"
                 >
-                  <X className="w-4 h-4" />
+                  <Upload className="w-4 h-4 mr-2" />
+                  {previewUrl ? "Thay đổi hình ảnh" : "Chọn hình ảnh"}
                 </button>
+                <p className="image-upload-note">
+                  Kích thước tối đa: 5MB. Định dạng: JPG, PNG, GIF
+                </p>
               </div>
-            ) : (
-              <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-                <ImageIcon className="w-8 h-8 text-gray-400" />
-              </div>
-            )}
-
-            <div className="mt-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                {previewUrl ? "Thay đổi hình ảnh" : "Chọn hình ảnh"}
-              </button>
-              <p className="mt-1 text-xs text-gray-500">
-                Kích thước tối đa: 5MB. Định dạng: JPG, PNG, GIF
-              </p>
             </div>
           </div>
 
           {/* Order and Status */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div className="form-row">
+            <div className="form-group">
               <label
                 htmlFor="order"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="form-label"
               >
                 Thứ tự hiển thị
               </label>
@@ -297,23 +311,24 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                 value={formData.order}
                 onChange={handleInputChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="form-input"
+                placeholder="0"
               />
             </div>
 
-            <div className="flex items-center">
-              <div className="flex h-full items-center">
+            <div className="form-group checkbox-group">
+              <div className="checkbox-container">
                 <input
                   type="checkbox"
                   id="isActive"
                   name="isActive"
                   checked={formData.isActive}
                   onChange={handleInputChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="form-checkbox"
                 />
                 <label
                   htmlFor="isActive"
-                  className="ml-2 block text-sm text-gray-900"
+                  className="checkbox-label"
                 >
                   Kích hoạt danh mục
                 </label>
@@ -322,20 +337,29 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="category-modal-actions">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="btn btn-secondary modal-btn"
             >
-              Hủy
+              ❌ Hủy
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary modal-btn"
             >
-              {loading ? "Đang lưu..." : isEditing ? "Cập nhật" : "Tạo mới"}
+              {loading ? (
+                <>
+                  <div className="btn-spinner"></div>
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  {isEditing ? "✅ Cập nhật" : "🎉 Tạo mới"}
+                </>
+              )}
             </button>
           </div>
         </form>

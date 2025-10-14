@@ -29,11 +29,12 @@ const ProductList: React.FC<ProductListProps> = ({
   };
 
   const formatPrice = (price: number) => {
-    return (
-      new Intl.NumberFormat("vi-VN", {
-        style: "decimal",
-      }).format(price) + " VND"
-    );
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price || 0);
   };
 
   const formatDate = (dateString: string) => {

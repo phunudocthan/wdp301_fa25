@@ -1,5 +1,6 @@
 ﻿const mongoose = require("mongoose");
 const crypto = require("crypto");
+const { Schema } = mongoose;
 
 const AddressSchema = new mongoose.Schema(
   {
@@ -124,6 +125,11 @@ const UserSchema = new mongoose.Schema(
     },
     passwordResetExpires: {
       type: Date,
+    },
+    favorites: {
+      type: [Schema.Types.ObjectId],
+      ref: "Lego",
+      default: [],
     },
   },
   {

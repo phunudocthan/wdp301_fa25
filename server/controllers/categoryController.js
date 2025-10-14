@@ -160,6 +160,11 @@ const createCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("Received category ID:", id);
+    console.log("ID type:", typeof id);
+    console.log("Request params:", req.params);
+    console.log("Request body:", req.body);
+
     const { name, description, parentId, isActive, order } = req.body;
     const image = req.file
       ? `/uploads/categories/${req.file.filename}`

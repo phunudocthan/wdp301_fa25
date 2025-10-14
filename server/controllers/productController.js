@@ -8,6 +8,11 @@ const Difficulty = require("../models/Difficulty");
  * @route   GET /api/admin/products
  * @access  Private (Admin)
  */
+/**
+ * @desc    Lấy danh sách tất cả sản phẩm (Admin)
+ * @route   GET /api/admin/products
+ * @access  Private (Admin)
+ */
 const getAllProducts = async (req, res) => {
   try {
     const {
@@ -86,6 +91,8 @@ const getAllProducts = async (req, res) => {
     });
   }
 };
+
+
 
 /**
  * @desc    Lấy thông tin một sản phẩm theo ID
@@ -490,8 +497,58 @@ const getUncategorizedProductsCount = async (req, res) => {
       error: error.message,
     });
   }
+};const getProductByCategoryID = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const products = await Lego.find({ categories: id })
+      .populate("themeId", "name")
+      .populate("ageRangeId", "rangeLabel minAge maxAge")
+      .populate("difficultyId", "label level")
+      .populate("categories", "name slug")
+      .populate("createdBy", "username email");
+
+    res.json({
+      success: true,
+      data: products, // empty array if none
+      message: products.length === 0 ? "No products found in this category." : undefined,
+    });
+  } catch (error) {
+    console.error("Get products by category ID error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error when fetching products by category",
+      error: error.message,
+    });
+  }
 };
 
+ const getRecentlyViewedProducts = async (req, res) => {
+  try {
+    const ids = req.query.id?.split(",") || [];
+
+    if (!ids.length) {
+      return res.status(400).json({ message: "No product IDs provided" });
+    }
+
+    // Tìm các sản phẩm có id trong danh sách
+    const products = await Lego.find({ _id: { $in: ids } })
+      .select("name price images category") // chỉ lấy trường cần
+      .lean();
+
+    // Sắp xếp lại theo thứ tự trong localStorage
+    const orderedProducts = ids
+      .map((id) => products.find((p) => p._id.toString() === id))
+      .filter(Boolean);
+
+    res.status(200).json({
+      success: true,
+      data: { products: orderedProducts },
+    });
+  } catch (error) {
+    console.error("Error getRecentlyViewedProducts:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 module.exports = {
   getAllProducts,
   getProductById,
@@ -500,5 +557,7 @@ module.exports = {
   deleteProduct,
   updateProductStatus,
   getProductStats,
+  getProductByCategoryID,
   getUncategorizedProductsCount,
+  getRecentlyViewedProducts,
 };
