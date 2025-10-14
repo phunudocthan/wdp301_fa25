@@ -18,7 +18,6 @@ import {
 } from "antd";
 import { ShoppingCartOutlined } from "@ant-design/icons";
 import "../styles/shop.scss";
-import imagesDefault from "../../../client/public/images/1827380.png";
 
 const { Title } = Typography;
 const { Meta } = Card;
@@ -28,7 +27,6 @@ interface Product {
   _id: string;
   name: string;
   price: number;
-  status: string;
   images?: string[];
 }
 
@@ -41,7 +39,10 @@ export default function Shop() {
   // --- Filter/sort/search ---
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<string>();
-  const [status, setStatus] = useState<string>();
+  const [theme, setTheme] = useState<string>();
+  const [category, setCategory] = useState<string>();
+  const [difficulty, setDifficulty] = useState<string>();
+  const [ageRange, setAgeRange] = useState<string>();
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const location = useLocation();
 
@@ -56,13 +57,32 @@ export default function Shop() {
       const finalSearch = searchTerm || urlSearch;
 
       if (finalSearch) params.append("search", finalSearch);
-      if (status) params.append("status", status);
-      if (sortBy) params.append("sortBy", sortBy);
+      if (theme) params.append("theme", theme);
+      if (category) params.append("category", category);
+      if (difficulty) params.append("difficulty", difficulty);
+      if (ageRange) params.append("ageRange", ageRange);
+
+      // Xử lý sort
+      if (sortBy === "price_asc") {
+        params.append("sortBy", "price");
+        params.append("sortOrder", "asc");
+      } else if (sortBy === "price_desc") {
+        params.append("sortBy", "price");
+        params.append("sortOrder", "desc");
+      } else if (sortBy === "newest") {
+        params.append("sortBy", "createdAt");
+        params.append("sortOrder", "desc");
+      }
+
+      // Lọc theo giá
       if (priceRange[0] > 0) params.append("minPrice", priceRange[0].toString());
-      if (priceRange[1] < 1000) params.append("maxPrice", priceRange[1].toString());
+      if (priceRange[1] < 1000)
+        params.append("maxPrice", priceRange[1].toString());
 
       const res = await axiosInstance.get(`/products?${params.toString()}`);
-      setProducts(res.data.products || []);
+
+      // Dữ liệu BE trả về dạng { success, data: { products, pagination } }
+      setProducts(res.data?.data?.products || []);
     } catch (err) {
       console.error("❌ Error fetching products:", err);
     } finally {
@@ -76,7 +96,7 @@ export default function Shop() {
       fetchProducts();
     }, 400);
     return () => clearTimeout(delay);
-  }, [searchTerm, sortBy, status, priceRange, location.search]);
+  }, [searchTerm, sortBy, theme, category, difficulty, ageRange, priceRange, location.search]);
 
   // --- Pagination ---
   const startIndex = (currentPage - 1) * pageSize;
@@ -109,14 +129,27 @@ export default function Shop() {
           />
 
           <Space>
+
             <Select
-              placeholder="Filter by status"
+              placeholder="Difficulty"
               allowClear
-              style={{ width: 180 }}
-              onChange={(value) => setStatus(value)}
+              style={{ width: 150 }}
+              onChange={(value) => setDifficulty(value)}
             >
-              <Option value="active">Active</Option>
-              <Option value="inactive">Inactive</Option>
+              <Option value="easy">Easy</Option>
+              <Option value="medium">Medium</Option>
+              <Option value="hard">Hard</Option>
+            </Select>
+
+            <Select
+              placeholder="Age Range"
+              allowClear
+              style={{ width: 150 }}
+              onChange={(value) => setAgeRange(value)}
+            >
+              <Option value="5-8">5–8</Option>
+              <Option value="9-12">9–12</Option>
+              <Option value="13+">13+</Option>
             </Select>
 
             <Select
@@ -230,10 +263,7 @@ export default function Shop() {
             </div>
           </>
         ) : (
-          <Empty
-            description="Not found products."
-            style={{ marginTop: "50px" }}
-          />
+          <Empty description="Not found products." style={{ marginTop: "50px" }} />
         )}
       </div>
     </>

@@ -66,55 +66,110 @@ router.get("/caterory_list/:id", getProductByCategoryID);
  */
 router.get("/", async (req, res) => {
   try {
-    const { search, theme, minPrice, maxPrice, status, sortBy } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      theme,
+      category,
+      minPrice,
+      maxPrice,
+      minPieces,
+      maxPieces,
+      ageRange,
+      difficulty,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
 
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // 🔍 Build filter
     let filter = {};
 
-    // 🔍 Search theo ký tự (tên hoặc mô tả)
+    // Tìm kiếm theo tên hoặc mô tả
     if (search) {
       filter.$or = [
-        { name: { $regex: search, $options: "i" } }, // không phân biệt hoa thường
+        { name: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
       ];
     }
 
+    // Lọc theo theme
+    if (theme) filter.themeId = theme;
 
-    // 🎨 Filter theo themeId
-    if (theme) {
-      filter.themeId = theme;
-    }
+    // Lọc theo category
+    if (category) filter.categories = category;
 
-    // ✅ Filter theo status
-    if (status) {
-      filter.status = status;
-    }
+    // Lọc theo độ tuổi
+    if (ageRange) filter.ageRangeId = ageRange;
 
-    // 💰 Filter theo price range
+    // Lọc theo độ khó
+    if (difficulty) filter.difficultyId = difficulty;
+
+    // Lọc theo giá
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    // ↕️ Sort
-    let sort = {};
-    if (sortBy === "price_asc") sort.price = 1;
-    if (sortBy === "price_desc") sort.price = -1;
-    if (sortBy === "newest") sort.createdAt = -1;
+    // Lọc theo số mảnh
+    if (minPieces || maxPieces) {
+      filter.pieces = {};
+      if (minPieces) filter.pieces.$gte = Number(minPieces);
+      if (maxPieces) filter.pieces.$lte = Number(maxPieces);
+    }
 
-    // 📦 Query Mongo
-    const products = await Lego.find(filter).sort(sort);
+    // 🔽 Sắp xếp
+    const sort = {};
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
 
-    return res.json({
-      count: products.length,
-      products,
+    // 🔄 Truy vấn dữ liệu
+    const products = await Lego.find(filter)
+      .populate("themeId", "name")
+      .populate("ageRangeId", "rangeLabel minAge maxAge")
+      .populate("difficultyId", "label level")
+      .populate("categories", "name slug")
+      .populate("createdBy", "username email")
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNum);
+
+    // Đếm tổng
+    const total = await Lego.countDocuments(filter);
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.json({
+      success: true,
+      data: {
+        products,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalProducts: total,
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1,
+        },
+      },
     });
-  } catch (err) {
-    console.error("❌ Error fetching products:", err.message);
-    return res.status(500).json({ message: "Server error" });
+  } catch (error) {
+    console.error("Get all products error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách sản phẩm",
+      error: error.message,
+    });
   }
 });
-//detail
+
+/**
+ * @route   GET /api/products/:id
+ * @desc    Lấy chi tiết sản phẩm theo ID
+ * @access  Public
+ */
 router.get("/:id", async (req, res) => {
   try {
     const product = await Lego.findById(req.params.id)

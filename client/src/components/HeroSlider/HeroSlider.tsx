@@ -11,19 +11,19 @@ export default function HeroSlider() {
     {
       image: "/images/lego-sale-banner.jpg",
       title: "What's on sale now?",
-      subtitle: "Take a look at the latest deals on LEGO® sets.",
+      subtitle: "Take a look at the latest deals on LEGOs® sets.",
       button: "Shop Now",
     },
     {
       image: "/images/lego-new-banner.jpg",
       title: "Discover New Arrivals",
-      subtitle: "Explore the latest LEGO® themes and products.",
+      subtitle: "Explore the latest LEGOs® themes and products.",
       button: "Explore",
     },
     {
       image: "/images/lego-gaming-banner.jpg",
       title: "Level Up Your Play",
-      subtitle: "Find your next gaming adventure in LEGO® form.",
+      subtitle: "Find your next gaming adventure in LEGOs® form.",
       button: "Play Now",
     },
   ];
