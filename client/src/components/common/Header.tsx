@@ -1,5 +1,4 @@
 import {
-  FaBell,
   FaChevronDown,
   FaHeart,
   FaSearch,
@@ -7,24 +6,24 @@ import {
   FaSignOutAlt,
   FaUser,
 } from "react-icons/fa";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { fetchNotifications } from "../../api/notifications";
+import { useFavorites } from "../context/FavoritesContext";
 import logo from "/logo.png";
 import "../../styles/layout.scss";
 
 export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [query, setQuery] = useState("");
-  const [numberNotifications, setNumberNotifications] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
   const { cart } = useCart();
+  const { favoriteIds } = useFavorites();
 
   const name = useMemo(
     () => user?.name || localStorage.getItem("name") || "User",
@@ -34,7 +33,6 @@ export default function Header() {
   const isAdmin = user?.role === "admin";
   const isAdminSection = isAdmin && location.pathname.startsWith("/admin");
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -46,21 +44,6 @@ export default function Header() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Load unread notifications count
-  useEffect(() => {
-    const loadNotifications = async () => {
-      try {
-        const list = await fetchNotifications();
-        setNumberNotifications(
-          list.filter((item) => item.status === "unread").length
-        );
-      } catch {
-        console.warn("Unable to load notifications");
-      }
-    };
-    loadNotifications();
   }, []);
 
   const handleLogout = () => {
@@ -86,10 +69,16 @@ export default function Header() {
     <header className="header">
       <div className="container header-inner">
         {/* --- LEFT: Logo --- */}
-        <div className="brand" onClick={() => navigate("/home")}>
+        <Link
+          to="/home"
+          className="brand"
+          onClick={() => {
+            setShowDropdown(false);
+          }}
+        >
           <img src={logo} alt="LEGO Logo" className="logo" />
           <span>LEGOs</span>
-        </div>
+        </Link>
 
         {/* --- CENTER: Navigation --- */}
         <nav className="nav">
@@ -143,14 +132,6 @@ export default function Header() {
               >
                 Notifications
               </NavLink>
-
-              <button
-                onClick={() => navigate("/shop")}
-                className="shop-toggle-btn"
-                title="Switch to Customer Shop View"
-              >
-                Shop View
-              </button>
             </>
           ) : (
             <>
@@ -158,55 +139,51 @@ export default function Header() {
               <NavLink to="/home">Home</NavLink>
               <NavLink to="/addresses">Address Book</NavLink>
               <NavLink to="/notifications">Notifications</NavLink>
-
-              {isAdmin && (
-                <button
-                  onClick={() => navigate("/admin")}
-                  className="admin-toggle-btn"
-                  title="Switch to Admin Dashboard"
-                >
-                  Admin Panel
-                </button>
-              )}
             </>
           )}
         </nav>
 
         {/* --- RIGHT: Search, Icons, Avatar --- */}
         <div className="header-right" onClick={(e) => e.stopPropagation()}>
-          <form className="search-box" onSubmit={handleSearchSubmit}>
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </form>
+          {!isAdminSection && (
+            <form className="search-box" onSubmit={handleSearchSubmit}>
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </form>
+          )}
 
           <div className="icons">
-            <div
-              className="notification-wrapper"
-              onClick={() => navigate("/notifications")}
-            >
-              {numberNotifications > 0 && (
-                <span className="notification-badge">
-                  {numberNotifications}
-                </span>
-              )}
-              <FaBell className="notification-icon" />
-            </div>
-            <FaHeart className="icon" />
-            <div
-              className="icon cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate("/cart");
-              }}
-            >
-              <FaShoppingBag />
-              <span className="cart-count">{cart.items.length}</span>
-            </div>
+            {!isAdminSection && (
+              <>
+                <div
+                  className="notification-wrapper"
+                  onClick={() => navigate("/favorites")}
+                  title="Favourites"
+                >
+                  {favoriteIds.length > 0 && (
+                    <span className="notification-badge">
+                      {favoriteIds.length}
+                    </span>
+                  )}
+                  <FaHeart className="icon" />
+                </div>
+                <div
+                  className="icon cursor-pointer"
+                  onClick={(evt) => {
+                    evt.stopPropagation();
+                    navigate("/cart");
+                  }}
+                >
+                  <FaShoppingBag />
+                  <span className="cart-count">{cart.items.length}</span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="relative user-menu" ref={dropdownRef}>

@@ -12,13 +12,14 @@ const timeframeLabels: Record<Timeframe, string> = {
   year: "Last 12 months",
 };
 
-const currencyFormatter = new Intl.NumberFormat("vi-VN", {
+const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "VND",
-  maximumFractionDigits: 0,
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
-const compactFormatter = new Intl.NumberFormat("vi-VN", {
+const compactFormatter = new Intl.NumberFormat("en-US", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
@@ -58,6 +59,11 @@ const AdminRevenueDashboard: React.FC = () => {
   const maxValue = useMemo(() => {
     if (!series || series.data.length === 0) return 0;
     return Math.max(...series.data, 0);
+  }, [series]);
+
+  const hasRevenueData = useMemo(() => {
+    if (!series) return false;
+    return series.data.some((value) => value > 0);
   }, [series]);
 
   const averageValue = useMemo(() => {
@@ -142,25 +148,32 @@ const AdminRevenueDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bar-chart">
-              {series.data.map((value, idx) => {
-                const ratio = maxValue === 0 ? 0 : Math.round((value / maxValue) * 100);
-                const showValue = series.data.length <= 12 || value === maxValue;
-                return (
-                  <div key={series.labels[idx] + idx} className="bar-chart__bar">
-                    {showValue && (
-                      <div className="bar-chart__value">{formatCompact(value)}</div>
-                    )}
-                    <div
-                      className="bar-chart__shape"
-                      style={{ height: `${ratio}%` }}
-                      title={`${series.labels[idx]} - ${formatCurrency(value)}`}
-                    />
-                    <div className="bar-chart__label">{series.labels[idx]}</div>
-                  </div>
-                );
-              })}
-            </div>
+            {hasRevenueData ? (
+              <div className="bar-chart">
+                {series.data.map((value, idx) => {
+                  const ratio = maxValue === 0 ? 0 : Math.round((value / maxValue) * 100);
+                  const heightPercent = value > 0 ? Math.max(ratio, maxValue >= 1000 ? 5 : 20) : 0;
+                  const showValue = series.data.length <= 12 || value === maxValue || value > 0;
+                  return (
+                    <div key={series.labels[idx] + idx} className="bar-chart__bar">
+                      {showValue && (
+                        <div className="bar-chart__value">{formatCompact(value)}</div>
+                      )}
+                      <div
+                        className="bar-chart__shape"
+                        style={{ height: `${heightPercent}%` }}
+                        title={`${series.labels[idx]} - ${formatCurrency(value)}`}
+                      />
+                      <div className="bar-chart__label">{series.labels[idx]}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="admin-empty-state" style={{ marginTop: 12 }}>
+                No revenue recorded for this range yet.
+              </div>
+            )}
           </>
         )}
       </div>

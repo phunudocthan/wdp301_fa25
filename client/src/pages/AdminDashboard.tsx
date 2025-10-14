@@ -8,13 +8,14 @@ import {
 } from "../api/admin";
 import "../styles/AdminDashboard.css";
 
-const currencyFormatter = new Intl.NumberFormat("vi-VN", {
+const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "VND",
-  maximumFractionDigits: 0,
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
-const numberFormatter = new Intl.NumberFormat("vi-VN");
+const numberFormatter = new Intl.NumberFormat("en-US");
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",

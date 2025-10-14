@@ -13,7 +13,9 @@ import {
 import "../styles/productDetail.scss";
 import { message } from "antd";
 import { useCart } from "../components/context/CartContext";
-import { ArrowLeftOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, HeartFilled, HeartOutlined } from "@ant-design/icons";
+import { useFavorites } from "../components/context/FavoritesContext";
+import { resolveAssetUrl } from "../utils/assets";
 interface Product {
   _id: string;
   name: string;
@@ -39,13 +41,18 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [showDesc, setShowDesc] = useState(false);
+  const { favoriteIds, toggleFavorite } = useFavorites();
+  const [favoritePending, setFavoritePending] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await axiosInstance.get(`/products/${id}`);
-        setProduct(res.data);
-        setSelectedImg(res.data.images?.[0] || null);
+        const normalizedImages = Array.isArray(res.data.images)
+          ? res.data.images.map((src: string) => resolveAssetUrl(src))
+          : [];
+        setProduct({ ...res.data, images: normalizedImages });
+        setSelectedImg(normalizedImages[0] || null);
       } catch (error) {
         console.error("❌ Error loading product:", error);
       } finally {
@@ -57,6 +64,36 @@ export default function ProductDetail() {
 
   if (loading) return <p className="loading">Loading...</p>;
   if (!product) return <p className="notfound">Not found product.</p>;
+
+  const isFavorite = favoriteIds.includes(product._id);
+
+  const handleFavoriteToggle = async (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+    if (favoritePending) return;
+
+    try {
+      setFavoritePending(true);
+      const added = await toggleFavorite(product._id);
+      message.success(
+        added
+          ? `${product.name} đã được thêm vào danh sách yêu thích`
+          : `${product.name} đã được xóa khỏi danh sách yêu thích`
+      );
+    } catch (error: any) {
+      const msg =
+        error?.message ||
+        "Không thể cập nhật danh sách yêu thích. Vui lòng thử lại.";
+      const notify =
+        typeof msg === "string" && msg.toLowerCase().includes("đăng nhập")
+          ? message.warning
+          : message.error;
+      notify(msg);
+    } finally {
+      setFavoritePending(false);
+    }
+  };
 
   return (
     <>
@@ -84,7 +121,10 @@ export default function ProductDetail() {
               ))}
             </div>
             <div className="main-image">
-              <img src={selectedImg || "/placeholder.png"} alt={product.name} />
+              <img
+                src={selectedImg || resolveAssetUrl(product.images?.[0]) || "/placeholder.png"}
+                alt={product.name}
+              />
             </div>
           </div>
 
@@ -94,7 +134,43 @@ export default function ProductDetail() {
               <span className="badge new">New</span>
             </div>
 
-            <h1 className="title">{product.name}</h1>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              <h1 className="title" style={{ marginBottom: 0 }}>
+                {product.name}
+              </h1>
+              <button
+                type="button"
+                onClick={handleFavoriteToggle}
+                disabled={favoritePending}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  border: "1px solid #f0f0f0",
+                  background: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+                  cursor: favoritePending ? "not-allowed" : "pointer",
+                  opacity: favoritePending ? 0.6 : 1,
+                  transition: "transform 0.2s ease",
+                }}
+              >
+                {isFavorite ? (
+                  <HeartFilled style={{ color: "#f5222d", fontSize: 20 }} />
+                ) : (
+                  <HeartOutlined style={{ color: "#555", fontSize: 20 }} />
+                )}
+              </button>
+            </div>
 
             {/* Optional: rating like LEGO.com */}
             <div className="rating">
@@ -134,7 +210,9 @@ export default function ProductDetail() {
                     name: product.name,
                     price: product.price,
                     image:
-                      selectedImg || product.images?.[0] || "/placeholder.png",
+                      selectedImg ||
+                      resolveAssetUrl(product.images?.[0]) ||
+                      "/placeholder.png",
                     quantity,
                   });
                   message.success(`${product.name} đã được thêm vào giỏ hàng`);

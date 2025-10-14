@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import categoryAdminAPI, { Category } from "../api/categoryAdmin";
+import { getApiOriginURL } from "../api/axiosInstance";
 
 interface CategoryFormProps {
   category?: Category | null;
@@ -41,7 +42,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       });
 
       if (category.image) {
-        setPreviewUrl(`http://localhost:5000${category.image}`);
+        setPreviewUrl(`${getApiOriginURL()}${category.image}`);
       }
     }
   }, [category]);

@@ -15,10 +15,11 @@ const statusLabel: Record<(typeof statusOrder)[number], string> = {
   refunded: "Refunded",
 };
 
-const currencyFormatter = new Intl.NumberFormat("vi-VN", {
+const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "VND",
-  maximumFractionDigits: 0,
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 const formatCurrency = (value: number) => currencyFormatter.format(value || 0);
@@ -48,21 +49,22 @@ const AdminOrdersDashboard: React.FC = () => {
 
   const statusBreakdown = useMemo(() => {
     if (!data) return [];
+    const totalCount = Object.values(data.statusBreakdown || {}).reduce(
+      (acc, entry) => acc + (entry?.count || 0),
+      0
+    );
     return statusOrder.map((status) => {
       const payload = data.statusBreakdown?.[status] || { count: 0, revenue: 0 };
+      const share = totalCount === 0 ? 0 : (payload.count / totalCount) * 100;
       return {
         status,
         label: statusLabel[status],
         count: payload.count,
         revenue: payload.revenue,
+        share,
       };
     });
   }, [data]);
-
-  const maxCount = useMemo(() => {
-    if (!statusBreakdown.length) return 0;
-    return Math.max(...statusBreakdown.map((item) => item.count), 0);
-  }, [statusBreakdown]);
 
   if (user && user.role !== "admin") {
     return <Navigate to="/profile" replace />;
@@ -100,23 +102,29 @@ const AdminOrdersDashboard: React.FC = () => {
               <div className="admin-section-header" style={{ marginBottom: 16 }}>
                 <h2>Status breakdown</h2>
               </div>
-              <div className="status-list">
-                {statusBreakdown.map((item) => {
-                  const percentage = maxCount === 0 ? 0 : Math.round((item.count / maxCount) * 100);
-                  return (
-                    <div key={item.status} className="status-item">
-                      <div className="status-item-header">
-                        <span>{item.label}</span>
-                        <span>
-                          {item.count} orders - {formatCurrency(item.revenue)}
-                        </span>
-                      </div>
-                      <div className="status-progress" aria-hidden>
-                        <span style={{ width: `${percentage}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="admin-table-wrapper">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th style={{ textAlign: "right" }}>Orders</th>
+                      <th style={{ textAlign: "right" }}>Share</th>
+                      <th style={{ textAlign: "right" }}>Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statusBreakdown.map((item) => (
+                      <tr key={item.status}>
+                        <td>{item.label}</td>
+                        <td style={{ textAlign: "right" }}>{item.count}</td>
+                        <td style={{ textAlign: "right" }}>
+                          {item.share.toFixed(1)}%
+                        </td>
+                        <td style={{ textAlign: "right" }}>{formatCurrency(item.revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </>

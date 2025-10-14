@@ -23,6 +23,7 @@ import ProfilePage from "./views/ProfilePage";
 import ProfileAdminPage from "./components/ProfileNew";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
+import FavoritesPage from "./pages/Favorites";
 import VerifyEmailPage from "./views/VerifyEmailPage";
 import ResendVerificationPage from "./views/ResendVerificationPage";
 import ResetPasswordPage from "./views/ResetPasswordPage";
@@ -61,6 +62,8 @@ function ProfileAdminWrapper() {
 function AppContent() {
   useTokenExpirationCheck();
   const location = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   // Pages that should NOT have header
   const pagesWithoutHeader = [
@@ -75,6 +78,9 @@ function AppContent() {
 
   const shouldShowHeader = !pagesWithoutHeader.includes(location.pathname);
 
+  const redirectIfAdmin = (element: JSX.Element) =>
+    isAdmin ? <Navigate to="/admin" replace /> : element;
+
   return (
     <div className="app-shell">
       {shouldShowHeader && <Header />}
@@ -86,15 +92,30 @@ function AppContent() {
           <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Public routes */}
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/home/featured" element={<FeaturedPage />} />
-          <Route path="/home/popular" element={<PopularPage />} />
-          <Route path="/home/gaming" element={<GamingPage />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/home" element={redirectIfAdmin(<HomePage />)} />
+          <Route
+            path="/home/featured"
+            element={redirectIfAdmin(<FeaturedPage />)}
+          />
+          <Route
+            path="/home/popular"
+            element={redirectIfAdmin(<PopularPage />)}
+          />
+          <Route
+            path="/home/gaming"
+            element={redirectIfAdmin(<GamingPage />)}
+          />
+          <Route
+            path="/product/:id"
+            element={redirectIfAdmin(<ProductDetail />)}
+          />
+          <Route path="/shop" element={redirectIfAdmin(<Shop />)} />
+          <Route path="/cart" element={redirectIfAdmin(<Cart />)} />
+          <Route path="/checkout" element={redirectIfAdmin(<Checkout />)} />
+          <Route
+            path="/order-success"
+            element={redirectIfAdmin(<OrderSuccess />)}
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -110,9 +131,13 @@ function AppContent() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
+              isAdmin ? (
+                <Navigate to="/admin/profile" replace />
+              ) : (
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              )
             }
           />
           <Route
@@ -126,25 +151,41 @@ function AppContent() {
           <Route
             path="/addresses"
             element={
-              <ProtectedRoute>
-                <AddressBookPage />
-              </ProtectedRoute>
+              redirectIfAdmin(
+                <ProtectedRoute>
+                  <AddressBookPage />
+                </ProtectedRoute>
+              )
             }
           />
           <Route
             path="/notifications"
             element={
-              <ProtectedRoute>
-                <NotificationsPage />
-              </ProtectedRoute>
+              redirectIfAdmin(
+                <ProtectedRoute>
+                  <NotificationsPage />
+                </ProtectedRoute>
+              )
+            }
+          />
+          <Route
+            path="/favorites"
+            element={
+              redirectIfAdmin(
+                <ProtectedRoute>
+                  <FavoritesPage />
+                </ProtectedRoute>
+              )
             }
           />
           <Route
             path="/user"
             element={
-              <ProtectedRoute>
-                <UserDashboard />
-              </ProtectedRoute>
+              redirectIfAdmin(
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              )
             }
           />
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from './context/CartContext';
+import { useFavorites } from './context/FavoritesContext';
 import {
   Blocks,
   User,
@@ -8,7 +9,8 @@ import {
   ShoppingCart,
   Search,
   Menu,
-  X
+  X,
+  Heart
 } from 'lucide-react';
 import type { User as UserType } from '../types/user';
 
@@ -22,6 +24,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { cart } = useCart();
+  const { favoriteIds } = useFavorites();
   const isAdmin = user?.role === 'admin';
 
   const go = (path: string) => {
@@ -74,6 +77,16 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
 
           {/* Right Side */}
           <div className="flex items-center space-x-4">
+            {/* Favourites */}
+            <button
+              onClick={() => go('/favorites')}
+              className="relative p-2 text-gray-700 hover:text-rose-500 transition-colors"
+            >
+              <Heart className="h-6 w-6" />
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {favoriteIds.length}
+              </span>
+            </button>
             {/* Cart */}
             <button
               onClick={() => go('/cart')}
@@ -163,6 +176,9 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
 
               <button type="button" onClick={() => go('/shop')} className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md">
                 Products
+              </button>
+              <button type="button" onClick={() => go('/favorites')} className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md">
+                Favorites
               </button>
               <button type="button" onClick={() => go('/home/featured')} className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md">
                 Featured

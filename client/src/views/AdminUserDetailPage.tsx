@@ -5,10 +5,11 @@ import { adminApi, AdminUserDetailResponse } from "../api/admin";
 import { useAuth } from "../components/context/AuthContext";
 import "../styles/AdminDashboard.css";
 
-const currencyFormatter = new Intl.NumberFormat("vi-VN", {
+const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "VND",
-  maximumFractionDigits: 0,
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 const AdminUserDetailPage: React.FC = () => {

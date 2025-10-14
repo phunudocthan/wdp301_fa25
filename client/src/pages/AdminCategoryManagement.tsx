@@ -15,6 +15,10 @@ import categoryAdminAPI, {
   CategoryStats,
 } from "../api/categoryAdmin";
 import CategoryForm from "../components/CategoryForm";
+import {
+  getApiOriginURL,
+  subscribeApiBaseURL,
+} from "../api/axiosInstance";
 
 const AdminCategoryManagement: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -29,12 +33,20 @@ const AdminCategoryManagement: React.FC = () => {
   );
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [apiOrigin, setApiOrigin] = useState(() => getApiOriginURL());
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCategories, setTotalCategories] = useState(0);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    const unsubscribe = subscribeApiBaseURL((url) =>
+      setApiOrigin(url.replace(/\/api$/, ""))
+    );
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     fetchCategories();
@@ -135,7 +147,7 @@ const AdminCategoryManagement: React.FC = () => {
               <div className="flex items-center">
                 {category.image && (
                   <img
-                    src={`http://localhost:5000${category.image}`}
+                    src={`${apiOrigin}${category.image}`}
                     alt={category.name}
                     className="w-10 h-10 object-cover rounded mr-3"
                   />

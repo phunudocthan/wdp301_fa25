@@ -14,6 +14,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
+    flex-wrap: nowrap;
   }
 
   /* 🔶 Logo + Brand */
@@ -42,6 +43,8 @@
   .nav {
     display: flex;
     gap: 24px;
+    flex-wrap: nowrap;
+    align-items: center;
 
     a {
       color: #000;

@@ -5,6 +5,13 @@ import axiosInstance from '../../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 import { EyeOutlined, CheckOutlined, CloseOutlined, SwapRightOutlined, ShoppingOutlined } from '@ant-design/icons';
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 type Order = {
   _id: string;
   orderNumber?: string;
@@ -87,7 +94,12 @@ const OrdersList: React.FC = () => {
       key: 'user',
       render: (u) => (typeof u === 'string' ? u : `${u?.name || ''} (${u?.email || ''})`),
     },
-    { title: 'Total', dataIndex: 'total', key: 'total', render: (v) => `${v} VND` },
+    {
+      title: 'Total',
+      dataIndex: 'total',
+      key: 'total',
+      render: (value: number) => currencyFormatter.format(value || 0),
+    },
     {
       title: 'Status',
       dataIndex: 'status',

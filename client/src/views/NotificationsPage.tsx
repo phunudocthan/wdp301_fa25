@@ -8,15 +8,22 @@ import {
   fetchNotificationDetail,
   NotificationItem,
 } from "../api/notifications";
-import { apiBaseURL } from "../api/axiosInstance";
+import {
+  getApiBaseURL,
+  subscribeApiBaseURL,
+} from "../api/axiosInstance";
 import { storage } from "../lib/storage";
 import "../styles/NotificationsPage.scss";
 
 Modal.setAppElement("#root"); // quan trọng, để accessibility
 
-const socketEndpoint = apiBaseURL.replace(/\/api$/, "");
+const toSocketEndpoint = (baseURL: string) =>
+  baseURL.replace(/\/api$/, "");
 
 const NotificationsPage: React.FC = () => {
+  const [socketEndpoint, setSocketEndpoint] = useState(
+    () => toSocketEndpoint(getApiBaseURL())
+  );
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   // connection status is tracked but not used in UI; keep ref via ref if needed later
   const connectionStatusRef = useRef<
@@ -44,6 +51,13 @@ const NotificationsPage: React.FC = () => {
   );
 
   useEffect(() => {
+    const unsubscribe = subscribeApiBaseURL((url) => {
+      setSocketEndpoint(toSocketEndpoint(url));
+    });
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
     const load = async () => {
       try {
         const list = await fetchNotifications();
@@ -62,6 +76,7 @@ const NotificationsPage: React.FC = () => {
       return;
     }
 
+    connectionStatusRef.current = "connecting";
     const socket = io(socketEndpoint, {
       auth: { token },
       transports: ["websocket"],
@@ -116,7 +131,7 @@ const NotificationsPage: React.FC = () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, []);
+  }, [socketEndpoint]);
 
   const handleMarkRead = async (id: string) => {
     try {
