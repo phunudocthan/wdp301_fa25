@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import LegoLoginPage from "../components/LegoLoginPage";
 import { useAuth } from "../components/context/AuthContext";
 import { requestEmailVerification } from "../api/auth";
+import {
+  getApiBaseURL,
+  subscribeApiBaseURL,
+} from "../api/axiosInstance";
 
 interface LoginResult {
   token: string;
@@ -14,10 +18,17 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [loginResult, setLoginResult] = useState<LoginResult | null>(null);
+  const toGoogleAuthUrl = (baseURL: string) =>
+    `${baseURL.replace(/\/api$/, "")}/auth/google`;
+  const [googleAuthUrl, setGoogleAuthUrl] = useState(() =>
+    toGoogleAuthUrl(getApiBaseURL())
+  );
 
-  const googleAuthUrl = useMemo(() => {
-    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    return `${base.replace(/\/$/, "")}/api/auth/google`;
+  useEffect(() => {
+    const unsubscribe = subscribeApiBaseURL((url) => {
+      setGoogleAuthUrl(toGoogleAuthUrl(url));
+    });
+    return unsubscribe;
   }, []);
 
   const handleLogin = useCallback(

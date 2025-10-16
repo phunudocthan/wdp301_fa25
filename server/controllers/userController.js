@@ -1,5 +1,7 @@
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const Lego = require('../models/Lego');
 
 const extractAddressFields = (address = {}) => ({
   street: address.street || '',
@@ -89,6 +91,91 @@ const mapAddressesForResponse = (addresses, { includeArchived = false } = {}) =>
       if (!a.isDefault && b.isDefault) return 1;
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
+};
+
+const safeString = (value) => {
+  if (value === null || typeof value === 'undefined') return undefined;
+  if (typeof value === 'string') return value;
+  if (typeof value.toString === 'function') return value.toString();
+  return String(value);
+};
+
+const favoritePopulateConfig = [
+  {
+    path: 'favorites',
+    match: { status: { $ne: 'inactive' } },
+    select:
+      'name price images status pieces stock themeId categories createdAt updatedAt',
+    populate: [
+      { path: 'themeId', select: 'name' },
+      { path: 'categories', select: 'name slug' },
+    ],
+  },
+];
+
+const mapFavoriteProduct = (lego) => {
+  if (!lego) return null;
+  const obj = lego.toObject ? lego.toObject({ virtuals: false }) : lego;
+
+  const theme =
+    obj.themeId && typeof obj.themeId === 'object'
+      ? {
+          id: safeString(obj.themeId._id || obj.themeId.id),
+          name: obj.themeId.name,
+        }
+      : obj.themeId
+      ? { id: safeString(obj.themeId), name: undefined }
+      : null;
+
+  const categories = Array.isArray(obj.categories)
+    ? obj.categories
+        .map((category) => {
+          if (!category) return null;
+          const catObj = category.toObject
+            ? category.toObject({ virtuals: false })
+            : category;
+          return {
+            id: safeString(catObj._id || catObj.id),
+            name: catObj.name,
+            slug: catObj.slug,
+          };
+        })
+        .filter(Boolean)
+    : [];
+
+  return {
+    id: safeString(obj._id),
+    name: obj.name,
+    price: obj.price,
+    images: Array.isArray(obj.images) ? obj.images : [],
+    status: obj.status,
+    stock: obj.stock,
+    pieces: obj.pieces,
+    theme,
+    categories,
+    createdAt: obj.createdAt,
+    updatedAt: obj.updatedAt,
+  };
+};
+
+const loadFavoritesForUser = async (userId) => {
+  const user = await User.findById(userId)
+    .select('favorites')
+    .populate(favoritePopulateConfig);
+
+  if (!user) {
+    return null;
+  }
+
+  const favorites = (user.favorites || [])
+    .map(mapFavoriteProduct)
+    .filter(Boolean);
+
+  return {
+    user,
+    favorites,
+    favoriteIds: favorites.map((fav) => fav.id),
+  };
 };
 
 exports.getProfile = async (req, res) => {
@@ -234,6 +321,13 @@ exports.createAddress = async (req, res) => {
       return res.status(400).json({ msg: 'Street is required' });
     }
 
+    // Normalize and validate phone if present
+    const phoneValue = phone && typeof phone === 'string' ? phone.trim() : (user && user.phone) || '';
+    const phoneRegex = /^0\d{9}$/;
+    if (phone && phone.trim() && !phoneRegex.test(phone.trim())) {
+      return res.status(400).json({ msg: 'Phone must be 10 digits and start with 0' });
+    }
+
     const user = await User.findById(req.user.id).select('addresses address name phone');
     if (!user) return res.status(404).json({ msg: 'User not found' });
 
@@ -242,7 +336,7 @@ exports.createAddress = async (req, res) => {
     const addressPayload = {
       label: label && label.trim() ? label.trim() : undefined,
       recipientName: recipientName && recipientName.trim() ? recipientName.trim() : user.name,
-      phone: phone && phone.trim() ? phone.trim() : user.phone,
+      phone: phone && phone.trim() ? phone.trim() : phoneValue,
       street: street.trim(),
       city: city?.trim() || '',
       state: state?.trim() || '',
@@ -305,15 +399,23 @@ exports.updateAddress = async (req, res) => {
     if (street && street.trim().length === 0) {
       return res.status(400).json({ msg: 'Street cannot be empty' });
     }
+    // validate phone if provided
+    const phoneRegex = /^0\d{9}$/;
+    if (typeof phone !== 'undefined' && phone !== null) {
+      if (String(phone).trim() && !phoneRegex.test(String(phone).trim())) {
+        return res.status(400).json({ msg: 'Phone must be 10 digits and start with 0' });
+      }
+    }
 
-    if (typeof label !== 'undefined') address.label = label;
-    if (typeof recipientName !== 'undefined') address.recipientName = recipientName;
-    if (typeof phone !== 'undefined') address.phone = phone;
-    if (typeof street !== 'undefined') address.street = street;
-    if (typeof city !== 'undefined') address.city = city;
-    if (typeof state !== 'undefined') address.state = state;
-    if (typeof postalCode !== 'undefined') address.postalCode = postalCode;
-    if (typeof country !== 'undefined') address.country = country;
+    // assign trimmed/normalized values
+    if (typeof label !== 'undefined') address.label = label && String(label).trim() ? String(label).trim() : undefined;
+    if (typeof recipientName !== 'undefined') address.recipientName = recipientName && String(recipientName).trim() ? String(recipientName).trim() : undefined;
+    if (typeof phone !== 'undefined') address.phone = phone && String(phone).trim() ? String(phone).trim() : undefined;
+    if (typeof street !== 'undefined') address.street = street && String(street).trim() ? String(street).trim() : address.street;
+    if (typeof city !== 'undefined') address.city = city && String(city).trim() ? String(city).trim() : '';
+    if (typeof state !== 'undefined') address.state = state && String(state).trim() ? String(state).trim() : '';
+    if (typeof postalCode !== 'undefined') address.postalCode = postalCode && String(postalCode).trim() ? String(postalCode).trim() : '';
+    if (typeof country !== 'undefined') address.country = country && String(country).trim() ? String(country).trim() : address.country;
 
     if (setAsDefault) {
       user.addresses.forEach((addr) => {
@@ -382,6 +484,89 @@ exports.archiveAddress = async (req, res) => {
     await user.save();
 
     res.json({ addresses: mapAddressesForResponse(user.addresses) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.listFavorites = async (req, res) => {
+  try {
+    const data = await loadFavoritesForUser(req.user.id);
+    if (!data) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    res.json({
+      favorites: data.favorites,
+      favoriteIds: data.favoriteIds,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.addFavorite = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ msg: 'Invalid product id' });
+    }
+
+    const lego = await Lego.findById(productId).select('status');
+    if (!lego || lego.status === 'inactive') {
+      return res.status(404).json({ msg: 'Product not found or unavailable' });
+    }
+
+    const result = await User.updateOne(
+      { _id: req.user.id },
+      { $addToSet: { favorites: lego._id } }
+    );
+
+    const data = await loadFavoritesForUser(req.user.id);
+    if (!data) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    res.json({
+      message: result.modifiedCount
+        ? 'Product added to favourites'
+        : 'Product already in favourites',
+      favorites: data.favorites,
+      favoriteIds: data.favoriteIds,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.removeFavorite = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ msg: 'Invalid product id' });
+    }
+
+    const result = await User.updateOne(
+      { _id: req.user.id },
+      { $pull: { favorites: productId } }
+    );
+
+    if (!result.modifiedCount) {
+      return res.status(404).json({ msg: 'Product not found in favourites' });
+    }
+
+    const data = await loadFavoritesForUser(req.user.id);
+    if (!data) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    res.json({
+      message: 'Product removed from favourites',
+      favorites: data.favorites,
+      favoriteIds: data.favoriteIds,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1,5 +1,6 @@
 ﻿const mongoose = require("mongoose");
 const crypto = require("crypto");
+const { Schema } = mongoose;
 
 const AddressSchema = new mongoose.Schema(
   {
@@ -16,7 +17,18 @@ const UserAddressSchema = new mongoose.Schema(
   {
     label: { type: String, trim: true },
     recipientName: { type: String, trim: true },
-    phone: { type: String, trim: true },
+    phone: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          // Số điện thoại Việt Nam: bắt đầu bằng 0, 10 số
+          return /^0\d{9}$/.test(v);
+        },
+        message: props => `${props.value} không phải là số điện thoại hợp lệ!`
+      },
+      required: [true, 'Vui lòng nhập số điện thoại'],
+    },
     street: { type: String, trim: true, required: true },
     city: { type: String, trim: true },
     state: { type: String, trim: true },
@@ -113,6 +125,11 @@ const UserSchema = new mongoose.Schema(
     },
     passwordResetExpires: {
       type: Date,
+    },
+    favorites: {
+      type: [Schema.Types.ObjectId],
+      ref: "Lego",
+      default: [],
     },
   },
   {

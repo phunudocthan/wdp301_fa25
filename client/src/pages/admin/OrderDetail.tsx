@@ -3,6 +3,13 @@ import { Card, Descriptions, List, Button, message, Tag } from 'antd';
 import axiosInstance from '../../api/axiosInstance';
 import { useParams, useNavigate } from 'react-router-dom';
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 const OrderDetail: React.FC = () => {
   const { id } = useParams();
   const [order, setOrder] = useState<any>(null);
@@ -57,7 +64,9 @@ const OrderDetail: React.FC = () => {
               return <Tag color={color}>{s}</Tag>;
             })()}
           </Descriptions.Item>
-          <Descriptions.Item label="Total">{order.total} VND</Descriptions.Item>
+          <Descriptions.Item label="Total">
+            {currencyFormatter.format(order.total || 0)}
+          </Descriptions.Item>
         </Descriptions>
       </Card>
 
@@ -71,7 +80,7 @@ const OrderDetail: React.FC = () => {
                 <div>
                   <div className="font-medium">{item.name}</div>
                   <div>Qty: {item.quantity}</div>
-                  <div>Price: {item.price} VND</div>
+                  <div>Price: {currencyFormatter.format(item.price || 0)}</div>
                 </div>
               </div>
             </List.Item>

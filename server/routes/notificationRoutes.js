@@ -9,6 +9,7 @@ const {
   adminCreateNotification,
   adminUpdateNotification,
   adminDeleteNotification,
+  adminRestoreNotification,
 } = require('../controllers/notificationController');
 
 
@@ -21,5 +22,6 @@ router.get('/admin/sent', requireAuth, requireRole('admin'), adminListSentNotifi
 router.post('/admin', requireAuth, requireRole('admin'), adminCreateNotification);
 router.patch('/admin/:notificationId', requireAuth, requireRole('admin'), adminUpdateNotification);
 router.delete('/admin/:notificationId', requireAuth, requireRole('admin'), adminDeleteNotification);
+router.post('/admin/:notificationId/restore', requireAuth, requireRole('admin'), adminRestoreNotification);
 
 module.exports = router;

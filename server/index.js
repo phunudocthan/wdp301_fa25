@@ -199,18 +199,28 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const helperRoutes = require("./routes/helperRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
 const voucherRoutes = require("./routes/voucherRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const recentlyViewedRoutes = require("./routes/recentlyViewedRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/helpers", helperRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/legos", (req, res) =>
   res.json({ message: "LEGO routes coming soon..." })
 );
-app.use('/api/orders', orderRoutes);
+app.use("/recently-viewed", recentlyViewedRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);

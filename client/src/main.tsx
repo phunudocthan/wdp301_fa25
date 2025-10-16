@@ -17,6 +17,7 @@ import "./styles/searchbar.scss";
 import { AuthProvider } from "./components/context/AuthContext";
 import { ThemeProvider } from "./components/context/ThemeContext";
 import { CartProvider } from "./components/context/CartContext";
+import { FavoritesProvider } from "./components/context/FavoritesContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 // Toast provider
@@ -39,11 +40,13 @@ root.render(
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <CartProvider>
-            {/* Toast global cho toàn app */}
-            <ToastProvider />
-            <App />
-          </CartProvider>
+          <FavoritesProvider>
+            <CartProvider>
+              {/* Toast global cho toàn app */}
+              <ToastProvider />
+              <App />
+            </CartProvider>
+          </FavoritesProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

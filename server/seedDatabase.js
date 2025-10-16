@@ -83,6 +83,75 @@ const seedDatabase = async () => {
         status: 'active',
         isVerified: true,
         failedLoginAttempts: 0
+      },
+      {
+        name: 'Ethan Builder',
+        email: 'ethan.builder@lego.com',
+        password: hashedPassword,
+        role: 'customer',
+        phone: '+84951231234',
+        address: {
+          street: '12 Tran Hung Dao',
+          city: 'Da Nang',
+          state: 'Da Nang',
+          postalCode: '550000',
+          country: 'Vietnam'
+        },
+        status: 'active',
+        isVerified: true,
+        failedLoginAttempts: 0
+      },
+      {
+        name: 'Mai Nguyen',
+        email: 'mai.nguyen@lego.com',
+        password: hashedPassword,
+        role: 'customer',
+        phone: '+8488991122',
+        address: {
+          street: '90 Ly Thuong Kiet',
+          city: 'Hanoi',
+          state: 'Hanoi',
+          postalCode: '100000',
+          country: 'Vietnam'
+        },
+        status: 'active',
+        isVerified: true,
+        failedLoginAttempts: 0
+      },
+      {
+        name: 'Bao Tran',
+        email: 'bao.tran@lego.com',
+        password: hashedPassword,
+        role: 'customer',
+        phone: '+84773344556',
+        address: {
+          street: '233 Vo Van Kiet',
+          city: 'Ho Chi Minh City',
+          state: 'Ho Chi Minh',
+          postalCode: '700000',
+          country: 'Vietnam'
+        },
+        status: 'locked',
+        isVerified: false,
+        failedLoginAttempts: 2,
+        lockUntil: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      },
+      {
+        name: 'Support Agent',
+        email: 'support@lego.com',
+        password: hashedPassword,
+        role: 'seller',
+        phone: '+84771234567',
+        address: {
+          street: '45 Nguyen Hue',
+          city: 'Ho Chi Minh City',
+          state: 'Ho Chi Minh',
+          postalCode: '700000',
+          country: 'Vietnam'
+        },
+        status: 'active',
+        isVerified: true,
+        failedLoginAttempts: 0
       }
     ]);
 
@@ -196,6 +265,58 @@ const seedDatabase = async () => {
       paymentStatus: 'unpaid',
       voucherId: vouchers[0]._id
     });
+
+    const shippingAddressTemplate = {
+      name: 'Sample Customer',
+      phone: '+84900000000',
+      address: '456 Sample Avenue',
+      city: 'Ho Chi Minh City',
+      postalCode: '700000',
+      country: 'Vietnam'
+    };
+
+    const orderStatusConfigs = [
+      { status: 'pending', paymentStatus: 'unpaid', count: 4, dayOffset: 1 },
+      { status: 'confirmed', paymentStatus: 'paid', count: 4, dayOffset: 4 },
+      { status: 'shipped', paymentStatus: 'paid', count: 4, dayOffset: 9 },
+      { status: 'delivered', paymentStatus: 'paid', count: 5, dayOffset: 20 },
+      { status: 'canceled', paymentStatus: 'failed', count: 3, dayOffset: 45 },
+      { status: 'refunded', paymentStatus: 'refunded', count: 2, dayOffset: 75 }
+    ];
+
+    const extraOrders = [];
+    orderStatusConfigs.forEach((config, configIndex) => {
+      for (let i = 0; i < config.count; i += 1) {
+        const lego = legos[(configIndex + i) % legos.length];
+        const quantity = (i % 3) + 1;
+        const baseDate = new Date();
+        baseDate.setDate(baseDate.getDate() - (config.dayOffset + i * 3));
+        const total = Number((lego.price * quantity).toFixed(2));
+
+        extraOrders.push({
+          orderNumber: `ORD-SEED-${config.status.toUpperCase()}-${configIndex + 1}-${i + 1}`,
+          userId: customer._id,
+          items: [
+            {
+              legoId: lego._id,
+              quantity,
+              price: lego.price
+            }
+          ],
+          total,
+          status: config.status,
+          paymentStatus: config.paymentStatus,
+          paymentMethod: i % 2 === 0 ? 'COD' : 'VNPay',
+          shippingAddress: shippingAddressTemplate,
+          createdAt: baseDate,
+          updatedAt: baseDate
+        });
+      }
+    });
+
+    if (extraOrders.length > 0) {
+      await Order.insertMany(extraOrders);
+    }
 
     const reviews = await Review.insertMany([
       {

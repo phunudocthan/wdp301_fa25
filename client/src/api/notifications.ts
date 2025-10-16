@@ -28,3 +28,8 @@ export async function fetchNotificationDetail(notificationId: string): Promise<N
   const response = await axiosInstance.get(`/notifications/${notificationId}`);
   return response.data?.notification;
 }
+
+export async function restoreNotification(notificationId: string): Promise<NotificationItem> {
+  const response = await axiosInstance.post(`/notifications/admin/${notificationId}/restore`);
+  return response.data?.notification;
+}

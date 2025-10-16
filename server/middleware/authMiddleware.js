@@ -34,6 +34,22 @@ const requireAuth = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("Auth error:", err.message);
+
+    // Handle specific JWT errors
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({
+        message: "Token expired",
+        code: "TOKEN_EXPIRED",
+      });
+    }
+
+    if (err.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        message: "Invalid token",
+        code: "INVALID_TOKEN",
+      });
+    }
+
     res.status(401).json({ message: "Unauthorized" });
   }
 };

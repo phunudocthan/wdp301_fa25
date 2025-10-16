@@ -10,6 +10,7 @@
 import { toast } from "react-toastify";
 import { api } from "../../lib/api";
 import { storage } from "../../lib/storage";
+import { clearExpiredToken, isTokenExpired } from "../../utils/tokenUtils";
 import type { User as ApiUser } from "../../types/user";
 
 const USER_STORAGE_KEY = "auth_user";
@@ -61,16 +62,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
+        // Clear any expired tokens first
+        clearExpiredToken();
+
         const storedUser = localStorage.getItem(USER_STORAGE_KEY);
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
 
-        if (storage.getToken()) {
-          const me = await api.me();
-          setAndPersistUser(me);
+        const token = storage.getToken();
+        if (token && !isTokenExpired(token)) {
+          try {
+            const me = await api.me();
+            setAndPersistUser(me as AuthUser);
+          } catch (error) {
+            // If API call fails, clear everything
+            storage.clearToken();
+            setAndPersistUser(null);
+          }
+        } else if (token && isTokenExpired(token)) {
+          // Token exists but expired, clear it
+          storage.clearToken();
+          setAndPersistUser(null);
+          toast.warn("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
         }
-      } catch {
+      } catch (error) {
         storage.clearToken();
         setAndPersistUser(null);
       } finally {
@@ -102,21 +118,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   // 🔹 Login Google
-  // 🔹 Login Google
   const googleLogin = useCallback(
-    async (token: string): Promise<{ token: string; role: string }> => {
-      const {
-        token: jwtToken,
-        user: loggedInUser,
-        role,
-      } = await api.googleLogin(token);
+    async (_token: string): Promise<{ token: string; role: string }> => {
+      // TODO: Implement Google login API
+      throw new Error("Google login not implemented yet");
 
-      storage.setToken(jwtToken);
-      setAndPersistUser(loggedInUser);
-      toast.success("Đăng nhập Google thành công");
+      // const {
+      //   token: jwtToken,
+      //   user: loggedInUser,
+      //   role,
+      // } = await api.googleLogin(token);
 
-      // 👈 Trả cả token + role
-      return { token: jwtToken, role };
+      // storage.setToken(jwtToken);
+      // setAndPersistUser(loggedInUser);
+      // toast.success("Đăng nhập Google thành công");
+
+      // // 👈 Trả cả token + role
+      // return { token: jwtToken, role };
     },
     [setAndPersistUser]
   );
@@ -133,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (token: string) => {
       storage.setToken(token);
       const me = await api.me();
-      setAndPersistUser(me);
+      setAndPersistUser(me as AuthUser);
       toast.success("Đăng nhập thành công");
     },
     [setAndPersistUser]
@@ -158,9 +176,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      if (storage.getToken()) {
+      const token = storage.getToken();
+      if (token && !isTokenExpired(token)) {
         const me = await api.me();
-        setUser(me);
+        setUser(me as AuthUser);
+      } else {
+        // Token expired or doesn't exist
+        setUser(null);
+        storage.clearToken();
       }
     } catch {
       setUser(null);

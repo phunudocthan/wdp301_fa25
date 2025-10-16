@@ -1,34 +1,53 @@
-import { NavLink, useNavigate } from "react-router-dom";
 import {
-  FaSearch,
-  FaHeart,
-  FaShoppingBag,
-  FaBell,
   FaChevronDown,
-  FaUser,
+  FaHeart,
+  FaSearch,
+  FaShoppingBag,
   FaSignOutAlt,
+  FaUser,
 } from "react-icons/fa";
-import { useState, useRef, useEffect } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { useFavorites } from "../context/FavoritesContext";
 import logo from "/logo.png";
 import "../../styles/layout.scss";
-import { fetchNotifications } from "../../api/notifications";
+import { Switch, Tooltip } from "antd";
+import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
 
 export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [query, setQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [numberNotifications, setNumberNotifications] = useState(0);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, user } = useAuth();
   const { cart } = useCart();
+  const { favoriteIds } = useFavorites();
 
-  const name = user?.name || localStorage.getItem("name") || "User";
+  const name = useMemo(
+    () => user?.name || localStorage.getItem("name") || "User",
+    [user?.name]
+  );
   const avatar = user?.avatar || localStorage.getItem("avatar");
+  const isAdmin = user?.role === "admin";
+  const isAdminSection = isAdmin && location.pathname.startsWith("/admin");
+  const [isDarkMode, setIsDarkMode] = useState(
+    localStorage.getItem("theme") === "dark"
+  );
 
-  // Đóng dropdown khi click ra ngoài
+  // Toggle theme
+  const toggleTheme = (checked: boolean) => {
+    setIsDarkMode(checked);
+    localStorage.setItem("theme", checked ? "dark" : "light");
+  };
+
+  // Apply attribute for custom CSS
+  useEffect(() => {
+    document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -42,96 +61,156 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Lấy số thông báo chưa đọc
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const list = await fetchNotifications();
-        setNumberNotifications(
-          list.filter((item) => item.status === "unread").length
-        );
-      } catch {
-        console.warn("Unable to load notifications");
-      }
-    };
-    load();
-  }, []);
-
   const handleLogout = () => {
     logout();
     setShowDropdown(false);
     navigate("/login");
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (query.trim().length > 0) {
-      navigate(`/shop?search=${encodeURIComponent(query)}`);
+    if (query.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(query.trim())}`);
       setQuery("");
     }
+  };
+
+  const handleProfileClick = () => {
+    setShowDropdown(false);
+    navigate(isAdmin ? "/profileAdmin" : "/profile");
   };
 
   return (
     <header className="header">
       <div className="container header-inner">
         {/* --- LEFT: Logo --- */}
-        <div className="brand" onClick={() => navigate("/home")}>
+        <Link
+          to="/home"
+          className="brand"
+          onClick={() => {
+            setShowDropdown(false);
+          }}
+        >
           <img src={logo} alt="LEGO Logo" className="logo" />
           <span>LEGOs</span>
-        </div>
+        </Link>
 
         {/* --- CENTER: Navigation --- */}
         <nav className="nav">
-          <NavLink to="/shop">Shop</NavLink>
-          <NavLink to="/home">Home</NavLink>
-          <NavLink to="/addresses">Address Book</NavLink>
-          <NavLink to="/notifications">Notifications</NavLink>
+          {isAdminSection ? (
+            <>
+              <NavLink
+                to="/admin"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/admin/dashboard/revenue"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Revenue
+              </NavLink>
+              <NavLink
+                to="/admin/dashboard/orders"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Order Stats
+              </NavLink>
+              <NavLink
+                to="/admin/orders"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Orders
+              </NavLink>
+              <NavLink
+                to="/admin/products"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Products
+              </NavLink>
+              <NavLink
+                to="/admin/categories"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Categories
+              </NavLink>
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Users
+              </NavLink>
+              <NavLink
+                to="/admin/notifications"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Notifications
+              </NavLink>
+              <NavLink
+                to="/admin/vouchers"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Vouchers
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink to="/shop">Shop</NavLink>
+              <NavLink to="/home">Home</NavLink>
+              <NavLink to="/addresses">Address Book</NavLink>
+              <NavLink to="/notifications">Notifications</NavLink>
+
+            </>
+          )}
         </nav>
 
-  {/* --- RIGHT: Search, Icons, Avatar --- */}
-  <div className="header-right" onClick={(e) => e.stopPropagation()}>
-          {/* Search box */}
-          <form className="search-box" onSubmit={handleSearchSubmit}>
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </form>
+        {/* --- RIGHT: Search, Icons, Avatar --- */}
+        <div className="header-right" onClick={(e) => e.stopPropagation()}>
+          {!isAdminSection && (
+            <form className="search-box" onSubmit={handleSearchSubmit}>
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </form>
+          )}
 
-          {/* Icons */}
           <div className="icons">
-            <div
-              className="notification-wrapper"
-              onClick={() => navigate("/notifications")}
-            >
-              {numberNotifications > 0 && (
-                <span className="notification-badge">
-                  {numberNotifications}
-                </span>
-              )}
-              <FaBell className="notification-icon" />
-            </div>
-            <FaHeart className="icon" />
-            <div
-              className="icon cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('Header: cart icon clicked, navigating to /cart');
-                navigate('/cart');
-              }}
-            >
-              <FaShoppingBag />
-              <span className="cart-count">{cart.items.length}</span>
-            </div>
+            {!isAdminSection && (
+              <>
+                <div
+                  className="notification-wrapper"
+                  onClick={() => navigate("/favorites")}
+                  title="Favourites"
+                >
+                  {favoriteIds.length > 0 && (
+                    <span className="notification-badge">
+                      {favoriteIds.length}
+                    </span>
+                  )}
+                  <FaHeart className="icon" />
+                </div>
+                <div
+                  className="icon cursor-pointer"
+                  onClick={(evt) => {
+                    evt.stopPropagation();
+                    navigate("/cart");
+                  }}
+                >
+                  <FaShoppingBag />
+                  <span className="cart-count">{cart.items.length}</span>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Avatar & Dropdown */}
           <div className="relative user-menu" ref={dropdownRef}>
             <div
-              onClick={() => setShowDropdown(!showDropdown)}
+              onClick={() => setShowDropdown((prev) => !prev)}
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded-full px-2 py-1 transition"
               title="User Menu"
             >
@@ -150,9 +229,8 @@ export default function Header() {
                 )}
               </div>
               <FaChevronDown
-                className={`text-gray-600 text-xs transition-transform ${
-                  showDropdown ? "rotate-180" : ""
-                }`}
+                className={`text-gray-600 text-xs transition-transform ${showDropdown ? "rotate-180" : ""
+                  }`}
               />
             </div>
 
@@ -164,10 +242,7 @@ export default function Header() {
                 </div>
 
                 <button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    navigate("/profileAdmin");
-                  }}
+                  onClick={handleProfileClick}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                 >
                   <FaUser className="text-gray-500" />
