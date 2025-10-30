@@ -21,7 +21,7 @@ import Favorites from '../pages/Favorites';
 import Register from '../pages/Register';
 import ProductDetail from '../pages/ProductDetail';
 import OrderHistory from '../pages/OrderHistory';
-import OrderDetailUser from '../pages/OrderListUser';
+import OrderDetailUser from '../pages/OrderDetailUser';
 import { useAuth } from '../components/context/AuthContext';
 import ProtectedRoute from '../routes/ProtectedRoute';
 
