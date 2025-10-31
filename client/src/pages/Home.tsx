@@ -4,6 +4,8 @@ import { Tabs, Card, Button, Row, Col, Spin, Tag, Empty, Typography, Pagination,
 import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
 import Header from "../components/common/Header";
 import HeroSlider from "../components/HeroSlider/HeroSlider";
+import HighlightNews from "../components/News/HighlightNews";
+import TrendingNews from "../components/News/TrendingNews";
 import "../styles/home.scss";
 import { useCart } from "../components/context/CartContext";
 import { ShoppingCartOutlined } from "@ant-design/icons";
@@ -222,13 +224,13 @@ export default function Home() {
       theme={{
         algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: isDarkMode ? "#40c4ff" : "#1677ff",
+          colorPrimary: isDarkMode ? "#40c4ff" : "#ff7a00",
           borderRadius: 8,
-          colorBgContainer: isDarkMode ? "#2c2c2c" : "#fff",
+          colorBgContainer: isDarkMode ? "#2c2c2c" : "var(--bg)",
         },
       }}
     >
-      <div style={{ backgroundColor: isDarkMode ? "#141414" : "#fff" }}>
+  <div style={{ backgroundColor: isDarkMode ? "#141414" : "var(--bg)" }}>
         {/* Theme Toggle Switch */}
         <div style={{ position: "fixed", top: 20, right: 20, zIndex: 1000 }}>
           <Switch
@@ -238,12 +240,14 @@ export default function Home() {
             unCheckedChildren="Light"
           />
         </div>
-        <Header />
-        <HeroSlider />
+  <Header />
+  <HeroSlider />
+  <HighlightNews limit={4} />
+  <TrendingNews limit={5} />
 
         {/* Recently Viewed Section */}
         <section style={{ padding: "24px 80px", margin: "16px 0" }}>
-          <Title level={3} style={{ textAlign: "left", marginBottom: 18, color: "#1677ff" }}>
+          <Title level={3} style={{ textAlign: "left", marginBottom: 18, color: "var(--primary)" }}>
             🕒 Sản phẩm đã xem gần đây
           </Title>
           {recentLoading ? (
@@ -267,7 +271,7 @@ export default function Home() {
                   >
                     <Meta
                       title={<span style={{ fontWeight: 500 }}>{p.name}</span>}
-                      description={<span style={{ color: "#1677ff" }}>${p.price?.toFixed(2)}</span>}
+                      description={<span style={{ color: "var(--primary)" }}>${p.price?.toFixed(2)}</span>}
                     />
                     <Button type="link" href={`/product/${p._id}`} style={{ marginTop: 8 }}>
                       Xem chi tiết
@@ -479,7 +483,7 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
                   style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 10, marginBottom: 10 }}
                 />
                 <h3 style={{ marginBottom: 6, fontWeight: 600, fontSize: 16 }}>{p.name}</h3>
-                <p style={{ fontSize: 16, fontWeight: "bold", color: "#1677ff", marginBottom: 6 }}>
+                <p style={{ fontSize: 16, fontWeight: "bold", color: "var(--primary)", marginBottom: 6 }}>
                   ${p.price.toFixed(2)}
                 </p>
                 <p style={{ fontSize: 13, color: p.stock ? (p.stock > 0 ? "#28a745" : "#dc3545") : "#dc3545", marginBottom: 10 }}>
@@ -569,7 +573,7 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
                 }
               >
                 <Meta
-                  title={<span style={{ color: "#1677ff" }}>{p.name}</span>}
+                  title={<span style={{ color: "var(--primary)" }}>{p.name}</span>}
                   description={
                     <div style={{ marginTop: "8px" }}>
                       <b style={{ fontSize: "16px" }}>${p.price.toFixed(2)}</b>

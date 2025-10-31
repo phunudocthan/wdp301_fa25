@@ -1,58 +1,19 @@
-import axiosInstance from "./axiosInstance";
+import axios from './axiosInstance';
 
-export interface UploadResponse {
-  success: boolean;
-  message: string;
-  data: {
-    images?: string[];
-    image?: string;
-  };
-}
+export const uploadSingle = (file: File) => {
+  const fd = new FormData();
+  fd.append('image', file);
+  return axios.post('/upload/product-image', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+};
 
-class UploadAPI {
-  // Upload multiple images
-  static async uploadProductImages(
-    files: FileList | File[]
-  ): Promise<UploadResponse> {
-    const formData = new FormData();
+export const uploadMultiple = (files: File[]) => {
+  const fd = new FormData();
+  files.forEach((f) => fd.append('images', f));
+  return axios.post('/upload/product-images', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+};
 
-    // Convert FileList to Array if needed
-    const fileArray = Array.from(files);
-
-    fileArray.forEach((file) => {
-      formData.append("images", file);
-    });
-
-    const response = await axiosInstance.post(
-      "/upload/product-images",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    return response.data;
-  }
-
-  // Upload single image
-  static async uploadProductImage(file: File): Promise<UploadResponse> {
-    const formData = new FormData();
-    formData.append("image", file);
-
-    const response = await axiosInstance.post(
-      "/upload/product-image",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    return response.data;
-  }
-}
-
-export default UploadAPI;
+export default { uploadSingle, uploadMultiple };

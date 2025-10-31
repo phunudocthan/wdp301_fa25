@@ -1,10 +1,12 @@
-import React from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/context/AuthContext";
 import { useTokenExpirationCheck } from "./hooks/useAuthHooks";
 import { SessionNotifications } from "./components/SessionNotifications";
-import Header from "./components/common/Header";
-import AuthDemo from "./components/common/AuthDemo";
+import EmployeeHeader from "./components/common/EmployeeHeader";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import HomePage from "./pages/Home";
 import FeaturedPage from "./pages/FeaturedPage";
 import PopularPage from "./pages/PopularPage";
@@ -14,8 +16,6 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import ProfilePage from "./views/ProfilePage";
 import ProfileAdminPage from "./components/ProfileNew";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -27,7 +27,6 @@ import ResetPasswordPage from "./views/ResetPasswordPage";
 import ForgotPasswordPage from "./views/ForgotPasswordPage";
 import AddressBookPage from "./views/AddressBookPage";
 import NotificationsPage from "./views/NotificationsPage";
-// ...existing code...
 import AdminProductManagement from "./pages/AdminProductManagement";
 import AdminCategoryManagement from "./pages/AdminCategoryManagement_new";
 import AdminProductDetail from "./pages/AdminProductDetail";
@@ -40,11 +39,12 @@ import AdminUsersPage from "./views/AdminUsersPage";
 import AdminUserDetailPage from "./views/AdminUserDetailPage";
 import OrdersList from "./pages/admin/OrdersList";
 import OrderDetail from "./pages/admin/OrderDetail";
-// ...existing code...
-import ProtectedRoute from "./routes/ProtectedRoute";
-import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNotificationPage from "./views/AdminNotificationPage";
 import AdminVoucherStatistics from "./pages/AdminVoucherStatistics";
+import NewsList from "./pages/NewsList";
+import NewsDetail from "./pages/NewsDetail";
+import EmployeeNews from "./pages/EmployeeNews";
+
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;
@@ -53,27 +53,33 @@ function ProfileAdminWrapper() {
 
 function AppContent() {
   useTokenExpirationCheck();
-  const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const pagesWithoutHeader = [
-    "/login",
-    "/register",
-    "/verify-email",
-    "/resend-verification",
-    "/forgot-password",
-    "/reset-password",
-    "/",
-  ];
-  const shouldShowHeader = !pagesWithoutHeader.includes(location.pathname);
+  const isEmployee = String(user?.role) === "employee";
+
+  // If the logged-in user is an employee, restrict UI to the EmployeeNews manager only (use minimal header)
+  if (isEmployee) {
+    return (
+      <div>
+        <EmployeeHeader />
+        <SessionNotifications />
+        <main>
+          <Routes>
+            <Route path="/employee/news" element={<ProtectedRoute><EmployeeNews /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/employee/news" replace />} />
+          </Routes>
+        </main>
+      </div>
+    );
+  }
+
   const redirectIfAdmin = (element: React.ReactElement) =>
     isAdmin ? <Navigate to="/admin" replace /> : element;
 
   return (
     <div>
-      {isAdmin && shouldShowHeader && <Header />}
       <SessionNotifications />
-      <main >
+      <main>
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={redirectIfAdmin(<HomePage />)} />
@@ -92,7 +98,7 @@ function AppContent() {
           <Route path="/resend-verification" element={<ResendVerificationPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/auth-demo" element={<AuthDemo />} />
+          <Route path="/auth-demo" element={<div />} />
           <Route path="/profile" element={isAdmin ? (<Navigate to="/admin/profile" replace />) : (<ProtectedRoute><ProfilePage /></ProtectedRoute>)} />
           <Route path="/profileAdmin" element={<ProtectedRoute><ProfileAdminWrapper /></ProtectedRoute>} />
           <Route path="/addresses" element={redirectIfAdmin(<ProtectedRoute><AddressBookPage /></ProtectedRoute>)} />
@@ -120,10 +126,13 @@ function AppContent() {
           <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoryManagement /></ProtectedRoute>} />
           <Route path="/admin/products/edit/:id" element={<ProtectedRoute><AdminProductEdit /></ProtectedRoute>} />
           <Route path="/admin/products/:id" element={<ProtectedRoute><AdminProductDetail /></ProtectedRoute>} />
+          <Route path="/news" element={redirectIfAdmin(<NewsList />)} />
+          <Route path="/news/:id" element={redirectIfAdmin(<NewsDetail />)} />
+          <Route path="/employee/news" element={isAdmin || isEmployee ? (<ProtectedRoute><EmployeeNews /></ProtectedRoute>) : <Navigate to="/login" replace />} />
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
-      </main>
+  </main>
     </div>
   );
 }

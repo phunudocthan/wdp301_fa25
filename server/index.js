@@ -206,6 +206,7 @@ const voucherRoutes = require("./routes/voucherRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const recentlyViewedRoutes = require("./routes/recentlyViewedRoutes");
+const newsRoutes = require("./routes/newsRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -221,6 +222,7 @@ app.use("/api/legos", (req, res) =>
 app.use("/recently-viewed", recentlyViewedRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/news", newsRoutes);
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);
