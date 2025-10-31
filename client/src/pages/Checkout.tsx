@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../components/context/CartContext";
 import { Input, Radio, Button, message, Modal } from "antd";
 import axios from "axios";
@@ -11,9 +11,19 @@ import Header from "../components/common/Header";
 
 export default function Checkout() {
   const { cart, clearCart } = useCart();
+    const location = useLocation();
+
   const navigate = useNavigate();
   const { user } = useAuth();
-
+  const query = new URLSearchParams(location.search);
+  const status = query.get("status");
+  useEffect(() => {
+   if (status === "success") {
+      message.success("Thanh toán thành công!");
+    } else if (status === "failed") {
+      message.error("Thanh toán thất bại. Vui lòng thử lại.");
+    }
+  }, [status]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -90,87 +100,89 @@ console.log(voucherInfo);
   };
 
   const totalAfterDiscount = Math.round(subtotal * (1 - discount / 100));
+const handleSubmit = async () => {
+  // 1️⃣ Kiểm tra user login
+  if (!user) {
+    message.info("Vui lòng đăng nhập trước khi đặt hàng.");
+    navigate("/login");
+    return;
+  }
 
-  const handleSubmit = async () => {
-    // require either a selected saved address or entered address fields
-    if (!name || !phone || (!address && selectedAddressId === "new")) {
-      message.error("Vui lòng điền đầy đủ thông tin giao hàng");
-      return;
+  // 2️⃣ Kiểm tra cart
+  if (!cart.items.length) {
+    message.error("Giỏ hàng đang trống.");
+    return;
+  }
+
+  // 3️⃣ Kiểm tra thông tin giao hàng
+  if (!name || !phone || (!address && selectedAddressId === "new")) {
+    message.error("Vui lòng điền đầy đủ thông tin giao hàng");
+    return;
+  }
+
+  // 4️⃣ Xác định địa chỉ
+  let customerAddress = address;
+  if (selectedAddressId !== "new") {
+    const found = addresses.find((a) => a._id === selectedAddressId);
+    if (found) {
+      customerAddress = [found.street, found.city, found.state, found.country]
+        .filter(Boolean)
+        .join(", ");
     }
+  }
 
-    // determine customer address object: use selected saved address when available
-    let customerAddress = address;
-    if (selectedAddressId !== "new") {
-      const found = addresses.find((a) => a._id === selectedAddressId);
-      if (found) {
-        customerAddress = [found.street, found.city, found.state, found.country]
-          .filter(Boolean)
-          .join(", ");
-      }
-    }
-
-    // Build payload for server
-    const payload = {
-      items: cart.items.map((it: any) => ({
-        legoId: it.id,
-        quantity: it.quantity,
-        price: it.price,
-      })),
-      shippingAddress: { name, phone, address: customerAddress },
-      paymentMethod: payment,
-      voucherId: voucherInfo?.id || undefined,
-    };
-
-    try {
-      // require authentication — server requires token to create orders
-      if (!user) {
-        message.info("Vui lòng đăng nhập trước khi đặt hàng.");
-        navigate("/login");
-        return;
-      }
-      // create order on server
-      const res = await axiosInstance.post("/orders", payload);
-      const savedOrder = res.data.order;
-
-      if (payment === "VNPay") {
-        // open VNPay sandbox demo (kept as convenience) — real VNPay integration requires server signing
-        const demoUrl = `http://sandbox.vnpayment.vn/tryitnow/Home/CreateOrder?orderId=${encodeURIComponent(
-          savedOrder._id
-        )}&amount=${encodeURIComponent(savedOrder.total)}`;
-        window.open(demoUrl, "_blank");
-        Modal.info({
-          title: "VNPay sandbox: test card info",
-          width: 700,
-          content: (
-            <div>
-              <p>
-                Mở tab VNPay demo, dùng thông tin đơn/amount nếu cần, sau đó
-                dùng các thẻ test từ trang demo.
-              </p>
-              <p>
-                Link demo:{" "}
-                <a href={demoUrl} target="_blank" rel="noreferrer">
-                  {demoUrl}
-                </a>
-              </p>
-            </div>
-          ),
-        });
-        message.info("Chuyển tới VNPay sandbox. Đơn hàng đã được tạo.");
-      } else {
-        message.success(
-          "Đặt hàng thành công. Mã đơn: " +
-            (savedOrder.orderNumber || savedOrder._id)
-        );
-      }
-
-      clearCart();
-      navigate("/order-success", { state: { order: savedOrder } });
-    } catch (err: any) {
-      console.error("Checkout error", err);
-      message.error(err?.message || "Không thể đặt hàng. Vui lòng thử lại.");
-    }
+  // 5️⃣ Tạo payload order
+  const payload = {
+    items: cart.items.map((it: any) => ({
+      legoId: it.id,
+      quantity: it.quantity,
+      price: it.price,
+    })),
+    shippingAddress: { name, phone, address: customerAddress },
+    paymentMethod: payment,
+    voucherId: voucherInfo?.id || undefined,
   };
+
+  console.log("Payload order:", payload);
+
+  try {
+    // 6️⃣ Gọi API tạo order
+    const res = await axiosInstance.post("/orders", payload);
+    const savedOrder = res.data.order;
+
+    // 7️⃣ Nếu chọn VNPay, tạo URL thanh toán
+    if (payment === "VNPay") {
+      const payRes = await axiosInstance.post("/vnpay/create_payment_url", {
+        orderId: savedOrder._id,
+        amount: savedOrder.total,
+      });
+
+      // Redirect sang VNPay
+      window.location.href = payRes.data.paymentUrl;
+         clearCart();
+      return;
+     
+    }
+
+    // 8️⃣ Nếu COD, xử lý bình thường
+    message.success(
+      "Đặt hàng thành công. Mã đơn: " +
+        (savedOrder.orderNumber || savedOrder._id)
+    );
+
+    clearCart();
+    navigate("/order-success", { state: { order: savedOrder } });
+  } catch (err: any) {
+    console.error("Checkout error:", err);
+
+    // Lấy message từ backend nếu có
+    const msg =
+      err?.response?.data?.message ||
+      err?.message ||
+      "Không thể đặt hàng. Vui lòng thử lại.";
+    message.error(msg);
+  }
+};
 
   return (
     <>

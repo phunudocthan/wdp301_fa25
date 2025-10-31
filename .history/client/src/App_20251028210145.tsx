@@ -45,10 +45,6 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNotificationPage from "./views/AdminNotificationPage";
 import AdminVoucherStatistics from "./pages/AdminVoucherStatistics";
-import OrderDetailUser from "./pages/OrderListUser";
-import OrderListUser from "./pages/OrderListUser";
-import OrderHistoryListUser from "./pages/OrderHistoryList";
-import CheckoutReorder from "./pages/CheckoutReorder";
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;
@@ -86,14 +82,11 @@ function AppContent() {
           <Route path="/home/gaming" element={redirectIfAdmin(<GamingPage />)} />
           <Route path="/product/:id" element={redirectIfAdmin(<ProductDetail />)} />
           {/* orders */}
-          <Route path="/orders" element={redirectIfAdmin(<OrderListUser />)} />
-          <Route path="/history-orders" element={redirectIfAdmin(<OrderHistoryListUser />)} />
+          <Route path="/orders" element={redirectIfAdmin(<OrdersList />)} />
           <Route path="/orders/:id" element={redirectIfAdmin(<OrderDetail />)} />
           <Route path="/shop" element={redirectIfAdmin(<Shop />)} />
           <Route path="/cart" element={redirectIfAdmin(<Cart />)} />
           <Route path="/checkout" element={redirectIfAdmin(<Checkout />)} />
-          <Route path="/checkout-reorder/:reorderId" element={redirectIfAdmin(<CheckoutReorder />)} />
-
           <Route path="/order-success" element={redirectIfAdmin(<OrderSuccess />)} />
           <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotificationPage /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />

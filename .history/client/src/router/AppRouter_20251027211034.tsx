@@ -21,7 +21,7 @@ import Favorites from '../pages/Favorites';
 import Register from '../pages/Register';
 import ProductDetail from '../pages/ProductDetail';
 import OrderHistory from '../pages/OrderHistory';
-import OrderDetailUser from '../pages/OrderListUser';
+import OrderDetailUser from '../pages/OrderDetailUser';
 import { useAuth } from '../components/context/AuthContext';
 import ProtectedRoute from '../routes/ProtectedRoute';
 
@@ -69,25 +69,20 @@ const AppRouter: React.FC = () => {
         }
       />
 
-      {/* Always register user order routes; ProtectedRoute will redirect to login if not authed.
-          Use redirectIfAdmin to send admins away from these pages. This prevents clicking
-          My Orders from falling through to the wildcard redirect when auth boot isn't finished. */}
-      <Route
-        path="/orders"
-        element={
-          <ProtectedRoute>
-            {redirectIfAdmin(<OrderHistory />)}
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/orders/:id"
-        element={
-          <ProtectedRoute>
-            {redirectIfAdmin(<OrderDetailUser />)}
-          </ProtectedRoute>
-        }
-      />
+      {isAuthenticated && user?.role !== 'admin' && (
+        <>
+          <Route path="/orders" element={
+            <ProtectedRoute>
+              <OrderHistory />
+            </ProtectedRoute>
+          } />
+          <Route path="/orders/:id" element={
+            <ProtectedRoute>
+              <OrderDetailUser />
+            </ProtectedRoute>
+          } />
+        </>
+      )}
 
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/resend-verification" element={<ResendVerificationPage />} />

@@ -160,12 +160,8 @@ export default function Header() {
               <NavLink to="/home">Home</NavLink>
               <NavLink to="/addresses">Address Book</NavLink>
               <NavLink to="/notifications">Notifications</NavLink>
-              {user && user.role !== 'admin' && <NavLink to="/orders">My Orders</NavLink>}
-   <NavLink to="/history-orders"
-               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-              >
-                <span>History orders</span>
-              </NavLink>  
+              <NavLink to="/orders">My Orders</NavLink>
+
             </>
           )}
         </nav>
@@ -255,13 +251,13 @@ export default function Header() {
                 </button>
 
                 <button
-                  onClick={() => { setShowDropdown(false); navigate(user && user.role !== 'admin' ? `/orders` : '/login'); }}
+                  onClick={() => { setShowDropdown(false); navigate('/orders'); }}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                 >
                   <FaShoppingBag className="text-gray-500" />
                   <span>My Orders</span>
                 </button>
-             
+
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
