@@ -20,6 +20,12 @@ const router = express.Router();
 const Theme = require("../models/Theme");
 const AgeRange = require("../models/AgeRange");
 const Difficulty = require("../models/Difficulty");
+const attachUserOptional = require("../middleware/optionalAuth");
+const {
+  applyPersonalizedSorting,
+} = require("../services/recommendationService");
+
+router.use(attachUserOptional);
 router.get("/admin/stats", requireAuth, requireRole("admin"), getProductStats);
 
 
@@ -157,7 +163,7 @@ router.get("/", async (req, res) => {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
 
     // 🔄 Truy vấn dữ liệu
-    const products = await Lego.find(filter)
+    let products = await Lego.find(filter)
       .populate("themeId", "name")
       .populate("ageRangeId", "rangeLabel minAge maxAge")
       .populate("difficultyId", "label level")
@@ -171,6 +177,16 @@ router.get("/", async (req, res) => {
     const total = await Lego.countDocuments(filter);
     const totalPages = Math.ceil(total / limitNum);
 
+    let personalizationMeta = { personalized: false };
+    if (req.user?._id) {
+      const { products: sortedProducts, meta } = await applyPersonalizedSorting(
+        req.user._id,
+        products
+      );
+      products = sortedProducts;
+      personalizationMeta = meta;
+    }
+
     res.json({
       success: true,
       data: {
@@ -182,6 +198,7 @@ router.get("/", async (req, res) => {
           hasNext: pageNum < totalPages,
           hasPrev: pageNum > 1,
         },
+        personalization: personalizationMeta,
       },
     });
   } catch (error) {

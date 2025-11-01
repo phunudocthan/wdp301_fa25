@@ -14,6 +14,7 @@ import categoryAdminAPI, {
   Category,
   CategoryStats,
 } from "../api/categoryAdmin";
+import { getFullImageURL } from "../api/axiosInstance";
 import CategoryForm from "../components/CategoryForm";
 import "../styles/AdminCategoryManagement.css";
 
@@ -130,7 +131,7 @@ const AdminCategoryManagement: React.FC = () => {
               )}
               {category.image && (
                 <img
-                  src={`http://localhost:5000${category.image}`}
+                  src={getFullImageURL(category.image)}
                   alt={category.name}
                   className="category-image"
                 />

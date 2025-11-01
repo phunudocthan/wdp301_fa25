@@ -27,7 +27,7 @@ cd server
 npm start
 ```
 
-Expected: Server should start without errors on port 5000
+Expected: Server should start without errors on port 5001
 
 ### 2. Start Client
 
@@ -43,7 +43,7 @@ Expected: Client should start on port 3000
 #### Test Single Image Upload
 
 ```bash
-curl -X POST http://localhost:5000/api/upload/product-image \
+curl -X POST http://localhost:5001/api/upload/product-image \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "image=@test-image.jpg"
 ```
@@ -51,7 +51,7 @@ curl -X POST http://localhost:5000/api/upload/product-image \
 #### Test Multiple Images Upload
 
 ```bash
-curl -X POST http://localhost:5000/api/upload/product-images \
+curl -X POST http://localhost:5001/api/upload/product-images \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "images=@image1.jpg" \
   -F "images=@image2.jpg"

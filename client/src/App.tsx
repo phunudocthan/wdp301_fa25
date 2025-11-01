@@ -49,6 +49,7 @@ import OrderDetailUser from "./pages/OrderListUser";
 import OrderListUser from "./pages/OrderListUser";
 import OrderHistoryListUser from "./pages/OrderHistoryList";
 import CheckoutReorder from "./pages/CheckoutReorder";
+import AIChatWidget from "./components/ai/AIChatWidget";
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;
@@ -70,6 +71,7 @@ function AppContent() {
     "/",
   ];
   const shouldShowHeader = !pagesWithoutHeader.includes(location.pathname);
+  const shouldShowChat = !pagesWithoutHeader.includes(location.pathname);
   const redirectIfAdmin = (element: React.ReactElement) =>
     isAdmin ? <Navigate to="/admin" replace /> : element;
 
@@ -134,6 +136,7 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </main>
+      {shouldShowChat && <AIChatWidget />}
     </div>
   );
 }

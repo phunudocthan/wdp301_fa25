@@ -1,6 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Tabs, Card, Button, Row, Col, Spin, Tag, Empty, Typography, Pagination, message, Popover, ConfigProvider, Switch } from "antd";
+import {
+  Tabs,
+  Card,
+  Button,
+  Row,
+  Col,
+  Spin,
+  Tag,
+  Empty,
+  Typography,
+  Pagination,
+  message,
+  Popover,
+  ConfigProvider,
+  Switch,
+} from "antd";
 import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
 import Header from "../components/common/Header";
 import HeroSlider from "../components/HeroSlider/HeroSlider";
@@ -11,6 +26,8 @@ import imagesDefault from "../../../client/public/images/1827380.png";
 import { Box, Layers, Palette, Settings, User } from "lucide-react";
 import Footer from "../components/common/Footer";
 import { theme as antdTheme } from "antd";
+import { addRecentlyViewed, getRecentlyViewed } from "../api/recentlyViewed";
+import { storage } from "../lib/storage";
 
 const { Meta } = Card;
 const { Title } = Typography;
@@ -79,25 +96,43 @@ export default function Home() {
 
   // Fetch recently viewed products
   useEffect(() => {
-    setRecentLoading(true);
-    const ids = JSON.parse(localStorage.getItem("recentlyViewedIds") || "[]");
-    if (Array.isArray(ids) && ids.length) {
-      axiosInstance
-        .get("/products/recentlyViewedIds/view/recent", {
-          params: { id: ids.slice(0, 8).join(",") },
-        })
-        .then((res) => {
-          setRecentlyViewed(res.data?.data?.products || []);
-          setRecentLoading(false);
-        })
-        .catch(() => {
-          setRecentLoading(false);
-          message.error("Failed to load recently viewed products.");
-        });
-    } else {
-      setRecentlyViewed([]);
-      setRecentLoading(false);
-    }
+    const fetchRecentlyViewed = async () => {
+      setRecentLoading(true);
+      try {
+        if (storage.getToken()) {
+          const data = await getRecentlyViewed();
+          const normalized = Array.isArray(data)
+            ? data
+                .map((item: any) => item?.lego)
+                .filter((lego: any) => lego && typeof lego === "object")
+            : [];
+          setRecentlyViewed(normalized);
+        } else {
+          const ids = JSON.parse(
+            localStorage.getItem("recentlyViewedIds") || "[]"
+          );
+          if (Array.isArray(ids) && ids.length) {
+            const res = await axiosInstance.get(
+              "/products/recentlyViewedIds/view/recent",
+              {
+                params: { id: ids.slice(0, 8).join(",") },
+              }
+            );
+            setRecentlyViewed(res.data?.data?.products || []);
+          } else {
+            setRecentlyViewed([]);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Failed to load recently viewed products:", error);
+        setRecentlyViewed([]);
+        message.error("Failed to load recently viewed products.");
+      } finally {
+        setRecentLoading(false);
+      }
+    };
+
+    fetchRecentlyViewed();
   }, []);
 
   // Fetch active vouchers
@@ -116,6 +151,37 @@ export default function Home() {
       .finally(() => setVoucherLoading(false));
   }, []);
 
+  const normalizeProductResponse = (
+    payload: any,
+    dataKey: "data" | "products" = "products"
+  ): { products: any[] } => {
+    if (!payload) {
+      return { products: [] };
+    }
+
+    if (Array.isArray(payload)) {
+      return { products: payload };
+    }
+
+    if (Array.isArray(payload.products)) {
+      return { products: payload.products };
+    }
+
+    if (payload.data) {
+      if (Array.isArray(payload.data)) {
+        return { products: payload.data };
+      }
+      if (Array.isArray(payload.data.products)) {
+        return { products: payload.data.products };
+      }
+      if (Array.isArray(payload.data[dataKey])) {
+        return { products: payload.data[dataKey] };
+      }
+    }
+
+    return { products: [] };
+  };
+
   // Fetch New Products
   useEffect(() => {
     const fetchNewProducts = async () => {
@@ -125,7 +191,7 @@ export default function Home() {
           ? `/products?search=${encodeURIComponent(search)}`
           : "/products?sortBy=newest";
         const res = await axiosInstance.get(url);
-        const products = extractArray(res.data);
+        const { products } = normalizeProductResponse(res.data);
         setNewProducts(products);
         setFilteredProducts(products);
       } catch (err) {
@@ -142,7 +208,7 @@ export default function Home() {
     const fetchBestSellers = async () => {
       try {
         const res = await axiosInstance.get("/products/best-sell");
-        const products = extractArray(res.data);
+        const { products } = normalizeProductResponse(res.data);
         setBestSellers(products);
       } catch (err) {
         console.error("❌ Error fetching best sellers:", err);
@@ -157,7 +223,7 @@ export default function Home() {
     const fetchCategories = async () => {
       try {
         const res = await axiosInstance.get(`/categories`);
-        const cats = extractArray(res.data);
+        const { products: cats } = normalizeProductResponse(res.data, "data");
         setCategories(cats);
       } catch (err) {
         console.error("❌ Error fetching categories:", err);
@@ -175,12 +241,12 @@ export default function Home() {
       setCurrentPage(1);
       if (!categoryId) {
         const res = await axiosInstance.get("/products");
-        const products = res.data?.data?.products || [];
+        const { products } = normalizeProductResponse(res.data);
         setFilteredProducts(products);
         return;
       }
       const res = await axiosInstance.get(`/products/caterory_list/${categoryId}`);
-      const products = res.data?.data || [];
+      const { products } = normalizeProductResponse(res.data);
       setFilteredProducts(products);
       if (products.length === 0) {
         message.info("No products found in this category.");
@@ -199,13 +265,6 @@ export default function Home() {
   };
 
   // Helper: Extract array safely
-  const extractArray = (data: any): any[] => {
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data.data)) return data.data;
-    if (Array.isArray(data.products)) return data.products;
-    return [];
-  };
-
   useEffect(() => {
     fetchProductByCategory(null);
   }, []);
@@ -450,6 +509,12 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
     viewed.unshift(productId);
     if (viewed.length > 10) viewed = viewed.slice(0, 10);
     localStorage.setItem(key, JSON.stringify(viewed));
+
+    if (storage.getToken()) {
+      void addRecentlyViewed(productId).catch((error) => {
+        console.warn("[recentlyViewed] failed to record view:", error);
+      });
+    }
   };
 
   if (loading) {

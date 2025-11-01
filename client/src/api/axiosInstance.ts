@@ -12,7 +12,7 @@ const parseEnvApiList = (value: string | undefined) =>
     .filter(Boolean)
     .map(normalizeBase);
 
-const devDefaultBases = ["http://localhost:5001/api", "http://localhost:5000/api"];
+const devDefaultBases = ["http://localhost:5001/api"];
 
 const currentOrigin = window.location.origin.replace(/\/$/, "");
 const defaultCandidates =
@@ -168,7 +168,7 @@ export const getFullImageURL = (imgPath?: string) => {
   if (!imgPath) return "/placeholder.png";
   if (imgPath.startsWith("http")) return imgPath;
 
-  // Bỏ /api nếu có, để lấy URL gốc (localhost:5000 hoặc domain)
+  // Bỏ /api nếu có, để lấy URL gốc (localhost:5001 hoặc domain)
   const rootURL = getApiOriginURL();
   return `${rootURL}${imgPath}`;
 };

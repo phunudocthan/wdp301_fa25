@@ -213,7 +213,7 @@ Content-Type: application/json
 ```bash
 cd server
 npm install
-npm run dev  # Server chạy trên port 5000
+npm run dev  # Server chạy trên port 5001
 ```
 
 ### Frontend

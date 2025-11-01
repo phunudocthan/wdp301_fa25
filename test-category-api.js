@@ -1,7 +1,7 @@
 // Test script for Category API
 const axios = require("axios");
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "http://localhost:5001/api";
 
 async function testCategoryAPI() {
   try {

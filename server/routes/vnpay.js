@@ -12,7 +12,7 @@ const router = express.Router();
 const vnp_TmnCode = (process.env.VNP_TMNCODE || "").trim();
 const vnp_HashSecret = (process.env.VNP_HASHSECRET || "").trim();
 const vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-const vnp_ReturnUrl = (process.env.VNP_RETURNURL || "http://localhost:5000/api/vnpay/return").trim();
+const vnp_ReturnUrl = (process.env.VNP_RETURNURL || "http://localhost:5001/api/vnpay/return").trim();
 
 
 // 🟢 TẠO URL THANH TOÁN

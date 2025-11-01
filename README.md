@@ -3,7 +3,7 @@
 Tạo file `server/.env` với nội dung mẫu dưới đây (có thể đổi port tùy ý):
 
 ```
-PORT=5000
+PORT=5001
 NODE_ENV=development
 JWT_SECRET=your-jwt-secret-key-here-replace-this-in-production
 
@@ -13,6 +13,10 @@ DB_NAME=lego_ecommerce
 # Client URL for CORS
 CLIENT_URL=http://localhost:3000
 
+# Gemini AI (optional for AI chat widget)
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-2.5-flash-lite-preview
+
 2. Cài dependencies:
    - Frontend: `cd client && npm install`
    - Backend: `cd server && npm install`
@@ -20,6 +24,13 @@ CLIENT_URL=http://localhost:3000
 3. Chay project:
    - Frontend: `npm run dev`
    - Backend: `npm run dev`
+
+4. Seed database mau (khuyen nghi truoc khi test AI/chat):
+   ```bash
+   cd server
+   node seedDatabase.js --reset
+   ```
+   Lenh `--reset` se xoa database dang tro den boi `DB_NAME` va nap lai toan bo du lieu mau (nguoi dung, category, theme, don hang, recently viewed...). Dam bao file `server/.env` da cau hinh `MONGODB_URI` hop le truoc khi chay.
 
 ## Cay thu muc hien tai
 
