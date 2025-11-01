@@ -24,7 +24,11 @@ try {
 } catch (error) {
   console.warn("[ai-chat] Failed to load knowledge base:", error.message);
 }
-
+/**
+paste hai dòng này vô file .env
+GEMINI_API_KEY=AIzaSyCZtTSiUV4ac-PFRyJgXf8WPEelLcwzuk4
+GEMINI_MODEL=gemini-2.5-flash-lite
+**/
 const DEFAULT_MODEL = "gemini-2.5-flash-lite";
 const MAX_STORED_MESSAGES = 100;
 const HISTORY_LIMIT = 40;
