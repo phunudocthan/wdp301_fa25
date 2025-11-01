@@ -14,6 +14,11 @@ const LegoSchema = new Schema(
       ref: "Theme",
       required: true,
     },
+    characterId: {
+      type: Schema.Types.ObjectId,
+      ref: "ThemeCharacter",
+    },
+
     ageRangeId: {
       type: Schema.Types.ObjectId,
       ref: "AgeRange",
@@ -69,6 +74,7 @@ const LegoSchema = new Schema(
 
 LegoSchema.index({ name: "text" });
 LegoSchema.index({ themeId: 1 });
+LegoSchema.index({ characterId: 1 }); // ✅ thêm index này
 LegoSchema.index({ price: 1 });
 LegoSchema.index({ categories: 1 });
 

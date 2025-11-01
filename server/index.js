@@ -19,6 +19,14 @@ const USE_GOOGLE_AUTH = Boolean(
     process.env.GOOGLE_CALLBACK_URL
 );
 
+const USE_FACEBOOK_AUTH = Boolean(
+  process.env.FACEBOOK_APP_ID &&
+    process.env.FACEBOOK_APP_SECRET &&
+    process.env.FACEBOOK_CALLBACK_URL
+);
+
+const USE_SOCIAL_AUTH = USE_GOOGLE_AUTH || USE_FACEBOOK_AUTH;
+
 const io = new Server(server, {
   cors: {
     origin: CLIENT_ORIGIN,
@@ -37,7 +45,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (USE_GOOGLE_AUTH) {
+if (USE_SOCIAL_AUTH) {
   app.use(
     session({
       secret:
@@ -127,6 +135,7 @@ app.get("/api/health", async (req, res) => {
 
 const User = require("./models/User");
 const Theme = require("./models/Theme");
+const ThemeCharacter = require("./models/ThemeCharacter");
 const AgeRange = require("./models/AgeRange");
 const Difficulty = require("./models/Difficulty");
 const Lego = require("./models/Lego");
@@ -139,6 +148,7 @@ app.get("/api/database/stats", async (req, res) => {
     const stats = {
       users: await User.countDocuments(),
       themes: await Theme.countDocuments(),
+      themeCharacters: await ThemeCharacter.countDocuments(),
       ageRanges: await AgeRange.countDocuments(),
       difficulties: await Difficulty.countDocuments(),
       legos: await Lego.countDocuments(),
@@ -206,7 +216,10 @@ const voucherRoutes = require("./routes/voucherRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const recentlyViewedRoutes = require("./routes/recentlyViewedRoutes");
+const themeRoutes = require("./routes/themeRoutes");
 
+// Mount auth routes at both /auth and /api/auth for compatibility
+app.use("/auth", authRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
@@ -215,6 +228,7 @@ app.use("/api/helpers", helperRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/vouchers", voucherRoutes);
+app.use("/api/themes", themeRoutes);
 app.use("/api/legos", (req, res) =>
   res.json({ message: "LEGO routes coming soon..." })
 );

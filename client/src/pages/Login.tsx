@@ -3,10 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import LegoLoginPage from "../components/LegoLoginPage";
 import { useAuth } from "../components/context/AuthContext";
 import { requestEmailVerification } from "../api/auth";
-import {
-  getApiBaseURL,
-  subscribeApiBaseURL,
-} from "../api/axiosInstance";
+import { getApiBaseURL, subscribeApiBaseURL } from "../api/axiosInstance";
 
 interface LoginResult {
   token: string;
@@ -14,21 +11,29 @@ interface LoginResult {
 }
 
 const Login = () => {
-  const { login, loginWithToken, user } = useAuth();
+  const { login, loginWithToken } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [loginResult, setLoginResult] = useState<LoginResult | null>(null);
   const toGoogleAuthUrl = (baseURL: string) =>
     `${baseURL.replace(/\/api$/, "")}/auth/google`;
+  const toFacebookAuthUrl = (baseURL: string) =>
+    `${baseURL.replace(/\/api$/, "")}/auth/facebook`;
   const [googleAuthUrl, setGoogleAuthUrl] = useState(() =>
     toGoogleAuthUrl(getApiBaseURL())
+  );
+  const [facebookAuthUrl, setFacebookAuthUrl] = useState(() =>
+    toFacebookAuthUrl(getApiBaseURL())
   );
 
   useEffect(() => {
     const unsubscribe = subscribeApiBaseURL((url) => {
       setGoogleAuthUrl(toGoogleAuthUrl(url));
+      setFacebookAuthUrl(toFacebookAuthUrl(url));
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleLogin = useCallback(
@@ -85,6 +90,7 @@ const Login = () => {
       onForgotPassword={handleForgotPassword}
       onNavigateRegister={handleNavigateRegister}
       googleAuthUrl={googleAuthUrl}
+      facebookAuthUrl={facebookAuthUrl}
       onLoginSuccess={handleLoginSuccess}
       onGoogleToken={handleGoogleToken}
     />

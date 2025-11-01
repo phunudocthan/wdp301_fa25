@@ -32,7 +32,7 @@ export default function Header() {
     [user?.name]
   );
   const avatar = user?.avatar || localStorage.getItem("avatar");
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "employee";
   const isAdminSection = isAdmin && location.pathname.startsWith("/admin");
   const [isDarkMode, setIsDarkMode] = useState(
     localStorage.getItem("theme") === "dark"
@@ -99,68 +99,101 @@ export default function Header() {
         <nav className="nav">
           {isAdminSection ? (
             <>
-              <NavLink
-                to="/admin"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Dashboard
-              </NavLink>
-              <NavLink
-                to="/admin/dashboard/revenue"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Revenue
-              </NavLink>
-              <NavLink
-                to="/admin/dashboard/orders"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Order Stats
-              </NavLink>
-              <NavLink
-                to="/admin/orders"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Orders
-              </NavLink>
-              <NavLink
-                to="/admin/products"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Products
-              </NavLink>
-              <NavLink
-                to="/admin/categories"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Categories
-              </NavLink>
-              <NavLink
-                to="/admin/users"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Users
-              </NavLink>
-              <NavLink
-                to="/admin/notifications"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Notifications
-              </NavLink>
-              <NavLink
-                to="/admin/vouchers"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Vouchers
-              </NavLink>
+              {user?.role === "employee" ? (
+                <>
+                  {/* Employee: Only Themes and Characters */}
+                  <NavLink
+                    to="/admin/themes"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Themes
+                  </NavLink>
+                  <NavLink
+                    to="/admin/characters"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Characters
+                  </NavLink>
+                </>
+              ) : (
+                <>
+                  {/* Admin: Full access */}
+                  <NavLink
+                    to="/admin"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Dashboard
+                  </NavLink>
+                  <NavLink
+                    to="/admin/dashboard/revenue"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Revenue
+                  </NavLink>
+                  <NavLink
+                    to="/admin/dashboard/orders"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Order Stats
+                  </NavLink>
+                  <NavLink
+                    to="/admin/orders"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Orders
+                  </NavLink>
+                  <NavLink
+                    to="/admin/products"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Products
+                  </NavLink>
+                  <NavLink
+                    to="/admin/categories"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Categories
+                  </NavLink>
+                  <NavLink
+                    to="/admin/users"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Users
+                  </NavLink>
+                  <NavLink
+                    to="/admin/notifications"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Notifications
+                  </NavLink>
+                  <NavLink
+                    to="/admin/vouchers"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Vouchers
+                  </NavLink>
+                  <NavLink
+                    to="/admin/themes"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Themes
+                  </NavLink>
+                  <NavLink
+                    to="/admin/characters"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Characters
+                  </NavLink>
+                </>
+              )}
             </>
           ) : (
             <>
-              <NavLink to="/shop">Shop</NavLink>
               <NavLink to="/home">Home</NavLink>
+              <NavLink to="/shop">Shop</NavLink>
+              <NavLink to="/themes">Themes</NavLink>
               <NavLink to="/addresses">Address Book</NavLink>
               <NavLink to="/notifications">Notifications</NavLink>
-
             </>
           )}
         </nav>
@@ -229,8 +262,9 @@ export default function Header() {
                 )}
               </div>
               <FaChevronDown
-                className={`text-gray-600 text-xs transition-transform ${showDropdown ? "rotate-180" : ""
-                  }`}
+                className={`text-gray-600 text-xs transition-transform ${
+                  showDropdown ? "rotate-180" : ""
+                }`}
               />
             </div>
 

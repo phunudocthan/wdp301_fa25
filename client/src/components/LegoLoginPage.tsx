@@ -16,6 +16,7 @@ interface LegoLoginPageProps {
   onForgotPassword: () => void | Promise<void>;
   onNavigateRegister: () => void;
   googleAuthUrl: string;
+  facebookAuthUrl?: string;
   onLoginSuccess?: () => void;
   onGoogleToken?: (token: string) => Promise<void>;
 }
@@ -26,6 +27,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
   onForgotPassword,
   onNavigateRegister,
   googleAuthUrl,
+  facebookAuthUrl,
   onLoginSuccess,
   onGoogleToken,
 }) => {
@@ -34,7 +36,9 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [loadingAction, setLoadingAction] = useState<"login" | "resend" | null>(null);
+  const [loadingAction, setLoadingAction] = useState<"login" | "resend" | null>(
+    null
+  );
   const isLoading = loadingAction !== null;
   const [showResendOption, setShowResendOption] = useState(false);
   const navigate = useNavigate();
@@ -168,6 +172,12 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
 
   const handleGoogleLogin = () => {
     window.location.href = googleAuthUrl;
+  };
+
+  const handleFacebookLogin = () => {
+    if (facebookAuthUrl) {
+      window.location.href = facebookAuthUrl;
+    }
   };
 
   return (
@@ -360,6 +370,25 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
             <span style={styles.socialIcon}>G</span>
             Continue with Google
           </button>
+
+          {facebookAuthUrl && (
+            <button
+              style={{ ...styles.socialButton, ...styles.facebookButton }}
+              onClick={handleFacebookLogin}
+              disabled={isLoading}
+              onMouseEnter={(event) => {
+                event.currentTarget.style.background = "#f5f5f5";
+                event.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(event) => {
+                event.currentTarget.style.background = "white";
+                event.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <span style={styles.socialIcon}>f</span>
+              Continue with Facebook
+            </button>
+          )}
         </div>
 
         <p style={styles.signupText}>

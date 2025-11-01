@@ -45,6 +45,12 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNotificationPage from "./views/AdminNotificationPage";
 import AdminVoucherStatistics from "./pages/AdminVoucherStatistics";
+import AdminThemeManagement from "./pages/AdminThemeManagement";
+import AdminCharacterManagement from "./pages/AdminCharacterManagement";
+import ThemesPage from "./pages/ThemesPage";
+import ThemeDetailPage from "./pages/ThemeDetailPage";
+import CharacterDetailPage from "./pages/CharacterDetailPage";
+
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;
@@ -55,7 +61,7 @@ function AppContent() {
   useTokenExpirationCheck();
   const location = useLocation();
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "employee";
   const pagesWithoutHeader = [
     "/login",
     "/register",
@@ -73,53 +79,256 @@ function AppContent() {
     <div>
       {isAdmin && shouldShowHeader && <Header />}
       <SessionNotifications />
-      <main >
+      <main>
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={redirectIfAdmin(<HomePage />)} />
-          <Route path="/home/featured" element={redirectIfAdmin(<FeaturedPage />)} />
-          <Route path="/home/popular" element={redirectIfAdmin(<PopularPage />)} />
-          <Route path="/home/gaming" element={redirectIfAdmin(<GamingPage />)} />
-          <Route path="/product/:id" element={redirectIfAdmin(<ProductDetail />)} />
+          <Route
+            path="/home/featured"
+            element={redirectIfAdmin(<FeaturedPage />)}
+          />
+          <Route
+            path="/home/popular"
+            element={redirectIfAdmin(<PopularPage />)}
+          />
+          <Route
+            path="/home/gaming"
+            element={redirectIfAdmin(<GamingPage />)}
+          />
+          <Route path="/themes" element={redirectIfAdmin(<ThemesPage />)} />
+          <Route
+            path="/themes/:id"
+            element={redirectIfAdmin(<ThemeDetailPage />)}
+          />
+          <Route
+            path="/characters/:id"
+            element={redirectIfAdmin(<CharacterDetailPage />)}
+          />
+          <Route
+            path="/product/:id"
+            element={redirectIfAdmin(<ProductDetail />)}
+          />
           <Route path="/shop" element={redirectIfAdmin(<Shop />)} />
           <Route path="/cart" element={redirectIfAdmin(<Cart />)} />
           <Route path="/checkout" element={redirectIfAdmin(<Checkout />)} />
-          <Route path="/order-success" element={redirectIfAdmin(<OrderSuccess />)} />
-          <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotificationPage /></ProtectedRoute>} />
+          <Route
+            path="/order-success"
+            element={redirectIfAdmin(<OrderSuccess />)}
+          />
+          <Route
+            path="/admin/notifications"
+            element={
+              <ProtectedRoute>
+                <AdminNotificationPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/resend-verification" element={<ResendVerificationPage />} />
+          <Route
+            path="/resend-verification"
+            element={<ResendVerificationPage />}
+          />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth-demo" element={<AuthDemo />} />
-          <Route path="/profile" element={isAdmin ? (<Navigate to="/admin/profile" replace />) : (<ProtectedRoute><ProfilePage /></ProtectedRoute>)} />
-          <Route path="/profileAdmin" element={<ProtectedRoute><ProfileAdminWrapper /></ProtectedRoute>} />
-          <Route path="/addresses" element={redirectIfAdmin(<ProtectedRoute><AddressBookPage /></ProtectedRoute>)} />
-          <Route path="/notifications" element={redirectIfAdmin(<ProtectedRoute><NotificationsPage /></ProtectedRoute>)} />
-          <Route path="/favorites" element={redirectIfAdmin(<ProtectedRoute><FavoritesPage /></ProtectedRoute>)} />
-          <Route path="/user" element={redirectIfAdmin(<ProtectedRoute><UserDashboard /></ProtectedRoute>)} />
+          <Route
+            path="/profile"
+            element={
+              isAdmin ? (
+                <Navigate to="/admin/profile" replace />
+              ) : (
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              )
+            }
+          />
+          <Route
+            path="/profileAdmin"
+            element={
+              <ProtectedRoute>
+                <ProfileAdminWrapper />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/addresses"
+            element={redirectIfAdmin(
+              <ProtectedRoute>
+                <AddressBookPage />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/notifications"
+            element={redirectIfAdmin(
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/favorites"
+            element={redirectIfAdmin(
+              <ProtectedRoute>
+                <FavoritesPage />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/user"
+            element={redirectIfAdmin(
+              <ProtectedRoute>
+                <UserDashboard />
+              </ProtectedRoute>
+            )}
+          />
           {/* Admin overview */}
-          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/profile" element={<ProtectedRoute><AdminProfile /></ProtectedRoute>} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/profile"
+            element={
+              <ProtectedRoute>
+                <AdminProfile />
+              </ProtectedRoute>
+            }
+          />
           {/* Admin analytics */}
-          <Route path="/admin/dashboard/revenue" element={<ProtectedRoute><AdminRevenueDashboard /></ProtectedRoute>} />
-          <Route path="/admin/dashboard/orders" element={<ProtectedRoute><AdminOrdersDashboard /></ProtectedRoute>} />
+          <Route
+            path="/admin/dashboard/revenue"
+            element={
+              <ProtectedRoute>
+                <AdminRevenueDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard/orders"
+            element={
+              <ProtectedRoute>
+                <AdminOrdersDashboard />
+              </ProtectedRoute>
+            }
+          />
           {/* Admin user management */}
-          <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
-          <Route path="/admin/users/:id" element={<ProtectedRoute><AdminUserDetailPage /></ProtectedRoute>} />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users/:id"
+            element={
+              <ProtectedRoute>
+                <AdminUserDetailPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Admin notifications */}
-          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Admin orders */}
-          <Route path="/admin/orders" element={<ProtectedRoute><OrdersList /></ProtectedRoute>} />
-          <Route path="/admin/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
+          <Route
+            path="/admin/orders"
+            element={
+              <ProtectedRoute>
+                <OrdersList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/orders/:id"
+            element={
+              <ProtectedRoute>
+                <OrderDetail />
+              </ProtectedRoute>
+            }
+          />
           {/* Admin product management */}
-          <Route path="/admin/products" element={<ProtectedRoute><AdminProductManagement /></ProtectedRoute>} />
-          <Route path="/admin/vouchers" element={<ProtectedRoute><AdminVoucherManagement /></ProtectedRoute>} />
-          <Route path="/admin/voucher-statistics" element={<ProtectedRoute><AdminVoucherStatistics /></ProtectedRoute>} />
-          <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoryManagement /></ProtectedRoute>} />
-          <Route path="/admin/products/edit/:id" element={<ProtectedRoute><AdminProductEdit /></ProtectedRoute>} />
-          <Route path="/admin/products/:id" element={<ProtectedRoute><AdminProductDetail /></ProtectedRoute>} />
+          <Route
+            path="/admin/products"
+            element={
+              <ProtectedRoute>
+                <AdminProductManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/vouchers"
+            element={
+              <ProtectedRoute>
+                <AdminVoucherManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/voucher-statistics"
+            element={
+              <ProtectedRoute>
+                <AdminVoucherStatistics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <ProtectedRoute>
+                <AdminCategoryManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/products/edit/:id"
+            element={
+              <ProtectedRoute>
+                <AdminProductEdit />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/products/:id"
+            element={
+              <ProtectedRoute>
+                <AdminProductDetail />
+              </ProtectedRoute>
+            }
+          />
+          {/* Admin theme management */}
+          <Route
+            path="/admin/themes"
+            element={
+              <ProtectedRoute>
+                <AdminThemeManagement />
+              </ProtectedRoute>
+            }
+          />
+          {/* Admin character management */}
+          <Route
+            path="/admin/characters"
+            element={
+              <ProtectedRoute>
+                <AdminCharacterManagement />
+              </ProtectedRoute>
+            }
+          />
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>

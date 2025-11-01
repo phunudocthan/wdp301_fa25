@@ -1,10 +1,7 @@
 ﻿const express = require("express");
 const passport = require("passport");
 const rateLimit = require("express-rate-limit");
-const {
-  requireAuth,
-  requireRole,
-} = require("../middleware/authMiddleware");
+const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 const authController = require("../controllers/authController");
 
 const router = express.Router();
@@ -61,6 +58,19 @@ if (authController.googleAuthEnabled) {
     "/google/callback",
     passport.authenticate("google", { failureRedirect: "/login" }),
     authController.handleGoogleCallback
+  );
+}
+
+if (authController.facebookAuthEnabled) {
+  router.get(
+    "/facebook",
+    passport.authenticate("facebook", { scope: ["public_profile"] })
+  );
+
+  router.get(
+    "/facebook/callback",
+    passport.authenticate("facebook", { failureRedirect: "/login" }),
+    authController.handleFacebookCallback
   );
 }
 

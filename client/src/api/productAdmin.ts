@@ -120,6 +120,20 @@ class ProductAdminAPI {
     await axiosInstance.delete(`/products/admin/${id}`);
   }
 
+  // Lấy sản phẩm theo Theme
+  static async getProductsByTheme(themeId: string): Promise<Product[]> {
+    const response = await axiosInstance.get(`/themes/${themeId}/products`);
+    return response.data.data; // giả sử backend trả về { success, data: [products] }
+  }
+
+  // Lấy sản phẩm theo Character
+  static async getProductsByCharacter(characterId: string): Promise<Product[]> {
+    const response = await axiosInstance.get(
+      `/characters/${characterId}/products`
+    );
+    return response.data.data;
+  }
+
   // Cập nhật trạng thái sản phẩm
   static async updateProductStatus(id: string, status: string): Promise<void> {
     await axiosInstance.patch(`/products/admin/${id}/status`, { status });

@@ -25,9 +25,10 @@ const UserAddressSchema = new mongoose.Schema(
           // Số điện thoại Việt Nam: bắt đầu bằng 0, 10 số
           return /^0\d{9}$/.test(v);
         },
-        message: props => `${props.value} không phải là số điện thoại hợp lệ!`
+        message: (props) =>
+          `${props.value} không phải là số điện thoại hợp lệ!`,
       },
-      required: [true, 'Vui lòng nhập số điện thoại'],
+      required: [true, "Vui lòng nhập số điện thoại"],
     },
     street: { type: String, trim: true, required: true },
     city: { type: String, trim: true },
@@ -65,7 +66,7 @@ const UserSchema = new mongoose.Schema(
       minlength: 6,
       select: false,
       required() {
-        return !this.googleId;
+        return !this.googleId && !this.facebookId;
       },
     },
     googleId: {
@@ -73,9 +74,14 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    facebookId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     role: {
       type: String,
-      enum: ["customer", "seller", "admin"],
+      enum: ["customer", "seller", "admin", "employee"],
       default: "customer",
     },
     avatar: {
@@ -151,7 +157,10 @@ UserSchema.methods.incLoginAttempts = function () {
 
   const updates = { $inc: { failedLoginAttempts: 1 } };
 
-  if ((this.failedLoginAttempts || 0) + 1 >= MAX_LOGIN_ATTEMPTS && !this.isLocked) {
+  if (
+    (this.failedLoginAttempts || 0) + 1 >= MAX_LOGIN_ATTEMPTS &&
+    !this.isLocked
+  ) {
     updates.$set = {
       lockUntil: Date.now() + LOCK_TIME_MS,
     };
@@ -183,4 +192,3 @@ UserSchema.index({ role: 1 });
 UserSchema.index({ passwordResetToken: 1 });
 
 module.exports = mongoose.model("User", UserSchema);
-
