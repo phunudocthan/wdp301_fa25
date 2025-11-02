@@ -219,6 +219,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const vnpayRoutes = require("./routes/vnpay");
 const recentlyViewedRoutes = require("./routes/recentlyViewedRoutes");
 const newsRoutes = require("./routes/newsRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 const themeRoutes = require("./routes/themeRoutes");
 
 // Mount auth routes at both /auth and /api/auth for compatibility
@@ -241,6 +242,7 @@ app.use("/api/recently-viewed", recentlyViewedRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/ai", aiChatRoutes);
 

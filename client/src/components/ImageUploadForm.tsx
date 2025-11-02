@@ -5,12 +5,14 @@ interface ImageUploadFormProps {
   images: string[];
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
+  uploadFn?: (files: File[]) => Promise<any>;
 }
 
 const ImageUploadForm: React.FC<ImageUploadFormProps> = ({
   images,
   onImagesChange,
   maxImages = 5,
+  uploadFn,
 }) => {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -43,7 +45,10 @@ const ImageUploadForm: React.FC<ImageUploadFormProps> = ({
       }
 
       // Upload images
-      const uploadResponse = await UploadAPI.uploadProductImages(validFiles);
+  // allow consumer to provide a custom upload function (e.g. review uploads)
+    const defaultUpload = (UploadAPI as any)?.uploadReviewImages || (UploadAPI as any)?.uploadProductImages;
+    const fn = uploadFn ? uploadFn : defaultUpload;
+    const uploadResponse = await fn(validFiles);
 
       if (uploadResponse.success && uploadResponse.data.images) {
         // Update images list

@@ -1,6 +1,6 @@
 import axios from './axiosInstance';
 
-export const uploadSingle = (file: File) => {
+export const uploadProductImage = (file: File) => {
   const fd = new FormData();
   fd.append('image', file);
   return axios.post('/upload/product-image', fd, {
@@ -8,7 +8,7 @@ export const uploadSingle = (file: File) => {
   }).then(r => r.data);
 };
 
-export const uploadMultiple = (files: File[]) => {
+export const uploadProductImages = (files: File[]) => {
   const fd = new FormData();
   files.forEach((f) => fd.append('images', f));
   return axios.post('/upload/product-images', fd, {
@@ -16,4 +16,20 @@ export const uploadMultiple = (files: File[]) => {
   }).then(r => r.data);
 };
 
-export default { uploadSingle, uploadMultiple };
+export const uploadReviewImage = (file: File) => {
+  const fd = new FormData();
+  fd.append('image', file);
+  return axios.post('/upload/review-image', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+};
+
+export const uploadReviewImages = (files: File[]) => {
+  const fd = new FormData();
+  files.forEach((f) => fd.append('images', f));
+  return axios.post('/upload/review-images', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+};
+
+export default { uploadProductImage, uploadProductImages, uploadReviewImage, uploadReviewImages };

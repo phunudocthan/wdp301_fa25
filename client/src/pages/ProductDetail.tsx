@@ -18,8 +18,9 @@ import { ArrowLeftOutlined, HeartFilled, HeartOutlined } from "@ant-design/icons
 import { useFavorites } from "../components/context/FavoritesContext";
 import { resolveAssetUrl } from "../utils/assets";
 import Footer from "../components/common/Footer";
-import { addRecentlyViewed } from "../api/recentlyViewed";
-import { storage } from "../lib/storage";
+import ImageUploadForm from "../components/ImageUploadForm";
+import ReviewAPI from "../api/review";
+import { useAuth } from "../components/context/AuthContext";
 interface Product {
   _id: string;
   name: string;
@@ -46,6 +47,10 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const [showDesc, setShowDesc] = useState(false);
   const { favoriteIds, toggleFavorite } = useFavorites();
+  const { user } = useAuth();
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [form, setForm] = useState<{ rating: number; comment: string; images: string[] }>({ rating: 0, comment: "", images: [] });
   const [favoritePending, setFavoritePending] = useState(false);
 
   const recordRecentlyViewed = (productId?: string) => {
@@ -84,7 +89,44 @@ export default function ProductDetail() {
       }
     };
     fetchProduct();
+    fetchReviews();
   }, [id]);
+
+  const fetchReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      const res = await ReviewAPI.getProductReviews(id || "");
+      setReviews(res.data || []);
+    } catch (err) {
+      console.error("Load reviews error", err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleVote = async (reviewId: string, vote: 'up' | 'down') => {
+    if (!user) {
+      message.warning('Vui lòng đăng nhập để thực hiện hành động này');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const res = await ReviewAPI.voteReview(reviewId, vote);
+      // res is expected to be { success: true, data: { up: number, down: number } }
+      const counts = res?.data || res;
+      setReviews((prev) =>
+        prev.map((r) =>
+          r._id === reviewId
+            ? { ...r, helpful: { up: counts.up ?? 0, down: counts.down ?? 0 } }
+            : r
+        )
+      );
+    } catch (err: any) {
+      console.error('Vote error', err);
+      message.error(err?.message || 'Không thể thực hiện hành động.');
+    }
+  };
 
   if (loading) return <p className="loading">Loading...</p>;
   if (!product) return <p className="notfound">Not found product.</p>;
@@ -336,8 +378,64 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+        {/* === Reviews Section === */}
+        <div className="reviews-section" style={{ padding: 20 }}>
+          <h3>Reviews</h3>
+          <div style={{ marginBottom: 16 }}>
+            <strong>{product.name}</strong>
+          </div>
+
+
+          {/* Reviews list */}
+          <div style={{ marginTop: 20 }}>
+            {reviewsLoading ? <p>Loading reviews...</p> : (
+              reviews.length === 0 ? <p>No reviews yet.</p> : (
+                reviews.map((r) => (
+                  <div key={r._id} style={{ borderBottom: '1px solid #eee', padding: 12 }}>
+                    <div style={{ fontWeight: 600 }}>{r.userId?.name || 'User'} — {r.rating} ⭐</div>
+                    <div style={{ color: '#555' }}>{r.comment}</div>
+                    {r.images && r.images.length > 0 && (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        {r.images.map((img: string, i: number) => <img key={i} src={img} alt={`rev-${i}`} style={{ width: 80, height: 80, objectFit: 'cover' }} />)}
+                      </div>
+                    )}
+                    <div style={{ marginTop: 8, fontSize: 13, color: '#777', display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          onClick={() => handleVote(r._id, 'up')}
+                          style={{ border: '1px solid #ddd', background: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer' }}
+                          aria-label="Helpful up"
+                        >
+                          👍
+                        </button>
+                        <span>{r.helpful?.up || 0}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          onClick={() => handleVote(r._id, 'down')}
+                          style={{ border: '1px solid #ddd', background: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer' }}
+                          aria-label="Helpful down"
+                        >
+                          👎
+                        </button>
+                        <span>{r.helpful?.down || 0}</span>
+                      </div>
+                    </div>
+                    {/* message replies of admin and replies is map */}
+                    {r.replies && (
+                      <div style={{ marginTop: 8, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
+                        <strong>Admin Reply:</strong> {r.replies.map((reply: any, i: number) => (<div key={i} style={{ marginTop: 4 }}>{reply.message} <span style={{ fontSize: 12, color: '#999' }}>({new Date(reply.createdAt).toLocaleDateString()})</span></div>))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )
+            )}
+          </div>
+        </div>
       </div>
-      <Footer/>
+      <Footer />
     </>
   );
 }

@@ -66,12 +66,13 @@ import AdminProductEdit from "./pages/AdminProductEdit";
 import AdminVoucherManagement from "./pages/AdminVoucherManagement";
 import AdminVoucherStatistics from "./pages/AdminVoucherStatistics";
 import AdminNotificationPage from "./views/AdminNotificationPage";
+import AdminCategoryManagement from "./pages/AdminCategoryManagement_new";
+import AdminReviewManagement from "./pages/AdminReviewManagement";
 import AdminThemeManagement from "./pages/AdminThemeManagement";
 import AdminCharacterManagement from "./pages/AdminCharacterManagement";
 
-
 import AIChatWidget from "./components/ai/AIChatWidget";
-import AdminCategoryManagement from "./pages/AdminCategoryManagement_new";
+
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;
@@ -99,8 +100,9 @@ function AppContent() {
   ]);
 
   const shouldShowHeader = !pagesWithoutHeader.has(location.pathname);
-const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
-  // --- Nhánh EMPLOYEE: chỉ cho phép EmployeeNews + EmployeeHeader ---
+  const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
+
+  // --- EMPLOYEE ---
   if (isEmployee) {
     return (
       <div>
@@ -116,7 +118,6 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
                 </ProtectedRoute>
               }
             />
-            {/* mọi path khác chuyển về employee/news */}
             <Route path="*" element={<Navigate to="/employee/news" replace />} />
           </Routes>
         </main>
@@ -124,21 +125,19 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
     );
   }
 
-  // Helper: nếu là admin, chuyển người dùng khỏi các trang client
   const redirectIfAdmin = (element: React.ReactElement) =>
     isAdmin ? <Navigate to="/admin" replace /> : element;
 
   return (
     <div>
-      {/* Admin & User đều dùng Header đầy đủ (ẩn trên trang auth) */}
       {shouldShowHeader && <Header />}
       <SessionNotifications />
       <main>
         <Routes>
-          {/* Common redirects */}
+          {/* Redirects */}
           <Route path="/" element={<Navigate to="/home" replace />} />
 
-          {/* Client routes (user thường) */}
+          {/* --- USER ROUTES --- */}
           <Route path="/home" element={redirectIfAdmin(<HomePage />)} />
           <Route path="/home/featured" element={redirectIfAdmin(<FeaturedPage />)} />
           <Route path="/home/popular" element={redirectIfAdmin(<PopularPage />)} />
@@ -147,22 +146,23 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
           <Route path="/product/:id" element={redirectIfAdmin(<ProductDetail />)} />
           <Route path="/cart" element={redirectIfAdmin(<Cart />)} />
           <Route path="/checkout" element={redirectIfAdmin(<Checkout />)} />
-          <Route path="/checkout-reorder/:reorderId" element={redirectIfAdmin(<CheckoutReorder />)} />
+          <Route
+            path="/checkout-reorder/:reorderId"
+            element={redirectIfAdmin(<CheckoutReorder />)}
+          />
           <Route path="/order-success" element={redirectIfAdmin(<OrderSuccess />)} />
-
-          {/* Orders (user) */}
           <Route path="/orders" element={redirectIfAdmin(<OrderListUser />)} />
           <Route path="/history-orders" element={redirectIfAdmin(<OrderHistoryListUser />)} />
           <Route path="/orders/detail/:id" element={redirectIfAdmin(<OrderDetailUser />)} />
 
-          {/* Content: themes/characters/news (client) */}
+          {/* --- CONTENT --- */}
           <Route path="/themes" element={redirectIfAdmin(<ThemesPage />)} />
           <Route path="/themes/:id" element={redirectIfAdmin(<ThemeDetailPage />)} />
           <Route path="/characters/:id" element={redirectIfAdmin(<CharacterDetailPage />)} />
           <Route path="/news" element={redirectIfAdmin(<NewsList />)} />
           <Route path="/news/:id" element={redirectIfAdmin(<NewsDetail />)} />
 
-          {/* Auth */}
+          {/* --- AUTH --- */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -170,7 +170,7 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* User profile & protected client features */}
+          {/* --- PROFILE & USER FEATURES --- */}
           <Route
             path="/profile"
             element={
@@ -241,7 +241,6 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
               </ProtectedRoute>
             }
           />
-          {/* analytics */}
           <Route
             path="/admin/dashboard/revenue"
             element={
@@ -258,7 +257,6 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
               </ProtectedRoute>
             }
           />
-          {/* users */}
           <Route
             path="/admin/users"
             element={
@@ -275,7 +273,6 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
               </ProtectedRoute>
             }
           />
-          {/* notifications (admin) */}
           <Route
             path="/admin/notifications"
             element={
@@ -284,7 +281,6 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
               </ProtectedRoute>
             }
           />
-          {/* orders (admin) */}
           <Route
             path="/admin/orders"
             element={
@@ -301,7 +297,6 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
               </ProtectedRoute>
             }
           />
-          {/* products / categories / vouchers */}
           <Route
             path="/admin/products"
             element={
@@ -350,7 +345,14 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
               </ProtectedRoute>
             }
           />
-          {/* themes / characters (admin) */}
+          <Route
+            path="/admin/reviews"
+            element={
+              <ProtectedRoute>
+                <AdminReviewManagement />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/themes"
             element={
@@ -368,7 +370,7 @@ const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
             }
           />
 
-          {/* Employee (nếu ai đó cố truy cập, non-employee sẽ bị đá sang login) */}
+          {/* Employee fallback */}
           <Route
             path="/employee/news"
             element={
