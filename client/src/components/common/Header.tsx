@@ -26,6 +26,7 @@ export default function Header() {
   const { logout, user } = useAuth();
   const { cart } = useCart();
   const { favoriteIds } = useFavorites();
+  console.log("hghjhgvhgvhjgvhjgvb");
 
   const name = useMemo(
     () => user?.name || localStorage.getItem("name") || "User",

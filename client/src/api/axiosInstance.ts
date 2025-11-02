@@ -12,16 +12,19 @@ const parseEnvApiList = (value: string | undefined) =>
     .filter(Boolean)
     .map(normalizeBase);
 
-const devDefaultBases = ["http://localhost:5001/api", "http://localhost:5000/api"];
+const devDefaultBases = [
+  "http://localhost:5001/api",
+  "http://localhost:5000/api",
+];
 
 const currentOrigin = window.location.origin.replace(/\/$/, "");
 const defaultCandidates =
-  window.location.port === "3000"
-    ? devDefaultBases
-    : [`${currentOrigin}/api`];
+  window.location.port === "3000" ? devDefaultBases : [`${currentOrigin}/api`];
 
 const candidateBases = (() => {
-  const envCandidates = parseEnvApiList(import.meta.env.VITE_API_URL as string | undefined);
+  const envCandidates = parseEnvApiList(
+    import.meta.env.VITE_API_URL as string | undefined
+  );
   const merged = envCandidates.length > 0 ? envCandidates : defaultCandidates;
   return merged
     .map(normalizeBase)
@@ -47,6 +50,7 @@ const notifyBaseChange = (url: string) => {
 const getStoredBase = () => {
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
+
     return stored && candidateBases.includes(stored) ? stored : null;
   } catch {
     return null;
@@ -80,7 +84,9 @@ export const subscribeApiBaseURL = (listener: (url: string) => void) => {
 };
 
 const findNextBase = (attemptedBase?: string) => {
-  const normalized = attemptedBase ? normalizeBase(attemptedBase) : currentBaseURL;
+  const normalized = attemptedBase
+    ? normalizeBase(attemptedBase)
+    : currentBaseURL;
   const startIndex = candidateBases.findIndex((base) => base === normalized);
   for (let index = startIndex + 1; index < candidateBases.length; index += 1) {
     if (candidateBases[index] !== currentBaseURL) {
@@ -114,9 +120,11 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const requestConfig = error?.config as (typeof error.config & {
-      __retriedWithAlternate?: boolean;
-    }) | undefined;
+    const requestConfig = error?.config as
+      | (typeof error.config & {
+          __retriedWithAlternate?: boolean;
+        })
+      | undefined;
     const isNetworkIssue = !error?.response;
     if (
       isNetworkIssue &&

@@ -1,36 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { useAuth } from "./context/AuthContext";
 import "../styles/LegoLoginPage.css";
 
 interface Styles {
   [key: string]: React.CSSProperties;
 }
-interface LoginResult {
-  token: string;
-  role: string;
-}
-interface LegoLoginPageProps {
-  onLogin: (email: string, password: string) => Promise<LoginResult>;
-  onResendVerification: (email: string) => Promise<string | void>;
-  onForgotPassword: () => void | Promise<void>;
-  onNavigateRegister: () => void;
-  googleAuthUrl: string;
-  facebookAuthUrl?: string;
-  onLoginSuccess?: () => void;
-  onGoogleToken?: (token: string) => Promise<void>;
-}
 
-const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
-  onLogin,
-  onResendVerification,
-  onForgotPassword,
-  onNavigateRegister,
-  googleAuthUrl,
-  facebookAuthUrl,
-  onLoginSuccess,
-  onGoogleToken,
-}) => {
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+const LegoLoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { login, loginWithToken, user } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -41,8 +24,46 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
   );
   const isLoading = loadingAction !== null;
   const [showResendOption, setShowResendOption] = useState(false);
-  const navigate = useNavigate();
+  const [googleAuthUrl, setGoogleAuthUrl] = useState("");
+  const [facebookAuthUrl, setFacebookAuthUrl] = useState("");
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/home");
+      }
+    }
+  }, [user, navigate]);
+
+  // Fetch OAuth URLs from server
+  useEffect(() => {
+    const fetchAuthUrls = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/oauth-urls`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.googleAuthUrl) {
+            setGoogleAuthUrl(data.googleAuthUrl);
+          }
+          if (data.facebookAuthUrl) {
+            setFacebookAuthUrl(data.facebookAuthUrl);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch OAuth URLs:", error);
+        // Fallback URLs if API fails
+        setGoogleAuthUrl(`${API_BASE_URL}/api/auth/google`);
+        setFacebookAuthUrl(`${API_BASE_URL}/api/auth/facebook`);
+      }
+    };
+
+    fetchAuthUrls();
+  }, []);
+
+  // Handle OAuth callback
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
@@ -62,32 +83,24 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
 
     (async () => {
       try {
-        if (onGoogleToken) {
-          await onGoogleToken(token);
-        }
+        await loginWithToken(token);
         if (!cancelled) {
-          // Lưu token + role vào localStorage
-          localStorage.setItem("token", token);
-          if (role) localStorage.setItem("role", role);
-
           setError(null);
-          setInfo("Google login successful!");
+          setInfo("Login successful!");
 
-          // Điều hướng dựa trên role
+          // Navigate based on role
           if (role === "admin") {
-            navigate("/shop");
+            navigate("/admin");
           } else {
             navigate("/home");
           }
-
-          onLoginSuccess?.();
         }
       } catch (err) {
         if (!cancelled) {
           const message =
             err instanceof Error
               ? err.message
-              : "Unable to complete Google login.";
+              : "Unable to complete OAuth login.";
           setError(message);
         }
       } finally {
@@ -100,7 +113,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [onGoogleToken, onLoginSuccess, navigate]);
+  }, [loginWithToken, navigate]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -115,15 +128,16 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
     setLoadingAction("login");
 
     try {
-      // onLogin giờ sẽ return { token, role }
-      await onLogin(email, password);
-
+      const result = await login(email, password);
       setInfo("Login successful!");
       setShowResendOption(false);
 
-      // Không navigate ở đây nữa, để onLoginSuccess xử lý
-      // Callback sau khi login thành công sẽ handle navigation
-      onLoginSuccess?.();
+      // Navigate based on role
+      if (result.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/home");
+      }
     } catch (err) {
       const message =
         err instanceof Error
@@ -132,7 +146,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
 
       setError(message);
 
-      // Nếu lỗi liên quan đến xác thực email thì hiển thị resend option
+      // Show resend option if email verification error
       const lower = message.toLowerCase();
       if (lower.includes("verify") || lower.includes("xac")) {
         setShowResendOption(true);
@@ -151,8 +165,22 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
     setInfo(null);
     setLoadingAction("resend");
     try {
-      const message = await onResendVerification(email);
-      setInfo(message || "Verification email sent. Please check your inbox.");
+      const response = await fetch(
+        `${API_BASE_URL}/api/auth/resend-verification`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.msg || "Failed to resend verification email");
+      }
+
+      setInfo(data.msg || "Verification email sent. Please check your inbox.");
     } catch (err) {
       const message =
         err instanceof Error
@@ -167,7 +195,11 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
   const handleForgotPassword = () => {
     setError(null);
     setInfo(null);
-    onForgotPassword();
+    navigate("/forgot-password");
+  };
+
+  const handleNavigateRegister = () => {
+    navigate("/register");
   };
 
   const handleGoogleLogin = () => {
@@ -398,7 +430,7 @@ const LegoLoginPage: React.FC<LegoLoginPageProps> = ({
             style={styles.signupLink}
             onClick={(event) => {
               event.preventDefault();
-              onNavigateRegister();
+              handleNavigateRegister();
             }}
           >
             {" "}

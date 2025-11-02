@@ -180,23 +180,26 @@ export default function ThemeDetailPage() {
               : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           }}
         >
-          {/* <div className="theme-banner-overlay">
-            <Title level={1}>{theme.name}</Title>
-          </div> */}
+          <div className="theme-banner-overlay">
+            <h1>{theme.name}</h1>
+            {theme.description && (
+              <p className="theme-description">{theme.description}</p>
+            )}
+          </div>
         </div>
 
         <div className="theme-content">
           {/* Theme Description */}
-          {theme.description && (
+          {/* {theme.description && (
             <div className="theme-description-section">
               <Card>
-                <Title level={3}>About {theme.name}</Title>
+                <Title level={3}>About {theme.name}</Title>a{" "}
                 <Paragraph style={{ fontSize: "16px", lineHeight: 1.8 }}>
                   {theme.description}
                 </Paragraph>
               </Card>
             </div>
-          )}
+          )} */}
 
           {/* Characters Section */}
           {theme.characters && theme.characters.length > 0 && (
@@ -232,6 +235,8 @@ export default function ThemeDetailPage() {
                                 : character.description
                               : ""
                           }
+                          // title={character.name}
+                          // description={character.description || ""}
                         />
                       </Card>
                     </Link>

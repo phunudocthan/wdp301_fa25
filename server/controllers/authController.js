@@ -129,6 +129,7 @@ if (GOOGLE_AUTH_ENABLED) {
                 name: profile.displayName,
                 email: profile.emails?.[0]?.value,
                 avatar: profile.photos?.[0]?.value,
+                role: "customer",
                 isVerified: true,
                 status: "active",
               });
@@ -204,6 +205,7 @@ if (FACEBOOK_AUTH_ENABLED) {
                 "Facebook User",
               email: fallbackEmail,
               avatar: profile.photos?.[0]?.value,
+              role: "customer",
               isVerified: true,
               status: "active",
             });
@@ -260,9 +262,9 @@ exports.handleFacebookCallback = (req, res) => {
     return res.redirect(`${CLIENT_URL}/login?error=no_token`);
   }
   return res.redirect(
-    `${CLIENT_URL}?token=${encodeURIComponent(token)}&role=${encodeURIComponent(
-      user.role
-    )}`
+    `${CLIENT_URL}/login?token=${encodeURIComponent(
+      token
+    )}&role=${encodeURIComponent(user.role)}`
   );
 };
 
@@ -272,9 +274,9 @@ exports.handleGoogleCallback = (req, res) => {
     return res.redirect(`${CLIENT_URL}/login?error=no_token`);
   }
   return res.redirect(
-    `${CLIENT_URL}?token=${encodeURIComponent(token)}&role=${encodeURIComponent(
-      user.role
-    )}`
+    `${CLIENT_URL}/login?token=${encodeURIComponent(
+      token
+    )}&role=${encodeURIComponent(user.role)}`
   );
 };
 

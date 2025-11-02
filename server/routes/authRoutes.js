@@ -36,6 +36,11 @@ router.post(
   resendVerificationLimiter,
   authController.resendVerificationEmail
 );
+router.post(
+  "/resend-verification",
+  resendVerificationLimiter,
+  authController.resendVerificationEmail
+);
 router.get("/verify-email", authController.verifyEmail);
 router.post(
   "/forgot-password",
@@ -47,6 +52,20 @@ router.post(
   forgotPasswordLimiter,
   authController.resetPassword
 );
+
+// OAuth URLs endpoint
+router.get("/oauth-urls", (req, res) => {
+  const baseUrl =
+    process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+  res.json({
+    googleAuthUrl: authController.googleAuthEnabled
+      ? `${baseUrl}/api/auth/google`
+      : null,
+    facebookAuthUrl: authController.facebookAuthEnabled
+      ? `${baseUrl}/api/auth/facebook`
+      : null,
+  });
+});
 
 if (authController.googleAuthEnabled) {
   router.get(

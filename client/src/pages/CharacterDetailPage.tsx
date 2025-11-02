@@ -1,26 +1,27 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
-  Card,
   Row,
   Col,
   Spin,
   Empty,
   Typography,
-  Tag,
-  Button,
   message,
   Breadcrumb,
+  Card,
+  Button,
+  Tag,
 } from "antd";
 import {
+  HomeOutlined,
   ShoppingCartOutlined,
   EyeOutlined,
-  HomeOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import themeApi, { ThemeCharacter } from "../api/theme";
 import productApi, { Product } from "../api/product";
-import { getFullImageURL } from "../api/axiosInstance";
 import { useCart } from "../components/context/CartContext";
+import { getFullImageURL } from "../api/axiosInstance";
 import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 import "../styles/character-detail.scss";
@@ -31,7 +32,6 @@ const { Meta } = Card;
 export default function CharacterDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [character, setCharacter] = useState<ThemeCharacter | null>(null);
-  const [characterProducts, setCharacterProducts] = useState<Product[]>([]);
   const [themeProducts, setThemeProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -50,10 +50,8 @@ export default function CharacterDetailPage() {
       const characterData = response.data.data;
       setCharacter(characterData);
 
-      // Fetch products after getting character data
+      // Only fetch theme products, not character-specific products
       if (characterData) {
-        fetchCharacterProducts();
-        // Fetch theme products if character has themeId
         const themeId =
           typeof characterData.themeId === "string"
             ? characterData.themeId
@@ -62,6 +60,7 @@ export default function CharacterDetailPage() {
           fetchThemeProducts(themeId);
         }
       }
+      setLoading(false);
     } catch (error: any) {
       console.error("Error fetching character:", error);
       message.error(error.response?.data?.error || "Failed to load character");
@@ -69,33 +68,15 @@ export default function CharacterDetailPage() {
     }
   };
 
-  const fetchCharacterProducts = async () => {
-    try {
-      setProductsLoading(true);
-      const response = await productApi.getByCharacter(id!);
-      setCharacterProducts(response.data.data);
-    } catch (error: any) {
-      console.error("Error fetching character products:", error);
-      message.error(
-        error.response?.data?.message || "Failed to load character products"
-      );
-    } finally {
-      setProductsLoading(false);
-      setLoading(false);
-    }
-  };
-
   const fetchThemeProducts = async (themeId: string) => {
     try {
+      setProductsLoading(true);
       const response = await productApi.getByTheme(themeId);
-      // Filter out products that are already in characterProducts
-      const characterProductIds = characterProducts.map((p) => p._id);
-      const filteredThemeProducts = response.data.data.filter(
-        (p: Product) => !characterProductIds.includes(p._id)
-      );
-      setThemeProducts(filteredThemeProducts);
+      setThemeProducts(response.data.data);
     } catch (error: any) {
       console.error("Error fetching theme products:", error);
+    } finally {
+      setProductsLoading(false);
     }
   };
 
@@ -201,8 +182,15 @@ export default function CharacterDetailPage() {
     <>
       <Header />
       <div className="character-detail-page">
-        {/* Breadcrumb */}
-        <div className="breadcrumb-section">
+        {/* Breadcrumb with Back Button */}
+        {/* <div className="breadcrumb-section">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => window.history.back()}
+            style={{ marginRight: 16 }}
+          >
+            Back
+          </Button>
           <Breadcrumb>
             <Breadcrumb.Item>
               <Link to="/home">
@@ -229,70 +217,75 @@ export default function CharacterDetailPage() {
             )}
             <Breadcrumb.Item>{character.name}</Breadcrumb.Item>
           </Breadcrumb>
-        </div>
+        </div> */}
 
-        {/* Character Banner */}
-        <div className="character-banner">
-          <Row gutter={[32, 32]} align="middle">
-            <Col xs={24} md={10}>
-              <div className="character-image-wrapper">
-                <img
-                  alt={character.name}
-                  src={getFullImageURL(character.image)}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/images/placeholder-character.png";
-                  }}
-                />
-              </div>
-            </Col>
-            <Col xs={24} md={14}>
-              <div className="character-info">
-                <Title level={1}>{character.name}</Title>
+        {/* Character Banner - Similar to Theme Banner */}
+        <div
+          className="character-banner"
+          style={{
+            // backgroundImage: character.image
+            //   ? `url(${getFullImageURL(character.image)})`
+            //   : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            position: "relative",
+          }}
+        >
+          <div className="character-banner-overlay">
+            <Row
+              gutter={[32, 32]}
+              align="middle"
+              className="character-banner-content"
+            >
+              {/* Cột trái - Hình ảnh */}
+              <Col xs={24} md={12} className="character-image-col">
+                <div className="character-image-wrapper">
+                  <img
+                    src={
+                      character.image
+                        ? getFullImageURL(character.image)
+                        : "/images/placeholder-character.png"
+                    }
+                    alt={character.name}
+                  />
+                </div>
+              </Col>
+
+              {/* Cột phải - Thông tin mô tả */}
+              <Col xs={24} md={12} className="character-info-col">
+                <Title level={1} className="character-name">
+                  {character.name}
+                </Title>
                 {character.description && (
                   <Paragraph className="character-description">
                     {character.description}
                   </Paragraph>
                 )}
-              </div>
-            </Col>
-          </Row>
+              </Col>
+            </Row>
+          </div>
         </div>
 
         <div className="character-content">
-          {/* Character-specific Products Section */}
-          <div className="products-section">
-            <Title level={2}>{character.name} Products</Title>
-            <div className="products-container">
-              {productsLoading ? (
-                <div className="products-loading">
-                  <Spin size="large" />
-                </div>
-              ) : characterProducts.length === 0 ? (
-                <Empty
-                  description={`No character-specific products found for ${character.name}`}
-                />
-              ) : (
-                <Row gutter={[24, 24]}>
-                  {characterProducts.map(renderProductCard)}
-                </Row>
-              )}
-            </div>
-          </div>
-
           {/* Theme Products Section */}
           {themeProducts.length > 0 && (
             <div className="products-section">
               <Title level={2}>
-                More from{" "}
+                Products from{" "}
                 {typeof character.themeId === "string"
                   ? "this theme"
                   : (character.themeId as any)?.name || "this theme"}
               </Title>
               <div className="products-container">
-                <Row gutter={[24, 24]}>
-                  {themeProducts.map(renderProductCard)}
-                </Row>
+                {productsLoading ? (
+                  <div className="products-loading">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <Row gutter={[24, 24]}>
+                    {themeProducts.map(renderProductCard)}
+                  </Row>
+                )}
               </div>
             </div>
           )}

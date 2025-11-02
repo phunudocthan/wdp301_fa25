@@ -14,7 +14,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
-import Login from "./pages/Login";
+import Login from "./components/LegoLoginPage";
 import Register from "./pages/Register";
 import ProfilePage from "./views/ProfilePage";
 import ProfileAdminPage from "./components/ProfileNew";
