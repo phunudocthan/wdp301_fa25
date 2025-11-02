@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FacebookStrategy = require("passport-facebook").Strategy;
 const User = require("../models/User");
 const ActivityLog = require("../models/ActivityLog");
 const {
@@ -21,6 +22,12 @@ const GOOGLE_AUTH_ENABLED = Boolean(
   process.env.GOOGLE_CLIENT_ID &&
     process.env.GOOGLE_CLIENT_SECRET &&
     process.env.GOOGLE_CALLBACK_URL
+);
+
+const FACEBOOK_AUTH_ENABLED = Boolean(
+  process.env.FACEBOOK_APP_ID &&
+    process.env.FACEBOOK_APP_SECRET &&
+    process.env.FACEBOOK_CALLBACK_URL
 );
 
 const createVerificationToken = () => crypto.randomBytes(32).toString("hex");
@@ -122,6 +129,7 @@ if (GOOGLE_AUTH_ENABLED) {
                 name: profile.displayName,
                 email: profile.emails?.[0]?.value,
                 avatar: profile.photos?.[0]?.value,
+                role: "customer",
                 isVerified: true,
                 status: "active",
               });
@@ -171,7 +179,94 @@ if (GOOGLE_AUTH_ENABLED) {
   });
 }
 
+// Facebook Strategy Configuration
+if (FACEBOOK_AUTH_ENABLED) {
+  passport.use(
+    new FacebookStrategy(
+      {
+        clientID: process.env.FACEBOOK_APP_ID,
+        clientSecret: process.env.FACEBOOK_APP_SECRET,
+        callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+        profileFields: ["id", "displayName", "photos", "name"],
+      },
+      async (_accessToken, _refreshToken, profile, done) => {
+        try {
+          let user = await User.findOne({ facebookId: profile.id });
+
+          if (!user) {
+            // Tạo email giả từ Facebook ID nếu không có email
+            const fallbackEmail = `facebook_${profile.id}@facebook.temp`;
+
+            user = new User({
+              facebookId: profile.id,
+              name:
+                profile.displayName ||
+                profile.name?.givenName ||
+                "Facebook User",
+              email: fallbackEmail,
+              avatar: profile.photos?.[0]?.value,
+              role: "customer",
+              isVerified: true,
+              status: "active",
+            });
+          }
+
+          await clearExpiredLock(user);
+          user.failedLoginAttempts = 0;
+          user.lockUntil = undefined;
+          user.lastLogin = new Date();
+          await user.save({ validateBeforeSave: false });
+
+          await logActivity(user._id, "Login with Facebook", {
+            ip: "facebook-oauth",
+            device: profile.provider || "Facebook",
+          });
+
+          const token = jwt.sign(
+            { id: user._id, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: JWT_EXPIRES_IN }
+          );
+
+          return done(null, { user, token });
+        } catch (error) {
+          return done(error, null);
+        }
+      }
+    )
+  );
+
+  // Serialize/deserialize for Facebook (same as Google, only register once)
+  if (!GOOGLE_AUTH_ENABLED) {
+    passport.serializeUser((payload, done) => {
+      done(null, payload.user._id.toString());
+    });
+
+    passport.deserializeUser(async (id, done) => {
+      try {
+        const user = await User.findById(id);
+        done(null, user);
+      } catch (error) {
+        done(error, null);
+      }
+    });
+  }
+}
+
 exports.googleAuthEnabled = GOOGLE_AUTH_ENABLED;
+exports.facebookAuthEnabled = FACEBOOK_AUTH_ENABLED;
+
+exports.handleFacebookCallback = (req, res) => {
+  const { user, token } = req.user || {};
+  if (!token || !user) {
+    return res.redirect(`${CLIENT_URL}/login?error=no_token`);
+  }
+  return res.redirect(
+    `${CLIENT_URL}/login?token=${encodeURIComponent(
+      token
+    )}&role=${encodeURIComponent(user.role)}`
+  );
+};
 
 exports.handleGoogleCallback = (req, res) => {
   const { user, token } = req.user || {};
@@ -179,9 +274,9 @@ exports.handleGoogleCallback = (req, res) => {
     return res.redirect(`${CLIENT_URL}/login?error=no_token`);
   }
   return res.redirect(
-    `${CLIENT_URL}?token=${encodeURIComponent(token)}&role=${encodeURIComponent(
-      user.role
-    )}`
+    `${CLIENT_URL}/login?token=${encodeURIComponent(
+      token
+    )}&role=${encodeURIComponent(user.role)}`
   );
 };
 

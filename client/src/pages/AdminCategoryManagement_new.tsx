@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  Search,
-  Filter,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Search, Filter } from "lucide-react";
 import categoryAdminAPI, {
   Category,
   CategoryStats,
@@ -25,9 +15,7 @@ const AdminCategoryManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >("all");
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set()
-  );
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -96,100 +84,67 @@ const AdminCategoryManagement: React.FC = () => {
     }
   };
 
-  const toggleExpanded = (categoryId: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
-  };
-
-  const renderCategoryRow = (category: Category, level = 0) => {
-    const hasSubcategories =
-      category.subcategories && category.subcategories.length > 0;
-    const isExpanded = expandedCategories.has(category._id);
-
+  const renderCategoryRow = (category: Category) => {
     return (
-      <React.Fragment key={category._id}>
-        <tr className={level > 0 ? "subcategory-row" : ""}>
-          <td style={{ paddingLeft: `${level * 20 + 12}px` }}>
-            <div className="category-info">
-              {hasSubcategories && (
-                <button
-                  onClick={() => toggleExpanded(category._id)}
-                  className="expand-btn"
-                >
-                  {isExpanded ? (
-                    <ChevronDown size={16} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  )}
-                </button>
-              )}
-              {category.image && (
-                <img
-                  src={`http://localhost:5000${category.image}`}
-                  alt={category.name}
-                  className="category-image"
-                />
-              )}
-              <div className="category-details">
-                <h4>{category.name}</h4>
-                <p>{category.slug}</p>
-              </div>
+      <tr key={category._id}>
+        <td style={{ paddingLeft: "12px" }}>
+          <div className="category-info">
+            {category.image && (
+              <img
+                src={`http://localhost:5000${category.image}`}
+                alt={category.name}
+                className="category-image"
+              />
+            )}
+            <div className="category-details">
+              <h4>{category.name}</h4>
+              <p>{category.slug}</p>
             </div>
-          </td>
-          <td>{category.description || "Không có mô tả"}</td>
-          <td>
-            <span
-              className={`status-badge ${
-                category.isActive ? "status-active" : "status-inactive"
+          </div>
+        </td>
+        <td>{category.description || "Không có mô tả"}</td>
+        <td>
+          <span
+            className={`status-badge ${
+              category.isActive ? "status-active" : "status-inactive"
+            }`}
+          >
+            {category.isActive ? "Hoạt động" : "Tạm dừng"}
+          </span>
+        </td>
+        <td>{category.productCount || 0}</td>
+        <td>{category.order}</td>
+        <td>{new Date(category.createdAt).toLocaleDateString("vi-VN")}</td>
+        <td>
+          <div className="actions">
+            <button
+              onClick={() =>
+                handleToggleStatus(category._id, category.isActive)
+              }
+              className={`action-btn btn-toggle ${
+                category.isActive ? "active" : "inactive"
               }`}
+              title={category.isActive ? "Tắt hoạt động" : "Bật hoạt động"}
             >
-              {category.isActive ? "Hoạt động" : "Tạm dừng"}
-            </span>
-          </td>
-          <td>{category.productCount || 0}</td>
-          <td>{category.order}</td>
-          <td>{new Date(category.createdAt).toLocaleDateString("vi-VN")}</td>
-          <td>
-            <div className="actions">
-              <button
-                onClick={() =>
-                  handleToggleStatus(category._id, category.isActive)
-                }
-                className={`action-btn btn-toggle ${
-                  category.isActive ? "active" : "inactive"
-                }`}
-                title={category.isActive ? "Tắt hoạt động" : "Bật hoạt động"}
-              >
-                {category.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
-              <button
-                onClick={() => setEditingCategory(category)}
-                className="action-btn btn-edit"
-                title="Chỉnh sửa"
-              >
-                <Edit size={14} />
-              </button>
-              <button
-                onClick={() => handleDeleteCategory(category._id)}
-                className="action-btn btn-delete"
-                title="Xóa"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </td>
-        </tr>
-        {hasSubcategories &&
-          isExpanded &&
-          category.subcategories?.map((subcategory) =>
-            renderCategoryRow(subcategory, level + 1)
-          )}
-      </React.Fragment>
+              {category.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+            <button
+              onClick={() => setEditingCategory(category)}
+              className="action-btn btn-edit"
+              title="Chỉnh sửa"
+            >
+              <Edit size={14} />
+            </button>
+            <button
+              onClick={() => handleDeleteCategory(category._id)}
+              className="action-btn btn-delete"
+              title="Xóa"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </td>
+      </tr>
     );
   };
 
@@ -209,7 +164,7 @@ const AdminCategoryManagement: React.FC = () => {
         <div>
           <h1>Quản lý danh mục</h1>
           <p style={{ margin: "5px 0 0 0", color: "#666" }}>
-            Quản lý danh mục sản phẩm và cấu trúc phân cấp
+            Quản lý danh mục sản phẩm
           </p>
         </div>
         <button
@@ -237,22 +192,6 @@ const AdminCategoryManagement: React.FC = () => {
             <div className="stat-content">
               <h3>Đang hoạt động</h3>
               <p>{stats.activeCategories}</p>
-            </div>
-          </div>
-
-          <div className="stat-card stat-parent">
-            <div className="stat-icon">📁</div>
-            <div className="stat-content">
-              <h3>Danh mục cha</h3>
-              <p>{stats.parentCategories}</p>
-            </div>
-          </div>
-
-          <div className="stat-card stat-sub">
-            <div className="stat-icon">📂</div>
-            <div className="stat-content">
-              <h3>Danh mục con</h3>
-              <p>{stats.subcategories}</p>
             </div>
           </div>
         </div>
@@ -290,7 +229,7 @@ const AdminCategoryManagement: React.FC = () => {
             </select>
           </div>
 
-          <div className="filter-group">
+          {/* <div className="filter-group">
             <label>Sắp xếp</label>
             <select className="sort-select">
               <option value="name_asc">Tên A-Z</option>
@@ -298,9 +237,9 @@ const AdminCategoryManagement: React.FC = () => {
               <option value="createdAt_desc">Mới nhất</option>
               <option value="createdAt_asc">Cũ nhất</option>
             </select>
-          </div>
+          </div> */}
 
-          <div className="filter-group">
+          {/* <div className="filter-group">
             <button
               onClick={() => {
                 setSearchTerm("");
@@ -312,7 +251,7 @@ const AdminCategoryManagement: React.FC = () => {
               <Filter size={16} />
               Xóa bộ lọc
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
 

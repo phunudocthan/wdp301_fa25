@@ -12,6 +12,7 @@ import { api } from "../../lib/api";
 import { storage } from "../../lib/storage";
 import { clearExpiredToken, isTokenExpired } from "../../utils/tokenUtils";
 import type { User as ApiUser } from "../../types/user";
+import { log } from "console";
 
 const USER_STORAGE_KEY = "auth_user";
 
@@ -118,23 +119,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   // 🔹 Login Google
+  // 🔹 Login Google
   const googleLogin = useCallback(
-    async (_token: string): Promise<{ token: string; role: string }> => {
-      // TODO: Implement Google login API
-      throw new Error("Google login not implemented yet");
+    async (googleToken: string): Promise<{ token: string; role: string }> => {
+      try {
+        // Gọi API backend để xác thực Google token
+        const response = await api.googleLogin(googleToken);
+        const { token, user, role } = response;
+        // Lưu token
+        storage.setToken(token);
 
-      // const {
-      //   token: jwtToken,
-      //   user: loggedInUser,
-      //   role,
-      // } = await api.googleLogin(token);
+        // Lưu user vào state + localStorage
+        setAndPersistUser(user);
 
-      // storage.setToken(jwtToken);
-      // setAndPersistUser(loggedInUser);
-      // toast.success("Đăng nhập Google thành công");
+        // 🔸 Lưu thông tin phụ trợ vào localStorage để dùng trong Header
+        localStorage.setItem("name", user.name || "");
+        localStorage.setItem("avatar", user.avatar || "");
+        localStorage.setItem("role", role || "");
 
-      // // 👈 Trả cả token + role
-      // return { token: jwtToken, role };
+        toast.success("Đăng nhập Google thành công");
+
+        return { token, role };
+      } catch (err: any) {
+        toast.error("Đăng nhập Google thất bại");
+        throw err;
+      }
     },
     [setAndPersistUser]
   );

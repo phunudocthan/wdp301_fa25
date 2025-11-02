@@ -85,7 +85,7 @@
 }
 
 .stat-card.stat-total {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
     color: white;
 }
 
@@ -488,6 +488,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -509,6 +510,7 @@
         opacity: 0;
         transform: scale(0.95) translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -788,36 +790,36 @@
     .category-modal-overlay {
         padding: 10px;
     }
-    
+
     .category-modal-container {
         max-width: 100%;
         border-radius: 12px;
     }
-    
+
     .category-modal-header {
         padding: 20px 20px 12px 20px;
         border-radius: 12px 12px 0 0;
     }
-    
+
     .category-modal-title {
         font-size: 18px;
     }
-    
+
     .category-modal-form {
         padding: 20px;
         gap: 16px;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
+
     .category-modal-actions {
         flex-direction: column;
         gap: 8px;
     }
-    
+
     .modal-btn {
         width: 100%;
     }

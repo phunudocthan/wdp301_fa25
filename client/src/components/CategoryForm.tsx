@@ -17,26 +17,21 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    parentId: "",
     isActive: true,
     order: 0,
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [parentCategories, setParentCategories] = useState<Category[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!category;
 
   useEffect(() => {
-    fetchParentCategories();
-
     if (category) {
       setFormData({
         name: category.name,
         description: category.description || "",
-        parentId: category.parentId || "",
         isActive: category.isActive,
         order: category.order,
       });
@@ -46,15 +41,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       }
     }
   }, [category]);
-
-  const fetchParentCategories = async () => {
-    try {
-      const response = await categoryAdminAPI.getCategories({ limit: 100 });
-      setParentCategories(response.data.filter((cat) => !cat.parentId)); // Only parent categories
-    } catch (error) {
-      console.error("Error fetching parent categories:", error);
-    }
-  };
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -124,10 +110,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       submitData.append("isActive", formData.isActive.toString());
       submitData.append("order", formData.order.toString());
 
-      if (formData.parentId) {
-        submitData.append("parentId", formData.parentId);
-      }
-
       if (selectedFile) {
         submitData.append("image", selectedFile);
       }
@@ -175,10 +157,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
         <form onSubmit={handleSubmit} className="category-modal-form">
           {/* Name */}
           <div className="form-group">
-            <label
-              htmlFor="name"
-              className="form-label required"
-            >
+            <label htmlFor="name" className="form-label required">
               Tên danh mục
             </label>
             <input
@@ -195,10 +174,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
 
           {/* Description */}
           <div className="form-group">
-            <label
-              htmlFor="description"
-              className="form-label"
-            >
+            <label htmlFor="description" className="form-label">
               Mô tả
             </label>
             <textarea
@@ -212,41 +188,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
             />
           </div>
 
-          {/* Parent Category */}
-          <div className="form-group">
-            <label
-              htmlFor="parentId"
-              className="form-label"
-            >
-              Danh mục cha
-            </label>
-            <select
-              id="parentId"
-              name="parentId"
-              value={formData.parentId}
-              onChange={handleInputChange}
-              className="form-select"
-            >
-              <option value="">
-                Chọn danh mục cha (để trống nếu là danh mục gốc)
-              </option>
-              {parentCategories.map((parentCat) => (
-                <option
-                  key={parentCat._id}
-                  value={parentCat._id}
-                  disabled={category?._id === parentCat._id} // Prevent self-selection
-                >
-                  {parentCat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Image Upload */}
           <div className="form-group">
-            <label className="form-label">
-              Hình ảnh danh mục
-            </label>
+            <label className="form-label">Hình ảnh danh mục</label>
 
             <div className="image-upload-section">
               {previewUrl ? (
@@ -268,7 +212,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               ) : (
                 <div className="image-placeholder">
                   <ImageIcon className="w-8 h-8 text-gray-400" />
-                  <span className="image-placeholder-text">Chưa có hình ảnh</span>
+                  <span className="image-placeholder-text">
+                    Chưa có hình ảnh
+                  </span>
                 </div>
               )}
 
@@ -298,10 +244,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           {/* Order and Status */}
           <div className="form-row">
             <div className="form-group">
-              <label
-                htmlFor="order"
-                className="form-label"
-              >
+              <label htmlFor="order" className="form-label">
                 Thứ tự hiển thị
               </label>
               <input
@@ -326,10 +269,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                   onChange={handleInputChange}
                   className="form-checkbox"
                 />
-                <label
-                  htmlFor="isActive"
-                  className="checkbox-label"
-                >
+                <label htmlFor="isActive" className="checkbox-label">
                   Kích hoạt danh mục
                 </label>
               </div>
@@ -356,9 +296,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                   Đang lưu...
                 </>
               ) : (
-                <>
-                  {isEditing ? "✅ Cập nhật" : "🎉 Tạo mới"}
-                </>
+                <>{isEditing ? "✅ Cập nhật" : "🎉 Tạo mới"}</>
               )}
             </button>
           </div>

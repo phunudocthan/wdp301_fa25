@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import newsApi from '../api/news';
 import uploadApi from '../api/upload';
-import ReactQuill from 'react-quill';
+import ReactQuill from   'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 const createEmptyForm = () => ({ title: '', excerpt: '', content: '', images: [] });
