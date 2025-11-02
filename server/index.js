@@ -142,6 +142,7 @@ const Lego = require("./models/Lego");
 const Order = require("./models/Order");
 const Review = require("./models/Review");
 const Voucher = require("./models/Voucher");
+const aiChatRoutes = require("./routes/aiChatRoutes");
 
 app.get("/api/database/stats", async (req, res) => {
   try {
@@ -236,10 +237,12 @@ app.use("/api/themes", themeRoutes);
 app.use("/api/legos", (req, res) =>
   res.json({ message: "LEGO routes coming soon..." })
 );
-app.use("/recently-viewed", recentlyViewedRoutes);
+app.use("/api/recently-viewed", recentlyViewedRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/ai", aiChatRoutes);
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);

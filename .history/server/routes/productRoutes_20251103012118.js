@@ -33,7 +33,8 @@ const router = express.Router();
 
 // ✅ Route thống kê sản phẩm (phải nằm TRƯỚC /admin/:id)
 const Theme = require("../models/Theme");
-
+const AgeRange = require("../models/AgeRange");
+const Difficulty = require("../models/Difficulty");
 const attachUserOptional = require("../middleware/optionalAuth");
 const {
   applyPersonalizedSorting,

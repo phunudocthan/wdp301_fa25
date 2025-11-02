@@ -71,7 +71,6 @@ import AdminCharacterManagement from "./pages/AdminCharacterManagement";
 
 
 import AIChatWidget from "./components/ai/AIChatWidget";
-import AdminCategoryManagement from "./pages/AdminCategoryManagement_new";
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;
@@ -99,7 +98,7 @@ function AppContent() {
   ]);
 
   const shouldShowHeader = !pagesWithoutHeader.has(location.pathname);
-const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
+
   // --- Nhánh EMPLOYEE: chỉ cho phép EmployeeNews + EmployeeHeader ---
   if (isEmployee) {
     return (

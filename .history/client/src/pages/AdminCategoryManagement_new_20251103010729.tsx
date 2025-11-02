@@ -87,6 +87,7 @@ const AdminCategoryManagement: React.FC = () => {
 
   const renderCategoryRow = (category: Category) => {
     return (
+<<<<<<< HEAD
       <tr key={category._id}>
         <td style={{ paddingLeft: "12px" }}>
           <div className="category-info">
@@ -100,6 +101,35 @@ const AdminCategoryManagement: React.FC = () => {
             <div className="category-details">
               <h4>{category.name}</h4>
               <p>{category.slug}</p>
+=======
+      <React.Fragment key={category._id}>
+        <tr className={level > 0 ? "subcategory-row" : ""}>
+          <td style={{ paddingLeft: `${level * 20 + 12}px` }}>
+            <div className="category-info">
+              {hasSubcategories && (
+                <button
+                  onClick={() => toggleExpanded(category._id)}
+                  className="expand-btn"
+                >
+                  {isExpanded ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </button>
+              )}
+              {category.image && (
+                <img
+                  src={getFullImageURL(category.image)}
+                  alt={category.name}
+                  className="category-image"
+                />
+              )}
+              <div className="category-details">
+                <h4>{category.name}</h4>
+                <p>{category.slug}</p>
+              </div>
+>>>>>>> e7cd2f781d336fde2894b61759d978509b9fc70a
             </div>
           </div>
         </td>

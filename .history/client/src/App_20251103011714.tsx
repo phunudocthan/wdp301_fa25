@@ -99,7 +99,7 @@ function AppContent() {
   ]);
 
   const shouldShowHeader = !pagesWithoutHeader.has(location.pathname);
-const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
+
   // --- Nhánh EMPLOYEE: chỉ cho phép EmployeeNews + EmployeeHeader ---
   if (isEmployee) {
     return (

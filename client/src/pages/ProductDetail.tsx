@@ -18,6 +18,8 @@ import { ArrowLeftOutlined, HeartFilled, HeartOutlined } from "@ant-design/icons
 import { useFavorites } from "../components/context/FavoritesContext";
 import { resolveAssetUrl } from "../utils/assets";
 import Footer from "../components/common/Footer";
+import { addRecentlyViewed } from "../api/recentlyViewed";
+import { storage } from "../lib/storage";
 interface Product {
   _id: string;
   name: string;
@@ -46,6 +48,25 @@ export default function ProductDetail() {
   const { favoriteIds, toggleFavorite } = useFavorites();
   const [favoritePending, setFavoritePending] = useState(false);
 
+  const recordRecentlyViewed = (productId?: string) => {
+    if (!productId) return;
+
+    const key = "recentlyViewedIds";
+    let viewed = JSON.parse(localStorage.getItem(key) || "[]");
+    viewed = viewed.filter((storedId: string) => storedId !== productId);
+    viewed.unshift(productId);
+    if (viewed.length > 10) {
+      viewed = viewed.slice(0, 10);
+    }
+    localStorage.setItem(key, JSON.stringify(viewed));
+
+    if (storage.getToken()) {
+      void addRecentlyViewed(productId).catch((error) =>
+        console.warn("[recentlyViewed] failed to record detail view:", error)
+      );
+    }
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -55,6 +76,7 @@ export default function ProductDetail() {
           : [];
         setProduct({ ...res.data, images: normalizedImages });
         setSelectedImg(normalizedImages[0] || null);
+        recordRecentlyViewed(id);
       } catch (error) {
         console.error("❌ Error loading product:", error);
       } finally {

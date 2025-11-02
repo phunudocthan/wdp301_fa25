@@ -1,0 +1,105 @@
+{
+  "name": "AI Product Recommendation Prompt Builder",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ai-recommendations",
+        "httpMethod": "POST",
+        "options": {
+          "responseMode": "lastNode",
+          "responseData": "allEntries"
+        }
+      },
+      "id": "Webhook_Trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const payload = items[0].json ?? {};\nconst contextInput = payload.context ?? {};\n\nconst recentSearches = payload.recentSearches ?? contextInput.recentSearches ?? [];\nconst recentClicks = payload.recentClicks ?? contextInput.recentClicks ?? [];\nconst cartData = payload.cart ?? contextInput.cart ?? {};\nconst featuredProducts = payload.featuredProducts ?? contextInput.featuredProducts ?? [];\nconst orders = payload.orders ?? contextInput.orders ?? [];\nconst cartItems = Array.isArray(cartData.items) ? cartData.items : Array.isArray(cartData) ? cartData : [];\n\nconst formatList = (list, mapper) =>\n  Array.isArray(list) && list.length > 0\n    ? list.map(mapper).join('\\n')\n    : 'Không có dữ liệu.';\n\nconst lines = [\n  `Khách hàng: ${payload.customer?.name ?? 'Ẩn danh'} (${payload.customer?.email ?? 'N/A'})`,\n  `Ngôn ngữ: ${payload.locale ?? 'vi-VN'}`,\n  '\\nLịch sử tìm kiếm:',\n  formatList(recentSearches.slice(-5), (s, index) => `${index + 1}. ${s}`),\n  '\\nSản phẩm đã xem gần đây:',\n  formatList(recentClicks.slice(-5), (item, index) => `${index + 1}. ${item.name} - ${item.price ?? 'N/A'} (${item.theme ?? 'không rõ'})`),\n  '\\nSản phẩm trong giỏ hàng:',\n  formatList(cartItems, (item, index) => `${index + 1}. ${item.name ?? item.title ?? 'Không rõ'} ×${item.quantity ?? 1} - ${item.price ?? 'N/A'}`)\n];\n\nconst basePrompt = payload.prompt ?? `Bạn là trợ lý bán hàng LEGO. Dựa trên dữ liệu:\n${lines.join('\\n')}\n\nHãy đề xuất tối đa 3 sản phẩm LEGO phù hợp nhất. Mỗi đề xuất nên có:\n- Tên sản phẩm\n- Mức giá\n- Lý do ngắn gọn (≤ 20 từ)\n- Tag thể hiện chủ đề/độ tuổi nếu có.\n\nĐịnh dạng phản hồi JSON với cấu trúc { \"recommendations\": [ { \"name\": \"\", \"price\": \"\", \"reason\": \"\", \"tags\": [] } ] }.`;\n\nconst messages = Array.isArray(payload.messages) && payload.messages.length\n  ? payload.messages\n  : [\n      ...(payload.systemPrompt ? [{ role: 'system', content: payload.systemPrompt }] : []),\n      { role: 'user', content: basePrompt }\n    ];\n\nconst generationConfigInput = payload.generationConfig ?? {};\nconst generationConfig = Object.fromEntries(\n  Object.entries({\n    temperature: payload.temperature ?? generationConfigInput.temperature ?? 0.6,\n    topP: payload.topP ?? generationConfigInput.topP,\n    topK: payload.topK ?? generationConfigInput.topK,\n    maxOutputTokens: payload.maxOutputTokens ?? generationConfigInput.maxOutputTokens ?? 256\n  }).filter(([, value]) => value !== undefined)\n);\n\nconst context = {\n  recentSearches,\n  recentClicks,\n  cart: Array.isArray(cartItems) ? { items: cartItems } : cartData,\n  featuredProducts,\n  orders\n};\n\nreturn [{ json: {\n  messages,\n  context,\n  customer: payload.customer ?? {},\n  generationConfig,\n  sessionId: payload.sessionId ?? null\n} }];"
+      },
+      "id": "Build Payload",
+      "name": "Build Payload",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        520,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5001/api/ai/chat",
+        "jsonParameters": true,
+        "options": {
+          "authentication": "none"
+        },
+        "method": "POST",
+        "jsonBody": "={{$json}}"
+      },
+      "id": "Call_QBot",
+      "name": "Call QBot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        780,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const response = items[0].json ?? {};\nreturn [{ json: {\n  answer: response.reply,\n  metadata: response.metadata,\n  session: response.session,\n  raw: response\n} }];"
+      },
+      "id": "Format Response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Payload": {
+      "main": [
+        [
+          {
+            "node": "Call QBot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call QBot": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "versionId": "ai-chat-workflow-v2"
+}

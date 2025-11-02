@@ -1,6 +1,7 @@
 const express = require("express");
 const Lego = require("../models/Lego");
 const Order = require("../models/Order");
+const Theme = require("../models/Theme");
 const AgeRange = require("../models/AgeRange");
 const Difficulty = require("../models/Difficulty");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
@@ -33,7 +34,8 @@ const router = express.Router();
 
 // ✅ Route thống kê sản phẩm (phải nằm TRƯỚC /admin/:id)
 const Theme = require("../models/Theme");
-
+const AgeRange = require("../models/AgeRange");
+const Difficulty = require("../models/Difficulty");
 const attachUserOptional = require("../middleware/optionalAuth");
 const {
   applyPersonalizedSorting,

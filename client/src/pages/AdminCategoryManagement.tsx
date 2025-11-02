@@ -155,7 +155,7 @@
 //               )}
 //               {category.image && (
 //                 <img
-//                   src={`http://localhost:5000${category.image}`}
+//                   src={`http://localhost:5001${category.image}`}
 //                   alt={category.name}
 //                   className="category-image"
 //                 />

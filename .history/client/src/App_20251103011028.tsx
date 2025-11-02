@@ -61,17 +61,23 @@ import AdminUserDetailPage from "./views/AdminUserDetailPage";
 import OrdersList from "./pages/admin/OrdersList";
 import OrderDetail from "./pages/admin/OrderDetail";
 import AdminProductManagement from "./pages/AdminProductManagement";
+import AdminCategoryManagement from "./pages/AdminCategoryManagement_new";
 import AdminProductDetail from "./pages/AdminProductDetail";
 import AdminProductEdit from "./pages/AdminProductEdit";
 import AdminVoucherManagement from "./pages/AdminVoucherManagement";
 import AdminVoucherStatistics from "./pages/AdminVoucherStatistics";
+<<<<<<< HEAD
 import AdminNotificationPage from "./views/AdminNotificationPage";
 import AdminThemeManagement from "./pages/AdminThemeManagement";
 import AdminCharacterManagement from "./pages/AdminCharacterManagement";
 
-
+=======
+import OrderDetailUser from "./pages/OrderListUser";
+import OrderListUser from "./pages/OrderListUser";
+import OrderHistoryListUser from "./pages/OrderHistoryList";
+import CheckoutReorder from "./pages/CheckoutReorder";
 import AIChatWidget from "./components/ai/AIChatWidget";
-import AdminCategoryManagement from "./pages/AdminCategoryManagement_new";
+>>>>>>> e7cd2f781d336fde2894b61759d978509b9fc70a
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;
@@ -99,7 +105,7 @@ function AppContent() {
   ]);
 
   const shouldShowHeader = !pagesWithoutHeader.has(location.pathname);
-const shouldShowChat = !pagesWithoutHeader.has(location.pathname);
+
   // --- Nhánh EMPLOYEE: chỉ cho phép EmployeeNews + EmployeeHeader ---
   if (isEmployee) {
     return (

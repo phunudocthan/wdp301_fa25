@@ -17,25 +17,41 @@ const MessageSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
-const ChatLogSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const ChatLogSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    title: {
+      type: String,
+      default: () =>
+        new Date().toLocaleString("vi-VN", {
+          hour12: false,
+        }),
+      trim: true,
+    },
+    messages: {
+      type: [MessageSchema],
+      default: [],
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  messages: {
-    type: [MessageSchema],
-    default: []
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  {
+    timestamps: false,
   }
-}, {
-  timestamps: false
-});
+);
 
 ChatLogSchema.index({ userId: 1 });
 ChatLogSchema.index({ createdAt: -1 });
+ChatLogSchema.index({ updatedAt: -1 });
 
 module.exports = mongoose.model('ChatLog', ChatLogSchema);
