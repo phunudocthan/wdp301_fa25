@@ -25,6 +25,16 @@ const ReviewSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  replies: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    message: { type: String, trim: true },
+    isAdmin: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  votes: {
+    up: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    down: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  },
   status: {
     type: String,
     enum: ['visible', 'hidden', 'reported'],
@@ -34,8 +44,5 @@ const ReviewSchema = new mongoose.Schema({
   timestamps: true
 });
 
-ReviewSchema.index({ legoId: 1, userId: 1 }, { unique: true });
-ReviewSchema.index({ legoId: 1, rating: 1 });
-ReviewSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Review', ReviewSchema);

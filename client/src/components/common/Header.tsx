@@ -178,6 +178,12 @@ export default function Header() {
               >
                 Vouchers
               </NavLink>
+              <NavLink
+                to="/admin/reviews"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Reviews
+              </NavLink>
             </>
           ) : (
             <>
