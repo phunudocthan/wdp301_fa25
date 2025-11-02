@@ -536,6 +536,7 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
                       price: p.price,
                       image: p.images?.[0] || imagesDefault,
                       quantity: 1,
+                      stock: p.stock,
                     });
                     message.success(`${p.name} đã được thêm vào giỏ hàng`);
                   }}
@@ -595,6 +596,7 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
                         price: p.price,
                         image: p.images?.[0] || imagesDefault,
                         quantity: 1,
+                        stock: p.stock,
                       });
                       message.success(`${p.name} đã được thêm vào giỏ hàng`);
                     } catch (err) {
