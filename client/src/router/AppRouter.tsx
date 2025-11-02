@@ -21,9 +21,10 @@ import Favorites from '../pages/Favorites';
 import Register from '../pages/Register';
 import ProductDetail from '../pages/ProductDetail';
 import OrderHistory from '../pages/OrderHistory';
-import OrderDetailUser from '../pages/OrderListUser';
+import OrderDetailUser from '../pages/OrderDetailUser';
 import { useAuth } from '../components/context/AuthContext';
 import ProtectedRoute from '../routes/ProtectedRoute';
+import OrderListUser from '../pages/OrderListUser';
 
 const AppRouter: React.FC = () => {
   const { user } = useAuth(); 
@@ -84,11 +85,18 @@ const AppRouter: React.FC = () => {
         path="/orders/:id"
         element={
           <ProtectedRoute>
+            {redirectIfAdmin(<OrderListUser />)}
+          </ProtectedRoute>
+        }
+      />
+   <Route
+        path="/orders/detail/:id"
+        element={
+          <ProtectedRoute>
             {redirectIfAdmin(<OrderDetailUser />)}
           </ProtectedRoute>
         }
       />
-
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/resend-verification" element={<ResendVerificationPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -106,7 +114,6 @@ const AppRouter: React.FC = () => {
         </>
       )}
 
-      <Route path="*" element={<Navigate to="/shop" replace />} />
     </Routes>
   );
 };

@@ -45,7 +45,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNotificationPage from "./views/AdminNotificationPage";
 import AdminVoucherStatistics from "./pages/AdminVoucherStatistics";
-import OrderDetailUser from "./pages/OrderListUser";
+import OrderDetailUser from "./pages/OrderDetailUser";
 import OrderListUser from "./pages/OrderListUser";
 import OrderHistoryListUser from "./pages/OrderHistoryList";
 import CheckoutReorder from "./pages/CheckoutReorder";
@@ -88,7 +88,7 @@ function AppContent() {
           {/* orders */}
           <Route path="/orders" element={redirectIfAdmin(<OrderListUser />)} />
           <Route path="/history-orders" element={redirectIfAdmin(<OrderHistoryListUser />)} />
-          <Route path="/orders/:id" element={redirectIfAdmin(<OrderDetail />)} />
+          <Route path="/orders/detail/:id" element={redirectIfAdmin(<OrderDetailUser />)} />
           <Route path="/shop" element={redirectIfAdmin(<Shop />)} />
           <Route path="/cart" element={redirectIfAdmin(<Cart />)} />
           <Route path="/checkout" element={redirectIfAdmin(<Checkout />)} />

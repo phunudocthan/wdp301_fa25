@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../api/axiosInstance';
-import { Card, List, Button, message, Tag, Popconfirm, Descriptions } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Card, List, Button, message, Tag, Popconfirm, Descriptions, Result, Skeleton, Space } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/common/Header';
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -16,7 +16,19 @@ const OrderListUser: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
+    
+  const location = useLocation();
 
+  const query = new URLSearchParams(location.search);
+
+  const status = query.get("status");
+  useEffect(() => {
+   if (status === "success") {
+      message.success("Thanh toán thành công!");
+    } else if (status === "failed") {
+      message.error("Thanh toán thất bại. Vui lòng thử lại.");
+    }
+  }, [status]);
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -46,9 +58,31 @@ const OrderListUser: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading)
+    return (
+      <div className="p-6">
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </div>
+    );
 
-  if (!orders.length) return <div className="p-4">You don’t have any orders yet.</div>;
+  if (!orders.length)
+    return (
+      <div className="p-6">
+        <Result
+          status="info"
+          title="You don't have any orders yet"
+          subTitle="Looks like you haven't placed an order. Start shopping to create your first order."
+          extra={
+            <Space>
+              <Button type="primary" onClick={() => navigate('/shop')}>
+                Start shopping
+              </Button>
+              <Button onClick={() => navigate('/home')}>Go to homepage</Button>
+            </Space>
+          }
+        />
+      </div>
+    );
 
   return (
     <> <Header />
@@ -81,7 +115,7 @@ const OrderListUser: React.FC = () => {
               </div>
             }
             extra={
-              <Button type="link" onClick={() => navigate(`/orders/${order._id}`)}>
+              <Button type="link" onClick={() => navigate(`/orders/detail/${order._id}`)}>
                 View Details
               </Button>
             }

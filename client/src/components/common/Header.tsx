@@ -13,8 +13,7 @@ import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import logo from "/logo.png";
 import "../../styles/layout.scss";
-import { Switch, Tooltip } from "antd";
-import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
+// theme toggle removed (unused imports omitted)
 
 export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -34,15 +33,9 @@ export default function Header() {
   const avatar = user?.avatar || localStorage.getItem("avatar");
   const isAdmin = user?.role === "admin";
   const isAdminSection = isAdmin && location.pathname.startsWith("/admin");
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem("theme") === "dark"
-  );
+  const isDarkMode = localStorage.getItem("theme") === "dark";
 
-  // Toggle theme
-  const toggleTheme = (checked: boolean) => {
-    setIsDarkMode(checked);
-    localStorage.setItem("theme", checked ? "dark" : "light");
-  };
+  // theme toggle UI removed; keep isDarkMode state and body attribute
 
   // Apply attribute for custom CSS
   useEffect(() => {
@@ -254,13 +247,7 @@ export default function Header() {
                   <span>Profile</span>
                 </button>
 
-                <button
-                  onClick={() => { setShowDropdown(false); navigate(user && user.role !== 'admin' ? `/orders` : '/login'); }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                >
-                  <FaShoppingBag className="text-gray-500" />
-                  <span>My Orders</span>
-                </button>
+                {/* My Orders removed from profile dropdown by request */}
              
                 <button
                   onClick={handleLogout}

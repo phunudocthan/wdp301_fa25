@@ -11,19 +11,11 @@ import Header from "../components/common/Header";
 
 export default function Checkout() {
   const { cart, clearCart } = useCart();
-    const location = useLocation();
 
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const query = new URLSearchParams(location.search);
-  const status = query.get("status");
-  useEffect(() => {
-   if (status === "success") {
-      message.success("Thanh toán thành công!");
-    } else if (status === "failed") {
-      message.error("Thanh toán thất bại. Vui lòng thử lại.");
-    }
-  }, [status]);
+  const { user } = useAuth();   
+ 
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");

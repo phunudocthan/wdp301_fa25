@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../api/axiosInstance';
-import { Card, List, Button, message, Tag, Popconfirm, Descriptions } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Card, List, Button, message, Tag, Descriptions, Result, Skeleton, Space } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/common/Header';
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -11,12 +11,24 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
+ 
 const OrderHistoryListUser: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [processingId, setProcessingId] = useState<string | null>(null);
+  // processingId removed (not used in this view)
+    const location = useLocation();
 
+  const query = new URLSearchParams(location.search);
+  const status = query.get("status");
+ useEffect(() => {
+   if (status === "success") {
+      message.success("Thanh toán thành công!");
+    } else if (status === "failed") {
+      message.error("Thanh toán thất bại. Vui lòng thử lại.");
+    }
+  }, [status]);
+  // 
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -33,22 +45,33 @@ const OrderHistoryListUser: React.FC = () => {
     fetchOrders();
   }, []);
 
-  const handleCancel = async (id: string) => {
-    try {
-      setProcessingId(id);
-      await axiosInstance.patch(`/orders/${id}`, { status: 'canceled' });
-      message.success('Order canceled');
-      fetchOrders();
-    } catch (err: any) {
-      message.error(err.response?.data?.message || 'Failed to cancel order');
-    } finally {
-      setProcessingId(null);
-    }
-  };
+  // cancel handling removed (not used in list view)
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading)
+    return (
+      <div className="p-6">
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </div>
+    );
 
-  if (!orders.length) return <div className="p-4">You don’t have any orders yet.</div>;
+  if (!orders.length)
+    return (
+      <div className="p-6">
+        <Result
+          status="info"
+          title="You don't have any orders yet"
+          subTitle="Looks like you haven't placed an order. Start shopping to create your first order."
+          extra={
+            <Space>
+              <Button type="primary" onClick={() => navigate('/shop')}>
+                Start shopping
+              </Button>
+              <Button onClick={() => navigate('/home')}>Go to homepage</Button>
+            </Space>
+          }
+        />
+      </div>
+    );
 
   return (
     <> <Header />
@@ -81,7 +104,7 @@ const OrderHistoryListUser: React.FC = () => {
               </div>
             }
             extra={
-              <Button type="link" onClick={() => navigate(`/orders/${order._id}`)}>
+              <Button type="link" onClick={() => navigate(`/orders/detail/${order._id}`)}>
                 View Details
               </Button>
             }
@@ -101,10 +124,7 @@ const OrderHistoryListUser: React.FC = () => {
         
               <div className="mt-3">
                 
-                  <Button  type="primary"
-                    loading={processingId === order._id}
-                    onClick={() => navigate(`/checkout-reorder/${order._id}`)}
-                  >
+                  <Button type="primary" onClick={() => navigate(`/checkout-reorder/${order._id}`)}>
 Reorder
                   </Button>
           
