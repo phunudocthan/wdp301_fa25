@@ -111,6 +111,9 @@ router.post("/", requireAuth, async (req, res) => {
           // street may come as `street` or `address` from different clients
           if (shippingAddress.street || shippingAddress.address) {
             normalizedShipping.street = shippingAddress.street || shippingAddress.address;
+            // keep compatibility: also set `address` to the same value so older clients/Views
+            // that read `shippingAddress.address` continue to work.
+            normalizedShipping.address = normalizedShipping.street;
           }
           if (shippingAddress.ward) normalizedShipping.ward = shippingAddress.ward;
           if (shippingAddress.district) normalizedShipping.district = shippingAddress.district;

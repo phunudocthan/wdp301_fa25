@@ -122,7 +122,18 @@ const OrderDetailUser = () => {
                     return <div style={{ fontWeight: 600 }}>{s.phone}</div>;
                   })()}
                 </Descriptions.Item>
-                {/* Address intentionally removed — show phone only for simplicity */}
+                <Descriptions.Item label="Address">
+                  {(() => {
+                    const s = order.shippingAddress;
+                    if (!s) return <Empty description="No address" />;
+                    // server normalizes address into `street`; fall back to `address` if present,
+                    // otherwise compose from ward/district/city
+                    const addr = s.street || s.address ||
+                      [s.ward, s.district, s.city].filter(Boolean).join(", ");
+                    if (!addr) return <Empty description="No address" />;
+                    return <div style={{ fontWeight: 600 }}>{addr}</div>;
+                  })()}
+                </Descriptions.Item>
                 <Descriptions.Item label="Payment">
                   {order.paymentMethod} - {order.paymentStatus}
                 </Descriptions.Item>

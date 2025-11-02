@@ -102,36 +102,20 @@ router.post("/", requireAuth, async (req, res) => {
           .json({ error: "out_of_stock", details: outOfStock });
       }
 
-        // normalize shippingAddress shape so both checkout payloads and schema-based docs work
-        const normalizedShipping = {};
-        if (shippingAddress) {
-          // prefer explicit schema fields, fall back to checkout payload keys
-          normalizedShipping.fullName = shippingAddress.fullName || shippingAddress.name || "";
-          normalizedShipping.phone = shippingAddress.phone || "";
-          // street may come as `street` or `address` from different clients
-          if (shippingAddress.street || shippingAddress.address) {
-            normalizedShipping.street = shippingAddress.street || shippingAddress.address;
-          }
-          if (shippingAddress.ward) normalizedShipping.ward = shippingAddress.ward;
-          if (shippingAddress.district) normalizedShipping.district = shippingAddress.district;
-          if (shippingAddress.city) normalizedShipping.city = shippingAddress.city;
-          if (shippingAddress.note) normalizedShipping.note = shippingAddress.note;
-        }
-
-        // create order document within session
-        const orderDoc = {
-          userId: req.user._id,
-          items: items.map((it) => ({
-            legoId: it.legoId,
-            quantity: it.quantity,
-            price: it.price,
-          })),
-          total,
-          shippingAddress: Object.keys(normalizedShipping).length ? normalizedShipping : undefined,
-          paymentMethod: paymentMethod === "VNPay" ? "VNPay" : "COD",
-          paymentStatus: paymentMethod === "VNPay" ? "unpaid" : "unpaid",
-          voucherId: voucherId || undefined,
-        };
+      // create order document within session
+      const orderDoc = {
+        userId: req.user._id,
+        items: items.map((it) => ({
+          legoId: it.legoId,
+          quantity: it.quantity,
+          price: it.price,
+        })),
+        total,
+        shippingAddress,
+        paymentMethod: paymentMethod === "VNPay" ? "VNPay" : "COD",
+        paymentStatus: paymentMethod === "VNPay" ? "unpaid" : "unpaid",
+        voucherId: voucherId || undefined,
+      };
 
       const [savedOrder] = await Order.create([orderDoc], { session });
 
