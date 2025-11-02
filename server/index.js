@@ -11,7 +11,7 @@ require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 const CLIENT_ORIGIN = process.env.CLIENT_URL || "http://localhost:3000";
 const USE_GOOGLE_AUTH = Boolean(
   process.env.GOOGLE_CLIENT_ID &&
@@ -207,6 +207,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const vnpayRoutes = require("./routes/vnpay");
 const recentlyViewedRoutes = require("./routes/recentlyViewedRoutes");
+const newsRoutes = require("./routes/newsRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -224,6 +225,7 @@ app.use("/api/legos", (req, res) =>
 app.use("/recently-viewed", recentlyViewedRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/news", newsRoutes);
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);

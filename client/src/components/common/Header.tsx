@@ -19,19 +19,23 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [query, setQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement | null>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
   const { cart } = useCart();
   const { favoriteIds } = useFavorites();
-
+  
   const name = useMemo(
-    () => user?.name || localStorage.getItem("name") || "User",
+    () => user?.name || (localStorage.getItem("name") as string | null) || "User",
     [user?.name]
   );
-  const avatar = user?.avatar || localStorage.getItem("avatar");
+  const avatar = user?.avatar || (localStorage.getItem("avatar") as string | null);
   const isAdmin = user?.role === "admin";
+  const isEmployee = user?.role === "employee";
   const isAdminSection = isAdmin && location.pathname.startsWith("/admin");
   const isDarkMode = localStorage.getItem("theme") === "dark";
 
@@ -43,15 +47,43 @@ export default function Header() {
   }, [isDarkMode]);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
+      const target = event.target as Node;
+      // If click is inside the button that toggles the menu, ignore
+      if (buttonRef.current && buttonRef.current.contains(target)) return;
+
+      // If portal dropdown exists and contains the click, ignore
+      if (portalRef.current && portalRef.current.contains(target)) return;
+
+      // Otherwise close
+      setShowDropdown(false);
     };
+
+    const handleWindowChange = () => {
+      // Recompute portal position on resize/scroll
+      if (!buttonRef.current) return;
+      const rect = buttonRef.current.getBoundingClientRect();
+      const width = 200; // match dropdown width below
+      setDropdownStyle({
+        position: "fixed",
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+        width,
+        zIndex: 99999,
+      });
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("resize", handleWindowChange);
+    window.addEventListener("scroll", handleWindowChange, true);
+
+    // initial compute
+    handleWindowChange();
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", handleWindowChange);
+      window.removeEventListener("scroll", handleWindowChange, true);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -151,6 +183,8 @@ export default function Header() {
             <>
               <NavLink to="/shop">Shop</NavLink>
               <NavLink to="/home">Home</NavLink>
+              {(isEmployee || isAdmin) && <NavLink to="/employee/news">Manage News</NavLink>}
+              <NavLink to="/news">News</NavLink>
               <NavLink to="/addresses">Address Book</NavLink>
               <NavLink to="/notifications">Notifications</NavLink>
               {user && user.role !== 'admin' && <NavLink to="/orders">My Orders</NavLink>}
@@ -185,9 +219,9 @@ export default function Header() {
                   onClick={() => navigate("/favorites")}
                   title="Favourites"
                 >
-                  {favoriteIds.length > 0 && (
+                  {(favoriteIds?.length ?? 0) > 0 && (
                     <span className="notification-badge">
-                      {favoriteIds.length}
+                      {favoriteIds?.length ?? 0}
                     </span>
                   )}
                   <FaHeart className="icon" />
@@ -200,15 +234,30 @@ export default function Header() {
                   }}
                 >
                   <FaShoppingBag />
-                  <span className="cart-count">{cart.items.length}</span>
+                  <span className="cart-count">{cart?.items?.length ?? 0}</span>
                 </div>
               </>
             )}
           </div>
 
-          <div className="relative user-menu" ref={dropdownRef}>
+          <div className="relative user-menu">
             <div
-              onClick={() => setShowDropdown((prev) => !prev)}
+              ref={buttonRef}
+              onClick={() => {
+                setShowDropdown((prev) => !prev);
+                // compute position immediately when opening
+                if (buttonRef.current) {
+                  const rect = buttonRef.current.getBoundingClientRect();
+                  const width = 200;
+                  setDropdownStyle({
+                    position: "fixed",
+                    top: rect.bottom + 8,
+                    right: window.innerWidth - rect.right,
+                    width,
+                    zIndex: 99999,
+                  });
+                }
+              }}
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded-full px-2 py-1 transition"
               title="User Menu"
             >
@@ -222,7 +271,7 @@ export default function Header() {
                   />
                 ) : (
                   <div className="bg-blue-600 text-white flex items-center justify-center h-full w-full text-sm font-bold rounded-full">
-                    {name[0]}
+                    {name?.charAt(0) || "U"}
                   </div>
                 )}
               </div>
@@ -233,7 +282,12 @@ export default function Header() {
             </div>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+              // Render dropdown into a fixed-position element so it cannot affect header layout
+              <div
+                ref={(el) => (portalRef.current = el)}
+                style={dropdownStyle}
+                className="bg-white rounded-lg shadow-lg border border-gray-200 py-2"
+              >
                 <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
                   <p className="font-medium">{name}</p>
                   <p className="text-gray-500 text-xs">{user?.email}</p>
