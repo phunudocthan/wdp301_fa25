@@ -1,0 +1,237 @@
+Table User as users {
+  _id objectId [pk]
+  name string [not null]
+  email string [not null, unique]
+  password string
+  googleId string [unique, note: 'sparse']
+  role string [default: 'customer', note: 'customer|seller|admin']
+  avatar string
+  phone string
+  address json [note: 'embedded: {street, city, state, postalCode, country}']
+  addresses json [note: 'embedded array: {label, recipientName, phone, street*, city, state, postalCode, country, isDefault, archived} + timestamps']
+  status string [default: 'active', note: 'active|inactive|locked']
+  lastLogin datetime
+  isVerified boolean [default: false]
+  emailVerificationToken string
+  emailVerificationExpires datetime
+  lastVerificationEmailSentAt datetime
+  verificationEmailAttempts int [default: 0]
+  failedLoginAttempts int [default: 0]
+  lockUntil datetime
+  passwordResetToken string
+  passwordResetExpires datetime
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    (email) [unique]
+    (googleId) [unique]
+    (role)
+    (passwordResetToken)
+  }
+}
+
+Table Theme as themes {
+  _id objectId [pk]
+  name string [not null, unique]
+  description string
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table AgeRange as age_ranges {
+  _id objectId [pk]
+  rangeLabel string [not null, unique]
+  minAge int
+  maxAge int
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table Difficulty as difficulties {
+  _id objectId [pk]
+  label string [not null, unique]
+  level int [not null, unique, note: '1..5']
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table Lego as legos {
+  _id objectId [pk]
+  name string [not null]
+  themeId objectId [not null, ref: > themes._id]
+  ageRangeId objectId [not null, ref: > age_ranges._id]
+  difficultyId objectId [not null, ref: > difficulties._id]
+  pieces int [default: 0]
+  price float [not null]
+  stock int [default: 0]
+  status string [default: 'pending', note: 'pending|active|inactive']
+  images json [note: 'array of string URLs']
+  createdBy objectId [not null, ref: > users._id]
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    (themeId)
+    (price)
+    (name) [note: 'text index']
+  }
+}
+
+Table Order as orders {
+  _id objectId [pk]
+  orderNumber string [unique]
+  userId objectId [not null, ref: > users._id]
+  items json [note: 'array of { legoId(ObjectId, ref Lego), quantity, price }']
+  total float [not null]
+  status string [default: 'pending', note: 'pending|confirmed|shipped|delivered|canceled|refunded']
+  shippingAddress json [not null]
+  paymentMethod string [not null, note: 'COD|VNPay']
+  paymentStatus string [default: 'unpaid', note: 'unpaid|paid|failed|refunded']
+  voucherId objectId [ref: > vouchers._id]
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    (orderNumber) [unique]
+    (status)
+    (userId, createdAt)
+  }
+}
+
+Table Voucher as vouchers {
+  _id objectId [pk]
+  code string [not null, unique, note: 'uppercase']
+  discountPercent int [not null, note: '0..100']
+  expiryDate date [not null]
+  usageLimit int [not null, note: '>=1']
+  status string [default: 'active', note: 'active|expired|disabled']
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    (status)
+    (expiryDate)
+  }
+}
+
+Table Cart as carts {
+  _id objectId [pk]
+  userId objectId [not null, unique, ref: > users._id]
+  items json [note: 'array of { legoId(ObjectId, ref Lego), quantity, price }']
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    (userId) [unique]
+  }
+}
+
+Table Wishlist as wishlists {
+  _id objectId [pk]
+  userId objectId [not null, unique, ref: > users._id]
+  legoIds json [note: 'array<ObjectId> ref Lego']
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table Review as reviews {
+  _id objectId [pk]
+  legoId objectId [not null, ref: > legos._id]
+  userId objectId [not null, ref: > users._id]
+  rating int [not null, note: '1..5']
+  comment string
+  images json [note: 'array of string URLs']
+  status string [default: 'visible', note: 'visible|hidden|reported']
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    (legoId, userId) [unique]
+    (legoId, rating)
+    (status)
+  }
+}
+
+Table Notification as notifications {
+  _id objectId [pk]
+  userId objectId [not null, ref: > users._id]
+  category string [not null, default: 'system', note: 'promotion|order|product|system|engagement']
+  title string [not null]
+  message string [not null]
+  link string
+  image string
+  meta json
+  type string [not null, default: 'system', note: 'order|system|promotion|product|engagement']
+  status string [default: 'unread', note: 'unread|read']
+  createdAt datetime [default: `now()`]
+  createdBy objectId [ref: > users._id]
+
+  indexes {
+    (userId, status)
+    (createdAt)
+  }
+}
+
+Table Gallery as galleries {
+  _id objectId [pk]
+  userId objectId [not null, ref: > users._id]
+  legoId objectId [ref: > legos._id]
+  imageUrl string [not null]
+  caption string
+  likes json [note: 'array<ObjectId> ref User']
+  status string [default: 'visible', note: 'visible|hidden|reported']
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    (userId)
+    (legoId)
+    (status, createdAt)
+  }
+}
+
+Table RecentlyViewed as recently_viewed {
+  _id objectId [pk]
+  userId objectId [not null, unique, ref: > users._id]
+  legoIds json [note: 'array<ObjectId> ref Lego']
+  updatedAt datetime
+
+  indexes {
+    (updatedAt)
+  }
+}
+
+Table ChatLog as chat_logs {
+  _id objectId [pk]
+  userId objectId [not null, ref: > users._id]
+  messages json [note: 'array<{ sender, text, timestamp }>' ]
+  createdAt datetime
+
+  indexes {
+    (userId)
+    (createdAt)
+  }
+}
+
+Table Banner as banners {
+  _id objectId [pk]
+  title string [not null]
+  imageUrl string [not null]
+  link string
+  status string [default: 'inactive', note: 'active|inactive']
+  createdAt datetime
+
+  indexes {
+    (status)
+    (createdAt)
+  }
+}
+
+Table Setting as settings {
+  _id objectId [pk]
+  key string [not null, unique]
+  value json [not null]
+  updatedAt datetime
+}
+

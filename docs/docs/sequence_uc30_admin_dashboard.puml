@@ -1,0 +1,75 @@
+@startuml UC30: Admin Dashboard Overview
+
+actor Admin
+participant ":AdminDashboard" as AdminDashboard
+participant ":AdminApi" as AdminApi
+participant ":AdminRoutes" as AdminRoutes
+participant ":AdminController" as AdminController
+participant ":OrderModel" as OrderModel
+participant ":UserModel" as UserModel
+database MongoDB
+
+Admin -> AdminDashboard: 1. Navigate to dashboard
+activate AdminDashboard
+AdminDashboard -> AdminApi: 2. getOverview()
+activate AdminApi
+AdminApi -> AdminRoutes: 3. GET /admin/dashboard/overview
+activate AdminRoutes
+AdminRoutes -> AdminController: 4. getOverviewStats(req, res)
+activate AdminController
+AdminController -> OrderModel: 5. Aggregate revenue (last 30 days)
+activate OrderModel
+OrderModel -> MongoDB: 6. Query orders with date filter
+activate MongoDB
+MongoDB --> OrderModel: 7. Revenue data / error
+deactivate MongoDB
+OrderModel --> AdminController: 8. Revenue aggregation / error
+deactivate OrderModel
+
+alt Success
+    activate AdminController
+    AdminController -> OrderModel: 8.1 Count orders by status
+    activate OrderModel
+    OrderModel -> MongoDB: 8.1.1 Query order counts
+    activate MongoDB
+    MongoDB --> OrderModel: 8.1.2 Order counts
+    deactivate MongoDB
+    OrderModel --> AdminController: 8.1.3 {pending, processing, completed, cancelled}
+    deactivate OrderModel
+    
+    AdminController -> UserModel: 8.2 Count users by status
+    activate UserModel
+    UserModel -> MongoDB: 8.2.1 Query user counts
+    activate MongoDB
+    MongoDB --> UserModel: 8.2.2 User counts
+    deactivate MongoDB
+    UserModel --> AdminController: 8.2.3 {active, inactive, locked}
+    deactivate UserModel
+    
+    AdminController --> AdminRoutes: 8.3 200 {revenue, orders, users}
+    deactivate AdminController
+    activate AdminRoutes
+    AdminRoutes --> AdminApi: 8.4 Response data
+    deactivate AdminRoutes
+    activate AdminApi
+    AdminApi --> AdminDashboard: 8.5 AdminOverviewResponse
+    deactivate AdminApi
+    activate AdminDashboard
+    AdminDashboard --> Admin: 8.6 Render dashboard
+    deactivate AdminDashboard
+else Error
+    activate AdminController
+    AdminController --> AdminRoutes: 8.1 500 Error message
+    deactivate AdminController
+    activate AdminRoutes
+    AdminRoutes --> AdminApi: 8.2 Error
+    deactivate AdminRoutes
+    activate AdminApi
+    AdminApi --> AdminDashboard: 8.3 Error
+    deactivate AdminApi
+    activate AdminDashboard
+    AdminDashboard --> Admin: 8.4 Show error
+    deactivate AdminDashboard
+end
+
+@enduml

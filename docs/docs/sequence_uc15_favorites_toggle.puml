@@ -1,0 +1,151 @@
+@startuml
+actor Customer
+
+participant ":ProductPage" as ProductPage
+participant ":FavoritesContext" as FavoritesContext
+participant ":FavoritesApi" as FavoritesApi
+participant ":UserRouter" as UserRouter
+participant ":AuthMiddleware" as AuthMiddleware
+participant ":UserController" as UserController
+participant ":UserModel" as UserModel
+participant ":LegoModel" as LegoModel
+database MongoDB
+
+Customer -> ProductPage : 1. Click "Toggle favourite"
+activate Customer
+activate ProductPage
+
+ProductPage -> FavoritesContext : 2. toggleFavorite(productId)
+activate FavoritesContext
+
+opt Customer not authenticated
+    FavoritesContext --> ProductPage : 2.1. Throw "Login required"
+    ProductPage -> Customer : 2.2. Prompt sign-in
+else Customer authenticated
+    FavoritesContext -> FavoritesContext : 3. Determine toggle action
+
+    alt Product already favourited
+        FavoritesContext -> FavoritesApi : 3.1. DELETE /users/favorites/{productId}
+        activate FavoritesApi
+        FavoritesApi -> UserRouter : 3.2. Forward request
+        activate UserRouter
+        UserRouter -> AuthMiddleware : 3.3. requireAuth()
+        activate AuthMiddleware
+        AuthMiddleware -> UserModel : 3.4. findById(userId)
+        activate UserModel
+        UserModel -> MongoDB : 3.5. Query user
+        activate MongoDB
+        MongoDB --> UserModel : 3.6. Return user
+        deactivate MongoDB
+        UserModel --> AuthMiddleware : 3.7. Provide user
+        deactivate UserModel
+        AuthMiddleware --> UserRouter : 3.8. next(req.user)
+        deactivate AuthMiddleware
+
+        UserRouter -> UserController : 3.9. removeFavorite(req)
+        activate UserController
+        UserController -> UserModel : 3.10. $pull favourite
+        activate UserModel
+        UserModel -> MongoDB : 3.11. Update favourites
+        activate MongoDB
+        MongoDB --> UserModel : 3.12. Update result
+        deactivate MongoDB
+        UserModel --> UserController : 3.13. modifiedCount
+
+        alt Product missing
+            UserController --> UserRouter : 3.14. 404 "Product not in favourites"
+            deactivate UserController
+            deactivate UserModel
+            UserRouter --> FavoritesApi : 3.15. Error response
+            deactivate UserRouter
+            FavoritesApi --> FavoritesContext : 3.16. Reject error
+            deactivate FavoritesApi
+            FavoritesContext --> ProductPage : 3.17. Notify removal failure
+            ProductPage -> Customer : 3.18. Show error
+        else Product removed
+            UserController -> UserModel : 3.19. loadFavoritesForUser(userId)
+            UserModel -> MongoDB : 3.20. Fetch favourites
+            activate MongoDB
+            MongoDB --> UserModel : 3.21. favourites payload
+            deactivate MongoDB
+            UserModel --> UserController : 3.22. favorites & ids
+            deactivate UserModel
+            UserController --> UserRouter : 3.23. 200 { favorites, favoriteIds }
+            deactivate UserController
+            UserRouter --> FavoritesApi : 3.24. Success response
+            deactivate UserRouter
+            FavoritesApi --> FavoritesContext : 3.25. Resolve payload
+            deactivate FavoritesApi
+            FavoritesContext -> ProductPage : 3.26. Update local state
+            ProductPage -> Customer : 3.27. Show "Removed from favourites"
+        end
+
+    else Product not yet favourited
+        FavoritesContext -> FavoritesApi : 3.28. POST /users/favorites/{productId}
+        activate FavoritesApi
+        FavoritesApi -> UserRouter : 3.29. Forward request
+        activate UserRouter
+        UserRouter -> AuthMiddleware : 3.30. requireAuth()
+        activate AuthMiddleware
+        AuthMiddleware -> UserModel : 3.31. findById(userId)
+        activate UserModel
+        UserModel -> MongoDB : 3.32. Query user
+        activate MongoDB
+        MongoDB --> UserModel : 3.33. Return user
+        deactivate MongoDB
+        UserModel --> AuthMiddleware : 3.34. Provide user
+        deactivate UserModel
+        AuthMiddleware --> UserRouter : 3.35. next(req.user)
+        deactivate AuthMiddleware
+
+        UserRouter -> UserController : 3.36. addFavorite(req)
+        activate UserController
+        UserController -> LegoModel : 3.37. findById(productId)
+        activate LegoModel
+        LegoModel -> MongoDB : 3.38. Query product
+        activate MongoDB
+        MongoDB --> LegoModel : 3.39. Product status
+        deactivate MongoDB
+        LegoModel --> UserController : 3.40. Product data
+        deactivate LegoModel
+
+        alt Product unavailable
+            UserController --> UserRouter : 3.41. 404 "Product not found"
+            deactivate UserController
+            deactivate UserModel
+            UserRouter --> FavoritesApi : 3.42. Error response
+            deactivate UserRouter
+            FavoritesApi --> FavoritesContext : 3.43. Reject error
+            deactivate FavoritesApi
+            FavoritesContext --> ProductPage : 3.44. Notify addition failure
+            ProductPage -> Customer : 3.45. Show error
+        else Product valid
+            UserController -> UserModel : 3.46. $addToSet favourite
+            activate UserModel
+            UserModel -> MongoDB : 3.47. Update favourites
+            activate MongoDB
+            MongoDB --> UserModel : 3.48. Update result
+            deactivate MongoDB
+            UserModel --> UserController : 3.49. modifiedCount
+            UserModel -> MongoDB : 3.50. Reload favourites
+            activate MongoDB
+            MongoDB --> UserModel : 3.51. favourites payload
+            deactivate MongoDB
+            UserModel --> UserController : 3.52. favorites & ids
+            deactivate UserModel
+            UserController --> UserRouter : 3.53. 200 { favorites, favoriteIds }
+            deactivate UserController
+            UserRouter --> FavoritesApi : 3.54. Success response
+            deactivate UserRouter
+            FavoritesApi --> FavoritesContext : 3.55. Resolve payload
+            deactivate FavoritesApi
+            FavoritesContext -> ProductPage : 3.56. Update local state
+            ProductPage -> Customer : 3.57. Show confirmation
+        end
+    end
+end
+
+deactivate FavoritesContext
+deactivate ProductPage
+deactivate Customer
+@enduml

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../api/axiosInstance';
-import { Card, List, Button, message, Tag, Popconfirm, Descriptions, Result, Skeleton, Space } from 'antd';
+import { Card, List, Button, message, Tag, Descriptions, Result, Skeleton, Space } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/common/Header';
 
@@ -11,28 +11,28 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
-const OrderListUser: React.FC = () => {
+ 
+const OrderHistoryListUser: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-    
-  const location = useLocation();
+  // processingId removed (not used in this view)
+    const location = useLocation();
 
   const query = new URLSearchParams(location.search);
-
   const status = query.get("status");
-  useEffect(() => {
+ useEffect(() => {
    if (status === "success") {
       message.success("Thanh toán thành công!");
     } else if (status === "failed") {
       message.error("Thanh toán thất bại. Vui lòng thử lại.");
     }
   }, [status]);
+  // 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get(`/orders/my`);
+      const res = await axiosInstance.get(`/orders/my-order-history`);
       setOrders(res.data.items || []);
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Failed to fetch orders');
@@ -45,18 +45,7 @@ const OrderListUser: React.FC = () => {
     fetchOrders();
   }, []);
 
-  const handleCancel = async (id: string) => {
-    try {
-      setProcessingId(id);
-      await axiosInstance.patch(`/orders/${id}`, { status: 'canceled' });
-      message.success('Order canceled');
-      fetchOrders();
-    } catch (err: any) {
-      message.error(err.response?.data?.message || 'Failed to cancel order');
-    } finally {
-      setProcessingId(null);
-    }
-  };
+  // cancel handling removed (not used in list view)
 
   if (loading)
     return (
@@ -85,10 +74,10 @@ const OrderListUser: React.FC = () => {
     );
 
   return (
-    <>
+    <> 
     <div className="p-4"> 
      
-      <h2 className="text-xl font-semibold mb-4">My Orders</h2>
+      <h2 className="text-xl font-semibold mb-4">My History Orders</h2>
 
       <List
         dataSource={orders}
@@ -132,18 +121,15 @@ const OrderListUser: React.FC = () => {
               </Descriptions.Item>
             </Descriptions>
 
-            {order.status === 'pending' && (
+        
               <div className="mt-3">
-                <Popconfirm
-                  title="Are you sure you want to cancel this order?"
-                  onConfirm={() => handleCancel(order._id)}
-                >
-                  <Button danger loading={processingId === order._id}>
-                    Cancel order
+                
+                  <Button type="primary" onClick={() => navigate(`/checkout-reorder/${order._id}`)}>
+Reorder
                   </Button>
-                </Popconfirm>
+          
               </div>
-            )}
+           
           </Card>
         )}
       />
@@ -152,4 +138,4 @@ const OrderListUser: React.FC = () => {
   );
 };
 
-export default OrderListUser;
+export default OrderHistoryListUser;

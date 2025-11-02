@@ -1,0 +1,64 @@
+@startuml UC34: User - Block
+
+actor Admin
+participant ":AdminUsersPage\n/AdminUserDetailPage" as AdminPage
+participant ":AdminApi" as AdminApi
+participant ":AdminRoutes" as AdminRoutes
+participant ":AdminController" as AdminController
+participant ":UserModel" as UserModel
+database MongoDB
+
+Admin -> AdminPage: 1. Click lock/unlock button
+activate AdminPage
+AdminPage -> AdminApi: 2. updateUserStatus(id, action)
+activate AdminApi
+AdminApi -> AdminRoutes: 3. PATCH /admin/users/:id/status
+activate AdminRoutes
+AdminRoutes -> AdminController: 4. toggleUserStatus(req, res)
+activate AdminController
+AdminController -> UserModel: 5. Find user by id
+activate UserModel
+UserModel -> MongoDB: 6. Query user
+activate MongoDB
+MongoDB --> UserModel: 7. User / error
+deactivate MongoDB
+UserModel --> AdminController: 8. User document / error
+deactivate UserModel
+
+alt User found and valid action
+    activate AdminController
+    AdminController -> UserModel: 8.1 Update status/lockUntil
+    activate UserModel
+    UserModel -> MongoDB: 8.1.1 Update user status
+    activate MongoDB
+    MongoDB --> UserModel: 8.1.2 Updated user
+    deactivate MongoDB
+    UserModel --> AdminController: 8.1.3 Updated user
+    deactivate UserModel
+    AdminController --> AdminRoutes: 8.2 200 {message, user}
+    deactivate AdminController
+    activate AdminRoutes
+    AdminRoutes --> AdminApi: 8.3 Response data
+    deactivate AdminRoutes
+    activate AdminApi
+    AdminApi --> AdminPage: 8.4 Success response
+    deactivate AdminApi
+    activate AdminPage
+    AdminPage --> Admin: 8.5 Update UI and refresh
+    deactivate AdminPage
+else Error (self-lock, invalid action, etc)
+    activate AdminController
+    AdminController --> AdminRoutes: 8.1 400/404 Error message
+    deactivate AdminController
+    activate AdminRoutes
+    AdminRoutes --> AdminApi: 8.2 Error
+    deactivate AdminRoutes
+    activate AdminApi
+    AdminApi --> AdminPage: 8.3 Error
+    deactivate AdminApi
+    activate AdminPage
+    AdminPage --> Admin: 8.4 Show error
+    deactivate AdminPage
+end
+
+@enduml

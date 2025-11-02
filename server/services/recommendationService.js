@@ -25,6 +25,22 @@ const addScore = (map, key, weight) => {
   map.set(key, current + weight);
 };
 
+const CATEGORY_MATCH_WEIGHT = Number(
+  process.env.PERSONALIZATION_CATEGORY_MATCH_WEIGHT || 1.4
+);
+const CATEGORY_TOP_MATCH_BONUS = Number(
+  process.env.PERSONALIZATION_CATEGORY_TOP_BONUS || 2.5
+);
+const THEME_MATCH_WEIGHT = Number(
+  process.env.PERSONALIZATION_THEME_MATCH_WEIGHT || 1.0
+);
+const AGE_RANGE_MATCH_WEIGHT = Number(
+  process.env.PERSONALIZATION_AGE_RANGE_MATCH_WEIGHT || 0.6
+);
+const DIFFICULTY_MATCH_WEIGHT = Number(
+  process.env.PERSONALIZATION_DIFFICULTY_MATCH_WEIGHT || 0.6
+);
+
 const gatherLegoInfo = async (ids) => {
   if (!ids.length) return new Map();
   const docs = await Lego.find({ _id: { $in: ids } })
@@ -214,20 +230,44 @@ const scoreProduct = (product, profile, index, baseScore) => {
   score += profile.legoScores.get(productId) || 0;
 
   const themeId = toIdString(product.themeId);
-  if (themeId) score += profile.themeScores.get(themeId) || 0;
+  if (themeId) {
+    const themeScore = profile.themeScores.get(themeId) || 0;
+    if (themeScore) {
+      score += themeScore * THEME_MATCH_WEIGHT;
+    }
+  }
 
+  let strongestCategoryMatch = 0;
   if (Array.isArray(product.categories)) {
     product.categories.forEach((cat) => {
       const catId = toIdString(cat);
-      if (catId) score += profile.categoryScores.get(catId) || 0;
+      if (!catId) return;
+      const categoryScore = profile.categoryScores.get(catId) || 0;
+      if (categoryScore > 0) {
+        score += categoryScore * CATEGORY_MATCH_WEIGHT;
+        strongestCategoryMatch = Math.max(strongestCategoryMatch, categoryScore);
+      }
     });
+  }
+  if (strongestCategoryMatch > 0) {
+    score += strongestCategoryMatch * CATEGORY_TOP_MATCH_BONUS;
   }
 
   const ageId = toIdString(product.ageRangeId);
-  if (ageId) score += profile.ageRangeScores.get(ageId) || 0;
+  if (ageId) {
+    const ageScore = profile.ageRangeScores.get(ageId) || 0;
+    if (ageScore) {
+      score += ageScore * AGE_RANGE_MATCH_WEIGHT;
+    }
+  }
 
   const difficultyId = toIdString(product.difficultyId);
-  if (difficultyId) score += profile.difficultyScores.get(difficultyId) || 0;
+  if (difficultyId) {
+    const difficultyScore = profile.difficultyScores.get(difficultyId) || 0;
+    if (difficultyScore) {
+      score += difficultyScore * DIFFICULTY_MATCH_WEIGHT;
+    }
+  }
 
   if (profile.avgPrice && product.price != null) {
     const diff = Math.abs(Number(product.price) - profile.avgPrice);

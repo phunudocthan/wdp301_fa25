@@ -115,14 +115,22 @@ const OrderDetailUser = () => {
           <Col xs={24} md={16}>
             <Card style={{ marginBottom: 16 }}>
               <Descriptions column={1} bordered>
-                <Descriptions.Item label="Phone">
-                  {(() => {
-                    const s = order.shippingAddress;
-                    if (!s || !s.phone) return <Empty description="No phone" />;
-                    return <div style={{ fontWeight: 600 }}>{s.phone}</div>;
-                  })()}
+                <Descriptions.Item label="Shipping">
+                  {order.shippingAddress?.fullName ? (
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{order.shippingAddress.fullName}</div>
+                      <div>{order.shippingAddress.phone}</div>
+                      <div>
+                        {order.shippingAddress.street}, {order.shippingAddress.ward || ""} {order.shippingAddress.district || ""}, {order.shippingAddress.city || ""}
+                      </div>
+                      {order.shippingAddress.note && (
+                        <div>Note: {order.shippingAddress.note}</div>
+                      )}
+                    </div>
+                  ) : (
+                    <Empty description="No shipping address" />
+                  )}
                 </Descriptions.Item>
-                {/* Address intentionally removed — show phone only for simplicity */}
                 <Descriptions.Item label="Payment">
                   {order.paymentMethod} - {order.paymentStatus}
                 </Descriptions.Item>

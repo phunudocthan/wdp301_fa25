@@ -1,0 +1,97 @@
+@startuml UC30: Admin Dashboard Overview
+
+actor Admin
+
+boundary "AdminDashboard" as View
+
+participant ":adminRoutes" as Route
+
+control "authMiddleware" as Auth
+
+control "adminController" as Controller
+
+entity "Order" as OrderModel
+
+entity "User" as UserModel
+
+database "MongoDB" as MongoDB
+
+Admin -> View: 1. Navigate to dashboard
+activate Admin
+activate View
+
+View -> Route: 2. GET /admin/dashboard/overview
+activate Route
+
+Route -> Auth: 3. requireAuth()
+activate Auth
+
+Auth -> Auth: 4. Verify token
+activate Auth
+deactivate Auth
+
+alt Invalid token
+    Auth --> Route: 5.1. Return 401 Unauthorized
+    deactivate Auth
+    Route --> View: 5.1.1. Error response
+    deactivate Route
+    View --> Admin: 5.1.2. Show login prompt
+else Valid token
+    Auth --> Route: 5.2. next(req.user)
+    deactivate Auth
+    
+    Route -> Auth: 6. requireRole('admin')
+    activate Auth
+    
+    alt Not admin
+        Auth --> Route: 7.1. Return 403 Forbidden
+        deactivate Auth
+        Route --> View: 7.1.1. Access denied
+        deactivate Route
+        View --> Admin: 7.1.2. Show error
+    else Is admin
+        Auth --> Route: 7.2. next()
+        deactivate Auth
+        
+        Route -> Controller: 8. getOverviewStats(req, res)
+        activate Controller
+        
+        Controller -> OrderModel: 9. aggregate(revenue pipeline)
+        activate OrderModel
+        OrderModel -> MongoDB: 10. Execute aggregation
+        activate MongoDB
+        MongoDB --> OrderModel: 11. Revenue data
+        deactivate MongoDB
+        OrderModel --> Controller: 12. Return revenue
+        deactivate OrderModel
+        
+        Controller -> OrderModel: 13. aggregate(order status counts)
+        activate OrderModel
+        OrderModel -> MongoDB: 14. Execute aggregation
+        activate MongoDB
+        MongoDB --> OrderModel: 15. Order stats
+        deactivate MongoDB
+        OrderModel --> Controller: 16. Return order counts
+        deactivate OrderModel
+        
+        Controller -> UserModel: 17. aggregate(user status counts)
+        activate UserModel
+        UserModel -> MongoDB: 18. Execute aggregation
+        activate MongoDB
+        MongoDB --> UserModel: 19. User stats
+        deactivate MongoDB
+        UserModel --> Controller: 20. Return user counts
+        deactivate UserModel
+        
+        Controller --> Route: 21. 200 OK + overview data
+        deactivate Controller
+        Route --> View: 22. Success response
+        deactivate Route
+        View --> Admin: 23. Render dashboard cards
+        deactivate View
+    end
+end
+
+deactivate Admin
+
+@enduml

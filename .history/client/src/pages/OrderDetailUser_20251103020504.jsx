@@ -122,7 +122,6 @@ const OrderDetailUser = () => {
                     return <div style={{ fontWeight: 600 }}>{s.phone}</div>;
                   })()}
                 </Descriptions.Item>
-                {/* Address intentionally removed — show phone only for simplicity */}
                 <Descriptions.Item label="Payment">
                   {order.paymentMethod} - {order.paymentStatus}
                 </Descriptions.Item>

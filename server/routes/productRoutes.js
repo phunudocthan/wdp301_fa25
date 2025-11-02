@@ -225,6 +225,20 @@ router.get("/", async (req, res) => {
       sortOrder = "desc",
     } = req.query;
 
+    const parseBooleanQuery = (value, defaultValue) => {
+      if (typeof value === "undefined") return defaultValue;
+      const normalized = Array.isArray(value) ? value[0] : value;
+      const lower = String(normalized).toLowerCase();
+      if (["true", "1", "yes"].includes(lower)) return true;
+      if (["false", "0", "no"].includes(lower)) return false;
+      return defaultValue;
+    };
+
+    const allowPersonalization = parseBooleanQuery(
+      req.query.personalized,
+      true
+    );
+
     const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const requestedLimit = Number(limit);
     const unlimited = Number.isFinite(requestedLimit) && requestedLimit === 0;
@@ -278,8 +292,11 @@ router.get("/", async (req, res) => {
       : 0;
 
     let products = [];
-    let personalizationMeta = { personalized: false };
-    const shouldPersonalize = Boolean(req.user?._id) && total > 0;
+    let personalizationMeta = allowPersonalization
+      ? { personalized: false }
+      : { personalized: false, reason: "disabled-by-query" };
+    const shouldPersonalize =
+      allowPersonalization && Boolean(req.user?._id) && total > 0;
 
     if (unlimited) {
       const hydrated = baseQuery.clone();

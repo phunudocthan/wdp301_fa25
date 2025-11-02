@@ -1,0 +1,236 @@
+@startuml Admin Dashboard and Favorites Class Diagram
+
+' ==================== UC30: Admin Dashboard Overview ====================
+
+package "«view»\nAdminDashboard" <<Cloud>> #E8F5E9 {
+  class "«component»\nAdminDashboard" as AdminDashboard {
+    - user: User
+    - overview: AdminOverviewResponse?
+    - loading: boolean
+    - error: string?
+    + fetchOverview(): void
+    + render(): JSX.Element
+  }
+}
+
+package "«api»\nAdminApi" <<Cloud>> #E3F2FD {
+  class "«service»\nAdminApi" as AdminApi {
+    + getOverview(): Promise<AdminOverviewResponse>
+    + getRevenueDashboard(): Promise<RevenueDashboardResponse>
+    + getOrderDashboard(): Promise<OrderDashboardResponse>
+    + listUsers(params): Promise<AdminUserListResponse>
+    + getUserDetail(id): Promise<AdminUserDetailResponse>
+    + updateUserStatus(id, action): Promise<any>
+  }
+}
+
+package "«router»\nAdminRouter" <<Cloud>> #FFF9C4 {
+  class "«router»\nAdminRoutes" as AdminRoutes {
+    + get('/dashboard/overview', requireAuth, requireRole('admin'), getOverviewStats)
+    + get('/dashboard/revenue', requireAuth, requireRole('admin'), getRevenueStats)
+    + get('/dashboard/orders', requireAuth, requireRole('admin'), getOrderStats)
+    + get('/users', requireAuth, requireRole('admin'), listUsers)
+    + get('/users/:id', requireAuth, requireRole('admin'), getUserDetail)
+    + patch('/users/:id/status', requireAuth, requireRole('admin'), toggleUserStatus)
+  }
+}
+
+package "«controller»\nAdminController" <<Cloud>> #FFE0B2 {
+  class "«controller»\nAdminController" as AdminController {
+    + getOverviewStats(req, res): Promise<void>
+    + getRevenueStats(req, res): Promise<void>
+    + getOrderStats(req, res): Promise<void>
+    + listUsers(req, res): Promise<void>
+    + getUserDetail(req, res): Promise<void>
+    + toggleUserStatus(req, res): Promise<void>
+    - aggregateRevenueByDate(options): Promise<Object>
+    - buildSearchFilter(search): Object?
+  }
+}
+
+package "«model»\nOrderModel" <<Database>> #FCE4EC {
+  class "«model»\nOrder" as OrderModel {
+    o _id: ObjectId
+    o orderNumber: String?
+    o userId: ObjectId
+    o status: String
+    o total: Number
+    o paymentStatus: String
+    o createdAt: Date
+    o updatedAt: Date
+  }
+}
+
+package "«model»\nUserModel" <<Database>> #FCE4EC {
+  class "«model»\nUser" as UserModel {
+    o _id: ObjectId
+    o name: String
+    o email: String
+    o password: String
+    o role: String
+    o status: String
+    o phone: String?
+    o avatar: String?
+    o favorites: [ObjectId]
+    o failedLoginAttempts: Number
+    o lockUntil: Date?
+    o createdAt: Date
+    o updatedAt: Date
+    + incLoginAttempts(): Promise<void>
+    + resetLoginAttempts(): Promise<void>
+  }
+}
+
+' ==================== UC15 & UC17: Favorites ====================
+
+package "«context»\nFavoritesContext" <<Cloud>> #E8F5E9 {
+  class "«context»\nFavoritesContext" as FavoritesContext {
+    - favorites: FavoriteProduct[]
+    - favoriteIds: string[]
+    - loading: boolean
+    - initialized: boolean
+    + refreshFavorites(): Promise<void>
+    + addFavorite(productId): Promise<void>
+    + removeFavorite(productId): Promise<void>
+    + toggleFavorite(productId): Promise<boolean>
+  }
+}
+
+package "«api»\nFavoritesApi" <<Cloud>> #E3F2FD {
+  class "«service»\nFavoritesApi" as FavoritesApi {
+    + fetchFavorites(): Promise<FavoritesPayload>
+    + addFavorite(productId): Promise<FavoritesPayload>
+    + removeFavorite(productId): Promise<FavoritesPayload>
+  }
+}
+
+package "«router»\nUserRouter" <<Cloud>> #FFF9C4 {
+  class "«router»\nUserRoutes" as UserRoutes {
+    + get('/favorites', requireAuth, listFavorites)
+    + post('/favorites/:productId', requireAuth, addFavorite)
+    + delete('/favorites/:productId', requireAuth, removeFavorite)
+  }
+}
+
+package "«controller»\nUserController" <<Cloud>> #FFE0B2 {
+  class "«controller»\nUserController" as UserController {
+    + listFavorites(req, res): Promise<void>
+    + addFavorite(req, res): Promise<void>
+    + removeFavorite(req, res): Promise<void>
+    - loadFavoritesForUser(userId): Promise<Object>
+    - mapFavoriteProduct(lego): Object?
+  }
+}
+
+package "«model»\nLegoModel" <<Database>> #FCE4EC {
+  class "«model»\nLego" as LegoModel {
+    o _id: ObjectId
+    o name: String
+    o price: Number
+    o images: [String]
+    o stock: Number
+    o pieces: Number
+    o status: String
+    o theme: ObjectId?
+    o categories: [ObjectId]
+    o createdAt: Date
+    o updatedAt: Date
+  }
+}
+
+' ==================== UC32 & UC33 & UC34: User Management ====================
+
+package "«view»\nAdminUsersPage" <<Cloud>> #E8F5E9 {
+  class "«component»\nAdminUsersPage" as AdminUsersPage {
+    - search: string
+    - role: RoleFilter
+    - status: StatusFilter
+    - page: number
+    - payload: AdminUserListResponse?
+    - loading: boolean
+    - error: string
+    - isUpdating: boolean
+    + handleToggleStatus(targetId, currentStatus): Promise<void>
+    + resetFilters(): void
+    + render(): JSX.Element
+  }
+}
+
+package "«view»\nAdminUserDetailPage" <<Cloud>> #E8F5E9 {
+  class "«component»\nAdminUserDetailPage" as AdminUserDetailPage {
+    - data: AdminUserDetailResponse?
+    - loading: boolean
+    - error: string
+    - updating: boolean
+    + handleToggleStatus(): Promise<void>
+    + render(): JSX.Element
+  }
+}
+
+' ==================== Relationships ====================
+
+' UC30: Admin Dashboard
+AdminDashboard ..> AdminApi : uses
+AdminApi ..> AdminRoutes : HTTP GET
+AdminRoutes ..> AdminController : routes to
+AdminController ..> OrderModel : aggregates
+AdminController ..> UserModel : queries
+
+' UC15 & UC17: Favorites
+FavoritesContext ..> FavoritesApi : uses
+FavoritesApi ..> UserRoutes : HTTP GET/POST/DELETE
+UserRoutes ..> UserController : routes to
+UserController ..> UserModel : updates favorites[]
+UserController ..> LegoModel : populates
+
+' UC32: User List
+AdminUsersPage ..> AdminApi : uses (listUsers)
+AdminApi ..> AdminRoutes : HTTP GET /users
+AdminRoutes ..> AdminController : routes to (listUsers)
+
+' UC33: User Detail
+AdminUserDetailPage ..> AdminApi : uses (getUserDetail)
+AdminApi ..> AdminRoutes : HTTP GET /users/:id
+AdminRoutes ..> AdminController : routes to (getUserDetail)
+AdminController ..> OrderModel : aggregates stats
+
+' UC34: User Block/Unblock
+AdminUsersPage ..> AdminApi : uses (updateUserStatus)
+AdminUserDetailPage ..> AdminApi : uses (updateUserStatus)
+AdminApi ..> AdminRoutes : HTTP PATCH /users/:id/status
+AdminRoutes ..> AdminController : routes to (toggleUserStatus)
+AdminController ..> UserModel : updates status/lockUntil
+
+' Model relationships
+UserModel "1" o-- "0..*" LegoModel : favorites
+
+note right of AdminController
+  **Key Methods:**
+  - getOverviewStats: Aggregates 30-day revenue,
+    order counts by status, user counts by status
+  - listUsers: Applies filters (role, status, search),
+    pagination, returns users + pagination metadata
+  - getUserDetail: Fetches user + order stats
+    (totalOrders, totalSpent, lastOrderAt)
+  - toggleUserStatus: Locks/unlocks users,
+    prevents self-modification
+end note
+
+note right of UserController
+  **Favorites Logic:**
+  - listFavorites: Populates User.favorites
+    with full Lego documents
+  - addFavorite: $addToSet to favorites array
+  - removeFavorite: $pull from favorites array
+  All return refreshed {favorites, favoriteIds}
+end note
+
+note bottom of UserModel
+  **Key Fields:**
+  - favorites: [ObjectId] ref 'Lego'
+  - status: 'active' | 'inactive' | 'locked'
+  - lockUntil: Date? (for temporary locks)
+  - failedLoginAttempts: Number
+end note
+
+@enduml

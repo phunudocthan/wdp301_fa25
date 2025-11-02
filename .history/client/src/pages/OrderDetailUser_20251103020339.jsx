@@ -115,14 +115,13 @@ const OrderDetailUser = () => {
           <Col xs={24} md={16}>
             <Card style={{ marginBottom: 16 }}>
               <Descriptions column={1} bordered>
-                <Descriptions.Item label="Phone">
+                <Descriptions.Item label="Shipping">
                   {(() => {
                     const s = order.shippingAddress;
                     if (!s || !s.phone) return <Empty description="No phone" />;
                     return <div style={{ fontWeight: 600 }}>{s.phone}</div>;
                   })()}
                 </Descriptions.Item>
-                {/* Address intentionally removed — show phone only for simplicity */}
                 <Descriptions.Item label="Payment">
                   {order.paymentMethod} - {order.paymentStatus}
                 </Descriptions.Item>

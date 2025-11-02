@@ -1,0 +1,40 @@
+@startuml UC34: User - Block
+
+class "«component» AdminUsersPage" as AdminUsersPage {
+  - isUpdating: boolean
+  + handleToggleStatus(targetId, currentStatus): Promise<void>
+  + render(): JSX.Element
+}
+
+class "«component» AdminUserDetailPage" as AdminUserDetailPage {
+  - updating: boolean
+  + handleToggleStatus(): Promise<void>
+  + render(): JSX.Element
+}
+
+class "«service» AdminApi" as AdminApi {
+  + updateUserStatus(id, action): Promise<any>
+}
+
+class "«router» AdminRoutes" as AdminRoutes {
+  + patch('/admin/users/:id/status', requireAuth, requireRole('admin'), toggleUserStatus)
+}
+
+class "«controller» AdminController" as AdminController {
+  + toggleUserStatus(req, res): Promise<void>
+}
+
+class "«model» User" as UserModel {
+  o _id: ObjectId
+  o status: String
+  o lockUntil: Date
+  o failedLoginAttempts: Number
+}
+
+AdminUsersPage ..> AdminApi : uses
+AdminUserDetailPage ..> AdminApi : uses
+AdminApi ..> AdminRoutes : HTTP PATCH
+AdminRoutes ..> AdminController : routes to
+AdminController ..> UserModel : updates status/lockUntil
+
+@enduml

@@ -1,0 +1,53 @@
+@startuml UC17: Favourites - View
+
+class "«component» FavoritesPage" as FavoritesPage {
+  - favorites: FavoriteProduct[]
+  - loading: boolean
+  + toggleFavorite(productId): Promise<void>
+  + render(): JSX.Element
+}
+
+class "«context» FavoritesContext" as FavoritesContext {
+  - favorites: FavoriteProduct[]
+  - favoriteIds: string[]
+  - loading: boolean
+  + refreshFavorites(): Promise<void>
+  + toggleFavorite(productId): Promise<boolean>
+}
+
+class "«service» FavoritesApi" as FavoritesApi {
+  + fetchFavorites(): Promise<FavoritesPayload>
+}
+
+class "«router» UserRoutes" as UserRoutes {
+  + get('/favorites', requireAuth, listFavorites)
+}
+
+class "«controller» UserController" as UserController {
+  + listFavorites(req, res): Promise<void>
+  - loadFavoritesForUser(userId): Promise<Object>
+  - mapFavoriteProduct(lego): Object
+}
+
+class "«model» User" as UserModel {
+  o _id: ObjectId
+  o name: String
+  o favorites: [ObjectId]
+}
+
+class "«model» Lego" as LegoModel {
+  o _id: ObjectId
+  o name: String
+  o price: Number
+  o images: [String]
+  o stock: Number
+}
+
+FavoritesPage ..> FavoritesContext : uses
+FavoritesContext ..> FavoritesApi : uses
+FavoritesApi ..> UserRoutes : HTTP GET
+UserRoutes ..> UserController : routes to
+UserController ..> UserModel : queries
+UserController ..> LegoModel : populates
+
+@enduml

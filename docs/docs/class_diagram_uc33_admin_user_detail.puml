@@ -1,0 +1,48 @@
+@startuml UC33: User - Detail
+
+class "«component» AdminUserDetailPage" as AdminUserDetailPage {
+  - data: AdminUserDetailResponse
+  - loading: boolean
+  - error: string
+  + render(): JSX.Element
+}
+
+class "«service» AdminApi" as AdminApi {
+  + getUserDetail(id): Promise<AdminUserDetailResponse>
+}
+
+class "«router» AdminRoutes" as AdminRoutes {
+  + get('/admin/users/:id', requireAuth, requireRole('admin'), getUserDetail)
+}
+
+class "«controller» AdminController" as AdminController {
+  + getUserDetail(req, res): Promise<void>
+}
+
+class "«model» User" as UserModel {
+  o _id: ObjectId
+  o name: String
+  o email: String
+  o role: String
+  o status: String
+  o phone: String
+  o avatar: String
+  o lockUntil: Date
+  o createdAt: Date
+}
+
+class "«model» Order" as OrderModel {
+  o _id: ObjectId
+  o userId: ObjectId
+  o total: Number
+  o status: String
+  o createdAt: Date
+}
+
+AdminUserDetailPage ..> AdminApi : uses
+AdminApi ..> AdminRoutes : HTTP GET
+AdminRoutes ..> AdminController : routes to
+AdminController ..> UserModel : queries
+AdminController ..> OrderModel : aggregates stats
+
+@enduml

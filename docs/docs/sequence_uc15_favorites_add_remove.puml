@@ -1,0 +1,73 @@
+@startuml UC15: Favourites - Add/Remove
+
+actor Customer
+participant ":ProductPage" as ProductPage
+participant ":FavoritesContext" as FavoritesContext
+participant ":FavoritesApi" as FavoritesApi
+participant ":UserRoutes" as UserRoutes
+participant ":UserController" as UserController
+participant ":UserModel" as UserModel
+database MongoDB
+
+Customer -> ProductPage: 1. Click favorite button
+activate ProductPage
+ProductPage -> FavoritesContext: 2. toggleFavorite(productId)
+activate FavoritesContext
+FavoritesContext -> FavoritesApi: 3. addFavorite(productId) / removeFavorite(productId)
+activate FavoritesApi
+FavoritesApi -> UserRoutes: 4. POST /favorites/:productId or DELETE /favorites/:productId
+activate UserRoutes
+UserRoutes -> UserController: 5. addFavorite(req, res) / removeFavorite(req, res)
+activate UserController
+UserController -> UserModel: 6. Update favorites array ($addToSet / $pull)
+activate UserModel
+UserModel -> MongoDB: 7. Query update user
+activate MongoDB
+MongoDB --> UserModel: 8. Updated user / error
+deactivate MongoDB
+UserModel --> UserController: 9. User document / error
+deactivate UserModel
+
+alt Success
+    activate UserController
+    UserController -> UserModel: 9.1 Load favorites with populated Lego
+    activate UserModel
+    UserModel -> MongoDB: 9.1.1 Query favorites
+    activate MongoDB
+    MongoDB --> UserModel: 9.1.2 Favorites array
+    deactivate MongoDB
+    UserModel --> UserController: 9.1.3 Populated favorites
+    deactivate UserModel
+    UserController --> UserRoutes: 9.2 200 {favorites, favoriteIds}
+    deactivate UserController
+    activate UserRoutes
+    UserRoutes --> FavoritesApi: 9.3 Response data
+    deactivate UserRoutes
+    activate FavoritesApi
+    FavoritesApi --> FavoritesContext: 9.4 FavoritesPayload
+    deactivate FavoritesApi
+    activate FavoritesContext
+    FavoritesContext --> ProductPage: 9.5 Success
+    deactivate FavoritesContext
+    activate ProductPage
+    ProductPage --> Customer: 9.6 Update UI
+    deactivate ProductPage
+else Error
+    activate UserController
+    UserController --> UserRoutes: 9.1 400/500 Error message
+    deactivate UserController
+    activate UserRoutes
+    UserRoutes --> FavoritesApi: 9.2 Error
+    deactivate UserRoutes
+    activate FavoritesApi
+    FavoritesApi --> FavoritesContext: 9.3 Error
+    deactivate FavoritesApi
+    activate FavoritesContext
+    FavoritesContext --> ProductPage: 9.4 Error
+    deactivate FavoritesContext
+    activate ProductPage
+    ProductPage --> Customer: 9.5 Show error
+    deactivate ProductPage
+end
+
+@enduml

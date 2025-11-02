@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getValidToken } from "../utils/tokenUtils";
 
-const STORAGE_KEY = "apiBaseURL:v2";
+const STORAGE_KEY = "apiBaseURL:v3";
 
 const normalizeBase = (value: string) => value.replace(/\/$/, "");
 
@@ -12,15 +12,22 @@ const parseEnvApiList = (value: string | undefined) =>
     .filter(Boolean)
     .map(normalizeBase);
 
-// Prefer localhost:5000 as the primary dev API base
+// Prefer localhost:5001 as the primary dev API base, fall back to 5000 if needed
 const devDefaultBases = [
   "http://localhost:5001/api",
   "http://localhost:5000/api",
 ];
 
 const currentOrigin = window.location.origin.replace(/\/$/, "");
-const defaultCandidates =
-  window.location.port === "3000" ? devDefaultBases : [`${currentOrigin}/api`];
+const isLocalhost = [
+  "localhost",
+  "127.0.0.1",
+  "0.0.0.0",
+  "::1",
+].includes(window.location.hostname);
+const defaultCandidates = isLocalhost
+  ? [...devDefaultBases, `${currentOrigin}/api`]
+  : [`${currentOrigin}/api`];
 
 const candidateBases = (() => {
   const envCandidates = parseEnvApiList(
