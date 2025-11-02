@@ -3,7 +3,6 @@ const Theme = require("../models/Theme");
 const AgeRange = require("../models/AgeRange");
 const Difficulty = require("../models/Difficulty");
 const ThemeCharacter = require("../models/ThemeCharacter");
-const { default: mongoose } = require("mongoose");
 
 /**
  * @desc Lấy danh sách tất cả sản phẩm (Admin)
@@ -514,7 +513,7 @@ const getProductStats = async (req, res) => {
  * @route get /api/products/recently-viewed
  * @access Private (User)
  */
-const getRecentlyViewedProducts = async (req, res) => {
+xports.getRecentlyViewedProducts = async (req, res) => {
   try {
     let ids = parseIdsFromReq(req);
 

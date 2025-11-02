@@ -74,7 +74,7 @@ const OrderHistoryListUser: React.FC = () => {
     );
 
   return (
-    <> 
+    <> <Header />
     <div className="p-4"> 
      
       <h2 className="text-xl font-semibold mb-4">My History Orders</h2>

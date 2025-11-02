@@ -3,7 +3,6 @@ const Theme = require("../models/Theme");
 const AgeRange = require("../models/AgeRange");
 const Difficulty = require("../models/Difficulty");
 const ThemeCharacter = require("../models/ThemeCharacter");
-const { default: mongoose } = require("mongoose");
 
 /**
  * @desc Lấy danh sách tất cả sản phẩm (Admin)
@@ -511,66 +510,39 @@ const getProductStats = async (req, res) => {
 
 /**
  * @desc Lấy danh sách sản phẩm đã xem gần đây
- * @route get /api/products/recently-viewed
+ * @route POST /api/products/recently-viewed
  * @access Private (User)
  */
 const getRecentlyViewedProducts = async (req, res) => {
   try {
-    let ids = parseIdsFromReq(req);
+    const { id } = req.body; // mảng productId được FE gửi lên
 
-    // Hard limit to avoid huge $in queries
-    ids = ids.slice(0, 20);
-
-    if (!Array.isArray(ids) || ids.length === 0) {
+    if (!Array.isArray(id) || id.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Danh sách sản phẩm đã xem không hợp lệ',
+        message: "Danh sách sản phẩm đã xem không hợp lệ",
       });
     }
 
-    // Validate ObjectId format; keep original order map
-    const orderMap = new Map();
-    const validObjectIds = [];
-    ids.forEach((id, index) => {
-      if (mongoose.Types.ObjectId.isValid(id)) {
-        validObjectIds.push(new mongoose.Types.ObjectId(id));
-        orderMap.set(String(id), index);
-      }
-    });
+    const products = await Lego.find({ _id: { $in: id } })
+      .populate("themeId", "name")
+      .populate("characterId", "name")
+      .populate("categories", "name slug");
 
-    if (validObjectIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Không có productId hợp lệ',
-      });
-    }
-
-    const docs = await Lego.find({ _id: { $in: validObjectIds } })
-      .populate('themeId', 'name')
-      .populate('characterId', 'name')
-      .populate('categories', 'name slug')
-      .lean();
-
-    // Preserve input order
-    const sorted = docs.sort((a, b) => {
-      const ai = orderMap.get(String(a._id)) ?? Infinity;
-      const bi = orderMap.get(String(b._id)) ?? Infinity;
-      return ai - bi;
-    });
-
-    return res.json({
+    res.json({
       success: true,
-      products: sorted,
+      data: products,
     });
   } catch (error) {
-    console.error('Get recently viewed products error:', error);
-    return res.status(500).json({
+    console.error("Get recently viewed products error:", error);
+    res.status(500).json({
       success: false,
-      message: 'Lỗi server khi lấy sản phẩm đã xem gần đây',
+      message: "Lỗi server khi lấy sản phẩm đã xem gần đây",
       error: error.message,
     });
   }
 };
+
 module.exports = {
   getAllProducts,
   getProductById,

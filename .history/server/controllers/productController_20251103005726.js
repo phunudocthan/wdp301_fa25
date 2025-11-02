@@ -3,7 +3,6 @@ const Theme = require("../models/Theme");
 const AgeRange = require("../models/AgeRange");
 const Difficulty = require("../models/Difficulty");
 const ThemeCharacter = require("../models/ThemeCharacter");
-const { default: mongoose } = require("mongoose");
 
 /**
  * @desc Lấy danh sách tất cả sản phẩm (Admin)
@@ -514,61 +513,33 @@ const getProductStats = async (req, res) => {
  * @route get /api/products/recently-viewed
  * @access Private (User)
  */
-const getRecentlyViewedProducts = async (req, res) => {
+const fetchProductByCategory = async (categoryId: string | null) => {
   try {
-    let ids = parseIdsFromReq(req);
+    setLoading(true);
+    setSelectedCategory(categoryId);
+    setCurrentPage(1);
 
-    // Hard limit to avoid huge $in queries
-    ids = ids.slice(0, 20);
+    const url = categoryId
+      ? `/products/category_list/${categoryId}`  // ✅ fixed path
+      : `/products`;
 
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Danh sách sản phẩm đã xem không hợp lệ',
-      });
+    const res = await axiosInstance.get(url);
+    const products = extractArray(res.data);     // ✅ always use helper
+    setFilteredProducts(products);
+
+    if (products.length === 0) {
+      message.info("No products found in this category.");
     }
-
-    // Validate ObjectId format; keep original order map
-    const orderMap = new Map();
-    const validObjectIds = [];
-    ids.forEach((id, index) => {
-      if (mongoose.Types.ObjectId.isValid(id)) {
-        validObjectIds.push(new mongoose.Types.ObjectId(id));
-        orderMap.set(String(id), index);
-      }
-    });
-
-    if (validObjectIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Không có productId hợp lệ',
-      });
+  } catch (err: any) {
+    console.error("❌ Error fetching products by category:", err);
+    if (err.response?.status === 404) {
+      message.info("No products found in this category.");
+      setFilteredProducts([]);
+    } else {
+      message.error("Failed to load products. Please try again!");
     }
-
-    const docs = await Lego.find({ _id: { $in: validObjectIds } })
-      .populate('themeId', 'name')
-      .populate('characterId', 'name')
-      .populate('categories', 'name slug')
-      .lean();
-
-    // Preserve input order
-    const sorted = docs.sort((a, b) => {
-      const ai = orderMap.get(String(a._id)) ?? Infinity;
-      const bi = orderMap.get(String(b._id)) ?? Infinity;
-      return ai - bi;
-    });
-
-    return res.json({
-      success: true,
-      products: sorted,
-    });
-  } catch (error) {
-    console.error('Get recently viewed products error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Lỗi server khi lấy sản phẩm đã xem gần đây',
-      error: error.message,
-    });
+  } finally {
+    setLoading(false);
   }
 };
 module.exports = {

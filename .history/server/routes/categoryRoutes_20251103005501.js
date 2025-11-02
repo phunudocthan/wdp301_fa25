@@ -9,7 +9,7 @@ router.get("/tree", categoryController.getCategoryTree);
 // Admin-only routes (require authentication and admin role)
 router.get(
   "/",
-  // requireAuth,
+  requireAuth,
   // requireRole("admin", "customer"),
   categoryController.getCategories
 );

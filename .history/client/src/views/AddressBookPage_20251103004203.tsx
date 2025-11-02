@@ -12,6 +12,7 @@ import type { UserAddress } from "../types/user";
 import "../styles/AddressBookPage.scss";
 import { Button } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
+import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 
 const emptyAddressForm: AddressPayload = {

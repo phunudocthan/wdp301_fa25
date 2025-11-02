@@ -97,7 +97,7 @@ useEffect(() => {
         return;
       }
 
-      const res = await axiosInstance.get("/products/recentlyViewedIds/view/recent", {
+      const res = await axiosInstance.get("/products/recently-viewed", {
         params: { ids: ids.slice(0, 8).join(",") },
         signal: controller.signal as any, // axios supports AbortController in recent versions
       });

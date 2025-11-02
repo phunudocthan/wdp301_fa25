@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import newsApi from '../api/news';
+import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import ImageModal from '../components/common/ImageModal';
 import '../styles/news.scss';
@@ -39,6 +40,7 @@ const NewsDetail: React.FC = () => {
 
   return (
     <div>
+      <Header />
       <div className="news-detail container mt-4">
         <button className="btn btn-link mb-3" onClick={() => navigate(-1)}>&larr; Back</button>
 

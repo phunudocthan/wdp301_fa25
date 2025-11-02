@@ -36,7 +36,7 @@ export default function Header() {
   );
   const avatar = user?.avatar || localStorage.getItem("avatar");
 
-  // ---- roles (rõ ràng) ----
+  // roles
   const role = user?.role ?? "guest";
   const isAdmin = role === "admin";
   const isEmployee = role === "employee";
@@ -113,7 +113,6 @@ export default function Header() {
             <>
               {isEmployee ? (
                 <>
-                  {/* Employee: chỉ 2 menu */}
                   <NavLink
                     to="/admin/themes"
                     className={({ isActive }) => (isActive ? "active" : "")}
@@ -129,7 +128,6 @@ export default function Header() {
                 </>
               ) : (
                 <>
-                  {/* Admin: full access (không lặp Themes/Characters lần 2) */}
                   <NavLink
                     to="/admin"
                     className={({ isActive }) => (isActive ? "active" : "")}
@@ -203,16 +201,16 @@ export default function Header() {
             <>
               <NavLink to="/home">Home</NavLink>
               <NavLink to="/shop">Shop</NavLink>
-               {(isEmployee || isAdmin) && <NavLink to="/employee/news">Manage News</NavLink>}
+              {(isEmployee || isAdmin) && (
+                <NavLink to="/employee/news">Manage News</NavLink>
+              )}
               <NavLink to="/news">News</NavLink>
               <NavLink to="/themes">Themes</NavLink>
+              {/* GỘP: chỉ còn một mục Orders cho user thường */}
+              {user && role !== "admin" && role !== "employee" && (
+                <NavLink to="/orders">Orders</NavLink>
+              )}
               <NavLink to="/addresses">Address Book</NavLink>
-                      {user && user.role !== 'admin' && <NavLink to="/orders">My Orders</NavLink>}
-   <NavLink to="/history-orders"
-               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-              >
-                <span>History orders</span>
-              </NavLink>  
               <NavLink to="/notifications">Notifications</NavLink>
             </>
           )}

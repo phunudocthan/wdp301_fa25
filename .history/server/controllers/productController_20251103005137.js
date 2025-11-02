@@ -3,7 +3,6 @@ const Theme = require("../models/Theme");
 const AgeRange = require("../models/AgeRange");
 const Difficulty = require("../models/Difficulty");
 const ThemeCharacter = require("../models/ThemeCharacter");
-const { default: mongoose } = require("mongoose");
 
 /**
  * @desc Lấy danh sách tất cả sản phẩm (Admin)
@@ -514,63 +513,64 @@ const getProductStats = async (req, res) => {
  * @route get /api/products/recently-viewed
  * @access Private (User)
  */
-const getRecentlyViewedProducts = async (req, res) => {
+
+export const getRecentlyViewedProducts = async (req: Request, res: Response) => {
   try {
-    let ids = parseIdsFromReq(req);
+    // Hỗ trợ cả GET (query) lẫn POST (body)
+    // GET: /products/recently-viewed?ids=a,b,c
+    // POST: { ids: ["a","b","c"] }
+    let rawIds: string[] = [];
 
-    // Hard limit to avoid huge $in queries
-    ids = ids.slice(0, 20);
+    if (req.method === "GET") {
+      const q = (req.query.ids as string | undefined) ?? (req.query.id as string | undefined);
+      if (q) rawIds = q.split(",").map((s) => s.trim()).filter(Boolean);
+    } else {
+      const bodyIds = (req.body?.ids ?? []) as string[];
+      if (Array.isArray(bodyIds)) rawIds = bodyIds;
+    }
 
-    if (!Array.isArray(ids) || ids.length === 0) {
+    if (!Array.isArray(rawIds) || rawIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Danh sách sản phẩm đã xem không hợp lệ',
+        message: "Danh sách sản phẩm đã xem không hợp lệ",
       });
     }
 
-    // Validate ObjectId format; keep original order map
-    const orderMap = new Map();
-    const validObjectIds = [];
-    ids.forEach((id, index) => {
-      if (mongoose.Types.ObjectId.isValid(id)) {
-        validObjectIds.push(new mongoose.Types.ObjectId(id));
-        orderMap.set(String(id), index);
-      }
-    });
+    // Giới hạn tối đa 8 id
+    const sliced = rawIds.slice(0, 8);
 
-    if (validObjectIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Không có productId hợp lệ',
-      });
+    // Lọc id hợp lệ
+    const validIds = sliced.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      return res.json({ success: true, data: { products: [] } });
     }
 
-    const docs = await Lego.find({ _id: { $in: validObjectIds } })
-      .populate('themeId', 'name')
-      .populate('characterId', 'name')
-      .populate('categories', 'name slug')
+    // Lấy dữ liệu; chỉ select field cần thiết
+    const docs = await Lego.find({ _id: { $in: validIds } })
+      .select("_id name slug price images stock themeId characterId categories")
+      .populate("themeId", "name")
+      .populate("characterId", "name")
+      .populate("categories", "name slug")
       .lean();
 
-    // Preserve input order
-    const sorted = docs.sort((a, b) => {
-      const ai = orderMap.get(String(a._id)) ?? Infinity;
-      const bi = orderMap.get(String(b._id)) ?? Infinity;
-      return ai - bi;
-    });
+    // Giữ nguyên thứ tự như FE gửi
+    const map = new Map(docs.map((d: any) => [String(d._id), d]));
+    const ordered = validIds.map((id) => map.get(String(id))).filter(Boolean);
 
     return res.json({
       success: true,
-      products: sorted,
+      data: { products: ordered },
     });
-  } catch (error) {
-    console.error('Get recently viewed products error:', error);
+  } catch (error: any) {
+    console.error("Get recently viewed products error:", error);
     return res.status(500).json({
       success: false,
-      message: 'Lỗi server khi lấy sản phẩm đã xem gần đây',
-      error: error.message,
+      message: "Lỗi server khi lấy sản phẩm đã xem gần đây",
+      error: error?.message,
     });
   }
 };
+
 module.exports = {
   getAllProducts,
   getProductById,

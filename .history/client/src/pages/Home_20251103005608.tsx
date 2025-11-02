@@ -80,56 +80,25 @@ export default function Home() {
   const search = params.get("search") || "";
 
   // Fetch recently viewed products
- // 🔁 replace your "Fetch recently viewed products" useEffect
-useEffect(() => {
-  let didCancel = false;
-  const controller = new AbortController();
+ useEffect(() => {
+  setRecentLoading(true);
+  const ids: string[] = JSON.parse(localStorage.getItem('recentlyViewedIds') || '[]');
 
-  const run = async () => {
-    setRecentLoading(true);
-    try {
-      const ids: string[] = typeof window !== "undefined"
-        ? JSON.parse(localStorage.getItem("recentlyViewedIds") || "[]")
-        : [];
-
-      if (!Array.isArray(ids) || ids.length === 0) {
-        if (!didCancel) setRecentlyViewed([]);
-        return;
-      }
-
-      const res = await axiosInstance.get("/products/recentlyViewedIds/view/recent", {
-        params: { ids: ids.slice(0, 8).join(",") },
-        signal: controller.signal as any, // axios supports AbortController in recent versions
-      });
-
-      const payload = res?.data;
-      const products =
-        Array.isArray(payload?.products)
-          ? payload.products
-          : Array.isArray(payload?.data?.products)
-          ? payload.data.products
-          : Array.isArray(payload?.data)
-          ? payload.data
-          : [];
-
-      if (!didCancel) setRecentlyViewed(products);
-    } catch (err: any) {
-      if (!didCancel) {
-        message.error("Failed to load recently viewed products.");
-        setRecentlyViewed([]);
-      }
-    } finally {
-      if (!didCancel) setRecentLoading(false);
-    }
-  };
-
-  run();
-  return () => {
-    didCancel = true;
-    controller.abort();
-  };
+  if (Array.isArray(ids) && ids.length) {
+    axiosInstance
+      .post('/products/recently-viewed', { ids: ids.slice(0, 8) })
+      .then((res) => {
+        setRecentlyViewed(res.data?.products || []);
+      })
+      .catch(() => {
+        message.error('Failed to load recently viewed products.');
+      })
+      .finally(() => setRecentLoading(false));
+  } else {
+    setRecentlyViewed([]);
+    setRecentLoading(false);
+  }
 }, []);
-
   // Fetch active vouchers
   useEffect(() => {
     setVoucherLoading(true);

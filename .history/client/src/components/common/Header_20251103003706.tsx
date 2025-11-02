@@ -207,12 +207,6 @@ export default function Header() {
               <NavLink to="/news">News</NavLink>
               <NavLink to="/themes">Themes</NavLink>
               <NavLink to="/addresses">Address Book</NavLink>
-                      {user && user.role !== 'admin' && <NavLink to="/orders">My Orders</NavLink>}
-   <NavLink to="/history-orders"
-               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-              >
-                <span>History orders</span>
-              </NavLink>  
               <NavLink to="/notifications">Notifications</NavLink>
             </>
           )}

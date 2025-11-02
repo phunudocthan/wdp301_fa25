@@ -12,6 +12,7 @@ import type { UserAddress } from "../types/user";
 import "../styles/AddressBookPage.scss";
 import { Button } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
+import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 
 const emptyAddressForm: AddressPayload = {
@@ -247,6 +248,7 @@ const AddressBookPage: React.FC = () => {
 
   return (
     <> 
+    <Header />
     <Button type="link" style={{ marginBottom: 24 }} onClick={() => window.history.back()}>
           <ArrowLeftOutlined />
 

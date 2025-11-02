@@ -96,7 +96,7 @@ const OrderDetailUser = () => {
 
   return (
     <>
-     
+      <Header />
       <div className="admin-container p-4">
         <Button onClick={() => navigate(-1)} style={{ marginBottom: 12 }}>
           Back

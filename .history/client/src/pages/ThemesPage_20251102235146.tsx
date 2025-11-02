@@ -45,6 +45,7 @@ export default function ThemesPage() {
 
   return (
     <>
+      <Header />
       <div className="themes-page">
         <div className="themes-hero">
           <Title level={1}>Explore LEGO Themes</Title>

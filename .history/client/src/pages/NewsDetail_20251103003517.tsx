@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import newsApi from '../api/news';
+import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import ImageModal from '../components/common/ImageModal';
 import '../styles/news.scss';

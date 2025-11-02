@@ -213,11 +213,11 @@ const NotificationsPage: React.FC = () => {
                 </div>
                 <h3>{notification.title}</h3>
                 <p>{notification.message}</p>
-                {/* {notification.link && (
+                {notification.link && (
                   <a href={notification.link} target="_blank" rel="noreferrer">
                     View more
                   </a>
-                )} */}
+                )}
               </div>
               <div className="notification-actions">
                 <button

@@ -27,6 +27,7 @@ const NewsList: React.FC = () => {
 
   return (
     <div>
+      <Header />
       <div className="news-page container mt-4">
       <header className="news-header">
         <button className="back-btn btn btn-outline-secondary btn-sm" onClick={() => navigate(-1)}>&larr; Back</button>
