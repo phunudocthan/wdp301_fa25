@@ -13,77 +13,54 @@ import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import logo from "/logo.png";
 import "../../styles/layout.scss";
-// theme toggle removed (unused imports omitted)
+import { Switch, Tooltip } from "antd";
+import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
 
 export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [query, setQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLDivElement>(null);
-  const portalRef = useRef<HTMLDivElement | null>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
   const { cart } = useCart();
   const { favoriteIds } = useFavorites();
-  
+
   const name = useMemo(
-    () => user?.name || (localStorage.getItem("name") as string | null) || "User",
+    () =>
+      (user?.name as string | undefined) ||
+      (localStorage.getItem("name") as string | null) ||
+      "User",
     [user?.name]
   );
-  const avatar = user?.avatar || (localStorage.getItem("avatar") as string | null);
-  const isAdmin = user?.role === "admin";
-  const isEmployee = user?.role === "employee";
-  const isAdminSection = isAdmin && location.pathname.startsWith("/admin");
-  const isDarkMode = localStorage.getItem("theme") === "dark";
+  const avatar = user?.avatar || localStorage.getItem("avatar");
 
-  // theme toggle UI removed; keep isDarkMode state and body attribute
+  // --- Roles ---
+  const role = user?.role ?? "guest";
+  const isAdmin = role === "admin";
+  const isEmployee = role === "employee";
+  const isAdminSection = isAdmin || (isEmployee && location.pathname.startsWith("/admin"));
 
-  // Apply attribute for custom CSS
+  // --- Dark mode ---
+  const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem("theme") === "dark");
+  const toggleTheme = (checked: boolean) => {
+    setIsDarkMode(checked);
+    localStorage.setItem("theme", checked ? "dark" : "light");
+  };
   useEffect(() => {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
+
+  // --- Close dropdown when clicking outside ---
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      // If click is inside the button that toggles the menu, ignore
-      if (buttonRef.current && buttonRef.current.contains(target)) return;
-
-      // If portal dropdown exists and contains the click, ignore
-      if (portalRef.current && portalRef.current.contains(target)) return;
-
-      // Otherwise close
-      setShowDropdown(false);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
     };
-
-    const handleWindowChange = () => {
-      // Recompute portal position on resize/scroll
-      if (!buttonRef.current) return;
-      const rect = buttonRef.current.getBoundingClientRect();
-      const width = 200; // match dropdown width below
-      setDropdownStyle({
-        position: "fixed",
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-        width,
-        zIndex: 99999,
-      });
-    };
-
     document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("resize", handleWindowChange);
-    window.addEventListener("scroll", handleWindowChange, true);
-
-    // initial compute
-    handleWindowChange();
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("resize", handleWindowChange);
-      window.removeEventListener("scroll", handleWindowChange, true);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -94,8 +71,9 @@ export default function Header() {
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (query.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(query.trim())}`);
+    const q = query.trim();
+    if (q) {
+      navigate(`/shop?search=${encodeURIComponent(q)}`);
       setQuery("");
     }
   };
@@ -108,102 +86,45 @@ export default function Header() {
   return (
     <header className="header">
       <div className="container header-inner">
-        {/* --- LEFT: Logo --- */}
-        <Link
-          to="/home"
-          className="brand"
-          onClick={() => {
-            setShowDropdown(false);
-          }}
-        >
+        {/* Logo */}
+        <Link to="/home" className="brand" onClick={() => setShowDropdown(false)}>
           <img src={logo} alt="LEGO Logo" className="logo" />
           <span>LEGOs</span>
         </Link>
 
-        {/* --- CENTER: Navigation --- */}
+        {/* Navigation */}
         <nav className="nav">
           {isAdminSection ? (
             <>
-              <NavLink
-                to="/admin"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Dashboard
-              </NavLink>
-              <NavLink
-                to="/admin/dashboard/revenue"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Revenue
-              </NavLink>
-              <NavLink
-                to="/admin/dashboard/orders"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Order Stats
-              </NavLink>
-              <NavLink
-                to="/admin/orders"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Orders
-              </NavLink>
-              <NavLink
-                to="/admin/products"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Products
-              </NavLink>
-              <NavLink
-                to="/admin/categories"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Categories
-              </NavLink>
-              <NavLink
-                to="/admin/users"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Users
-              </NavLink>
-              <NavLink
-                to="/admin/notifications"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Notifications
-              </NavLink>
-              <NavLink
-                to="/admin/vouchers"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Vouchers
-              </NavLink>
-              <NavLink
-                to="/admin/reviews"
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                Reviews
-              </NavLink>
+              <NavLink to="/admin" end>Dashboard</NavLink>
+              <NavLink to="/admin/dashboard/revenue">Revenue</NavLink>
+              <NavLink to="/admin/dashboard/orders">Order Stats</NavLink>
+              <NavLink to="/admin/orders">Orders</NavLink>
+              <NavLink to="/admin/products">Products</NavLink>
+              <NavLink to="/admin/categories">Categories</NavLink>
+              <NavLink to="/admin/users">Users</NavLink>
+              <NavLink to="/admin/notifications">Notifications</NavLink>
+              <NavLink to="/admin/vouchers">Vouchers</NavLink>
+              <NavLink to="/admin/reviews">Reviews</NavLink>
+              <NavLink to="/admin/themes">Themes</NavLink>
+              <NavLink to="/admin/characters">Characters</NavLink>
             </>
           ) : (
             <>
-              <NavLink to="/shop">Shop</NavLink>
               <NavLink to="/home">Home</NavLink>
+              <NavLink to="/shop">Shop</NavLink>
               {(isEmployee || isAdmin) && <NavLink to="/employee/news">Manage News</NavLink>}
               <NavLink to="/news">News</NavLink>
+              <NavLink to="/themes">Themes</NavLink>
               <NavLink to="/addresses">Address Book</NavLink>
+              {user && user.role !== "admin" && <NavLink to="/orders">My Orders</NavLink>}
+              <NavLink to="/history-orders">History Orders</NavLink>
               <NavLink to="/notifications">Notifications</NavLink>
-              {user && user.role !== 'admin' && <NavLink to="/orders">My Orders</NavLink>}
-   <NavLink to="/history-orders"
-               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-              >
-                <span>History orders</span>
-              </NavLink>  
             </>
           )}
         </nav>
 
-        {/* --- RIGHT: Search, Icons, Avatar --- */}
+        {/* RIGHT: search, theme, icons, user */}
         <div className="header-right" onClick={(e) => e.stopPropagation()}>
           {!isAdminSection && (
             <form className="search-box" onSubmit={handleSearchSubmit}>
@@ -217,6 +138,19 @@ export default function Header() {
             </form>
           )}
 
+          {/* Dark / light toggle */}
+          <div className="mx-2">
+            <Tooltip title={isDarkMode ? "Dark mode" : "Light mode"}>
+              <Switch
+                checkedChildren={<MoonOutlined />}
+                unCheckedChildren={<BulbOutlined />}
+                checked={isDarkMode}
+                onChange={toggleTheme}
+              />
+            </Tooltip>
+          </div>
+
+          {/* Icons */}
           <div className="icons">
             {!isAdminSection && (
               <>
@@ -225,20 +159,12 @@ export default function Header() {
                   onClick={() => navigate("/favorites")}
                   title="Favourites"
                 >
-                  {(favoriteIds?.length ?? 0) > 0 && (
-                    <span className="notification-badge">
-                      {favoriteIds?.length ?? 0}
-                    </span>
+                  {favoriteIds?.length > 0 && (
+                    <span className="notification-badge">{favoriteIds.length}</span>
                   )}
                   <FaHeart className="icon" />
                 </div>
-                <div
-                  className="icon cursor-pointer"
-                  onClick={(evt) => {
-                    evt.stopPropagation();
-                    navigate("/cart");
-                  }}
-                >
+                <div className="icon cursor-pointer" onClick={() => navigate("/cart")}>
                   <FaShoppingBag />
                   <span className="cart-count">{cart?.items?.length ?? 0}</span>
                 </div>
@@ -246,57 +172,34 @@ export default function Header() {
             )}
           </div>
 
-          <div className="relative user-menu">
+          {/* User dropdown */}
+          <div className="relative user-menu" ref={dropdownRef}>
             <div
-              ref={buttonRef}
-              onClick={() => {
-                setShowDropdown((prev) => !prev);
-                // compute position immediately when opening
-                if (buttonRef.current) {
-                  const rect = buttonRef.current.getBoundingClientRect();
-                  const width = 200;
-                  setDropdownStyle({
-                    position: "fixed",
-                    top: rect.bottom + 8,
-                    right: window.innerWidth - rect.right,
-                    width,
-                    zIndex: 99999,
-                  });
-                }
-              }}
+              onClick={() => setShowDropdown((prev) => !prev)}
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded-full px-2 py-1 transition"
               title="User Menu"
             >
               <div className="rounded-full overflow-hidden h-9 w-9">
                 {avatar ? (
-                  <img
-                    src={avatar}
-                    alt="avatar"
-                    className="user-avatar"
-                    referrerPolicy="no-referrer"
-                  />
+                  <img src={avatar} alt="avatar" className="user-avatar" referrerPolicy="no-referrer" />
                 ) : (
                   <div className="bg-blue-600 text-white flex items-center justify-center h-full w-full text-sm font-bold rounded-full">
-                    {name?.charAt(0) || "U"}
+                    {(name ?? "U").charAt(0)}
                   </div>
                 )}
               </div>
               <FaChevronDown
-                className={`text-gray-600 text-xs transition-transform ${showDropdown ? "rotate-180" : ""
-                  }`}
+                className={`text-gray-600 text-xs transition-transform ${
+                  showDropdown ? "rotate-180" : ""
+                }`}
               />
             </div>
 
             {showDropdown && (
-              // Render dropdown into a fixed-position element so it cannot affect header layout
-              <div
-                ref={(el) => (portalRef.current = el)}
-                style={dropdownStyle}
-                className="bg-white rounded-lg shadow-lg border border-gray-200 py-2"
-              >
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                 <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
-                  <p className="font-medium">{name}</p>
-                  <p className="text-gray-500 text-xs">{user?.email}</p>
+                  <p className="font-medium truncate">{name}</p>
+                  <p className="text-gray-500 text-xs truncate">{user?.email ?? ""}</p>
                 </div>
 
                 <button
@@ -307,8 +210,6 @@ export default function Header() {
                   <span>Profile</span>
                 </button>
 
-                {/* My Orders removed from profile dropdown by request */}
-             
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"

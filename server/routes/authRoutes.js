@@ -1,10 +1,7 @@
 ﻿const express = require("express");
 const passport = require("passport");
 const rateLimit = require("express-rate-limit");
-const {
-  requireAuth,
-  requireRole,
-} = require("../middleware/authMiddleware");
+const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 const authController = require("../controllers/authController");
 
 const router = express.Router();
@@ -39,6 +36,11 @@ router.post(
   resendVerificationLimiter,
   authController.resendVerificationEmail
 );
+router.post(
+  "/resend-verification",
+  resendVerificationLimiter,
+  authController.resendVerificationEmail
+);
 router.get("/verify-email", authController.verifyEmail);
 router.post(
   "/forgot-password",
@@ -51,6 +53,20 @@ router.post(
   authController.resetPassword
 );
 
+// OAuth URLs endpoint
+router.get("/oauth-urls", (req, res) => {
+  const baseUrl =
+    process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+  res.json({
+    googleAuthUrl: authController.googleAuthEnabled
+      ? `${baseUrl}/api/auth/google`
+      : null,
+    facebookAuthUrl: authController.facebookAuthEnabled
+      ? `${baseUrl}/api/auth/facebook`
+      : null,
+  });
+});
+
 if (authController.googleAuthEnabled) {
   router.get(
     "/google",
@@ -61,6 +77,19 @@ if (authController.googleAuthEnabled) {
     "/google/callback",
     passport.authenticate("google", { failureRedirect: "/login" }),
     authController.handleGoogleCallback
+  );
+}
+
+if (authController.facebookAuthEnabled) {
+  router.get(
+    "/facebook",
+    passport.authenticate("facebook", { scope: ["public_profile"] })
+  );
+
+  router.get(
+    "/facebook/callback",
+    passport.authenticate("facebook", { failureRedirect: "/login" }),
+    authController.handleFacebookCallback
   );
 }
 

@@ -1,0 +1,141 @@
+import React, { useEffect, useState } from 'react';
+import axiosInstance from '../api/axiosInstance';
+import { Card, List, Button, message, Tag, Descriptions, Result, Skeleton, Space } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Header from '../components/common/Header';
+
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'VND',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+ 
+const OrderHistoryListUser: React.FC = () => {
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  // processingId removed (not used in this view)
+    const location = useLocation();
+
+  const query = new URLSearchParams(location.search);
+  const status = query.get("status");
+ useEffect(() => {
+   if (status === "success") {
+      message.success("Thanh toán thành công!");
+    } else if (status === "failed") {
+      message.error("Thanh toán thất bại. Vui lòng thử lại.");
+    }
+  }, [status]);
+  // 
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.get(`/orders/my-order-history`);
+      setOrders(res.data.items || []);
+    } catch (err: any) {
+      message.error(err.response?.data?.message || 'Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  // cancel handling removed (not used in list view)
+
+  if (loading)
+    return (
+      <div className="p-6">
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </div>
+    );
+
+  if (!orders.length)
+    return (
+      <div className="p-6">
+        <Result
+          status="info"
+          title="You don't have any orders yet"
+          subTitle="Looks like you haven't placed an order. Start shopping to create your first order."
+          extra={
+            <Space>
+              <Button type="primary" onClick={() => navigate('/shop')}>
+                Start shopping
+              </Button>
+              <Button onClick={() => navigate('/home')}>Go to homepage</Button>
+            </Space>
+          }
+        />
+      </div>
+    );
+
+  return (
+    <> <Header />
+    <div className="p-4"> 
+     
+      <h2 className="text-xl font-semibold mb-4">My History Orders</h2>
+
+      <List
+        dataSource={orders}
+        renderItem={(order) => (
+          <Card
+            key={order._id}
+            style={{ marginBottom: 16 }}
+            title={
+              <div className="flex justify-between items-center">
+                <span>Order {order.orderNumber}</span>
+                <Tag
+                  color={
+                    order.status === 'pending'
+                      ? 'orange'
+                      : order.status === 'confirmed'
+                      ? 'blue'
+                      : order.status === 'delivered'
+                      ? 'green'
+                      : 'red'
+                  }
+                >
+                  {order.status}
+                </Tag>
+              </div>
+            }
+            extra={
+              <Button type="link" onClick={() => navigate(`/orders/detail/${order._id}`)}>
+                View Details
+              </Button>
+            }
+          >
+            <Descriptions column={2} size="small">
+              <Descriptions.Item label="Total">
+                {currencyFormatter.format(order.total || 0)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Payment">
+                {order.paymentMethod} - {order.paymentStatus}
+              </Descriptions.Item>
+              <Descriptions.Item label="Shipping">
+                {order.shippingAddress?.address}
+              </Descriptions.Item>
+            </Descriptions>
+
+        
+              <div className="mt-3">
+                
+                  <Button type="primary" onClick={() => navigate(`/checkout-reorder/${order._id}`)}>
+Reorder
+                  </Button>
+          
+              </div>
+           
+          </Card>
+        )}
+      />
+    </div>
+    </>
+  );
+};
+
+export default OrderHistoryListUser;

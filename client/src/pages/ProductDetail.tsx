@@ -53,6 +53,25 @@ export default function ProductDetail() {
   const [form, setForm] = useState<{ rating: number; comment: string; images: string[] }>({ rating: 0, comment: "", images: [] });
   const [favoritePending, setFavoritePending] = useState(false);
 
+  const recordRecentlyViewed = (productId?: string) => {
+    if (!productId) return;
+
+    const key = "recentlyViewedIds";
+    let viewed = JSON.parse(localStorage.getItem(key) || "[]");
+    viewed = viewed.filter((storedId: string) => storedId !== productId);
+    viewed.unshift(productId);
+    if (viewed.length > 10) {
+      viewed = viewed.slice(0, 10);
+    }
+    localStorage.setItem(key, JSON.stringify(viewed));
+
+    if (storage.getToken()) {
+      void addRecentlyViewed(productId).catch((error) =>
+        console.warn("[recentlyViewed] failed to record detail view:", error)
+      );
+    }
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -62,6 +81,7 @@ export default function ProductDetail() {
           : [];
         setProduct({ ...res.data, images: normalizedImages });
         setSelectedImg(normalizedImages[0] || null);
+        recordRecentlyViewed(id);
       } catch (error) {
         console.error("❌ Error loading product:", error);
       } finally {
@@ -81,6 +101,30 @@ export default function ProductDetail() {
       console.error("Load reviews error", err);
     } finally {
       setReviewsLoading(false);
+    }
+  };
+
+  const handleVote = async (reviewId: string, vote: 'up' | 'down') => {
+    if (!user) {
+      message.warning('Vui lòng đăng nhập để thực hiện hành động này');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const res = await ReviewAPI.voteReview(reviewId, vote);
+      // res is expected to be { success: true, data: { up: number, down: number } }
+      const counts = res?.data || res;
+      setReviews((prev) =>
+        prev.map((r) =>
+          r._id === reviewId
+            ? { ...r, helpful: { up: counts.up ?? 0, down: counts.down ?? 0 } }
+            : r
+        )
+      );
+    } catch (err: any) {
+      console.error('Vote error', err);
+      message.error(err?.message || 'Không thể thực hiện hành động.');
     }
   };
 
@@ -119,7 +163,6 @@ export default function ProductDetail() {
 
   return (
     <>
-      <Header />
       <div className="product-detail-page">
         <button
           className="back-btn"
@@ -342,7 +385,7 @@ export default function ProductDetail() {
             <strong>{product.name}</strong>
           </div>
 
-         
+
           {/* Reviews list */}
           <div style={{ marginTop: 20 }}>
             {reviewsLoading ? <p>Loading reviews...</p> : (
@@ -356,7 +399,35 @@ export default function ProductDetail() {
                         {r.images.map((img: string, i: number) => <img key={i} src={img} alt={`rev-${i}`} style={{ width: 80, height: 80, objectFit: 'cover' }} />)}
                       </div>
                     )}
-                    <div style={{ marginTop: 8, fontSize: 13, color: '#777' }}>Helpful: {r.helpful?.up || 0} / {r.helpful?.down || 0}</div>
+                    <div style={{ marginTop: 8, fontSize: 13, color: '#777', display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          onClick={() => handleVote(r._id, 'up')}
+                          style={{ border: '1px solid #ddd', background: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer' }}
+                          aria-label="Helpful up"
+                        >
+                          👍
+                        </button>
+                        <span>{r.helpful?.up || 0}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          onClick={() => handleVote(r._id, 'down')}
+                          style={{ border: '1px solid #ddd', background: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer' }}
+                          aria-label="Helpful down"
+                        >
+                          👎
+                        </button>
+                        <span>{r.helpful?.down || 0}</span>
+                      </div>
+                    </div>
+                    {/* message replies of admin and replies is map */}
+                    {r.replies && (
+                      <div style={{ marginTop: 8, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
+                        <strong>Admin Reply:</strong> {r.replies.map((reply: any, i: number) => (<div key={i} style={{ marginTop: 4 }}>{reply.message} <span style={{ fontSize: 12, color: '#999' }}>({new Date(reply.createdAt).toLocaleDateString()})</span></div>))}
+                      </div>
+                    )}
                   </div>
                 ))
               )

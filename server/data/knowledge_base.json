@@ -1,0 +1,344 @@
+{
+  "knowledgeBase": {
+    "version": "1.0",
+    "lastUpdate": "2025-11-01",
+    "categories": [
+      {
+        "id": "customer_service",
+        "name": "Chăm sóc khách hàng",
+        "items": [
+          {
+            "question": "Làm sao để liên hệ hỗ trợ?",
+            "answer": "Bạn có thể liên hệ qua Hotline 1900-5346-86 (24/7), Email support@legoshop.vn, hoặc chat trực tiếp với chúng tôi. Ngoài ra có thể gọi: 0901 234 567 (Zalo/Viber)",
+            "keywords": [
+              "liên hệ",
+              "hỗ trợ",
+              "hotline",
+              "số điện thoại",
+              "email"
+            ]
+          },
+          {
+            "question": "Giờ làm việc của cửa hàng?",
+            "answer": "Cửa hàng mở cửa từ 9:00 - 21:00 (HN, ĐN) và 9:00 - 22:00 (HCM) tất cả các ngày trong tuần. Hotline 24/7, nhưng tư vấn viên trực 8:00 - 22:00",
+            "keywords": ["giờ làm việc", "mở cửa", "đóng cửa", "thời gian"]
+          },
+          {
+            "question": "Địa chỉ cửa hàng ở đâu?",
+            "answer": "Chúng tôi có 3 chi nhánh:\n- Hà Nội: 123 Láng Hạ, Ba Đình (024 3456 7890)\n- TP.HCM: 456 Nguyễn Huệ, Quận 1 (028 9876 5432)\n- Đà Nẵng: 789 Bạch Đằng, Hải Châu (0236 3333 4444)",
+            "keywords": [
+              "địa chỉ",
+              "cửa hàng",
+              "chi nhánh",
+              "showroom",
+              "hà nội",
+              "sài gòn",
+              "đà nẵng"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "shipping",
+        "name": "Giao hàng",
+        "items": [
+          {
+            "question": "Thời gian giao hàng bao lâu?",
+            "answer": "Nội thành: 1-2 ngày làm việc. Ngoại thành: 3-5 ngày làm việc. Vùng xa: 5-7 ngày. Đơn hàng được xử lý trong 24h sau khi đặt",
+            "keywords": [
+              "thời gian giao hàng",
+              "ship",
+              "vận chuyển",
+              "bao lâu",
+              "mất bao nhiêu ngày"
+            ]
+          },
+          {
+            "question": "Phí ship bao nhiêu?",
+            "answer": "Miễn phí ship cho đơn từ 500,000đ. Dưới 500k: phí ship 30,000đ - 50,000đ tùy khu vực. Vùng xa có thể phụ thu thêm",
+            "keywords": [
+              "phí ship",
+              "phí vận chuyển",
+              "free ship",
+              "miễn phí giao hàng",
+              "chi phí giao"
+            ]
+          },
+          {
+            "question": "Có giao hàng COD không?",
+            "answer": "Có! Chúng tôi hỗ trợ thanh toán khi nhận hàng (COD) cho tất cả đơn hàng. Phí COD: miễn phí",
+            "keywords": ["COD", "thanh toán khi nhận hàng", "trả tiền khi nhận"]
+          },
+          {
+            "question": "Kiểm tra đơn hàng như thế nào?",
+            "answer": "Bạn có thể kiểm tra đơn hàng qua: 1) Đăng nhập vào tài khoản > Đơn hàng của tôi, 2) Email xác nhận đơn hàng, 3) Chat với QBot cung cấp mã đơn, 4) Gọi hotline 1900-5346-86",
+            "keywords": [
+              "kiểm tra đơn hàng",
+              "tra cứu",
+              "đơn hàng của tôi",
+              "order tracking"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "name": "Thanh toán",
+        "items": [
+          {
+            "question": "Có những hình thức thanh toán nào?",
+            "answer": "Chúng tôi chấp nhận: 1) COD (tiền mặt khi nhận hàng), 2) Chuyển khoản ngân hàng, 3) Thẻ tín dụng/ghi nợ (Visa, MasterCard), 4) Ví điện tử (Momo, ZaloPay), 5) VNPay QR Code",
+            "keywords": [
+              "thanh toán",
+              "payment",
+              "hình thức thanh toán",
+              "trả tiền"
+            ]
+          },
+          {
+            "question": "Có được thanh toán trả góp không?",
+            "answer": "Có! Chúng tôi hỗ trợ trả góp 0% qua thẻ tín dụng cho đơn từ 3 triệu. Các ngân hàng liên kết: VPBank, TPBank, FE Credit, Home Credit",
+            "keywords": ["trả góp", "분할", "installment", "mua chậm trả"]
+          }
+        ]
+      },
+      {
+        "id": "return_policy",
+        "name": "Đổi trả & Hoàn tiền",
+        "items": [
+          {
+            "question": "Chính sách đổi trả như thế nào?",
+            "answer": "Đổi trả trong 30 ngày kể từ khi nhận hàng. Điều kiện: Hộp nguyên seal chưa mở, còn đầy đủ phụ kiện. Miễn phí đổi trả nếu lỗi nhà sản xuất. Liên hệ: nam.returns@legoshop.vn hoặc 0956 789 012",
+            "keywords": [
+              "đổi trả",
+              "return",
+              "hoàn trả",
+              "trả hàng",
+              "không vừa ý"
+            ]
+          },
+          {
+            "question": "Hoàn tiền mất bao lâu?",
+            "answer": "Sau khi nhận và kiểm tra hàng trả về (1-2 ngày), hoàn tiền trong 3-5 ngày làm việc. Hoàn về tài khoản/ví điện tử hoặc nhận tiền mặt tại cửa hàng",
+            "keywords": ["hoàn tiền", "refund", "trả tiền lại", "nhận lại tiền"]
+          },
+          {
+            "question": "Đổi size/màu được không?",
+            "answer": "Được! Đổi size/màu miễn phí trong 30 ngày nếu hàng còn nguyên seal. Nếu đã mở hộp, không hỗ trợ đổi (trừ lỗi sản xuất)",
+            "keywords": ["đổi màu", "đổi size", "exchange", "thay đổi"]
+          }
+        ]
+      },
+      {
+        "id": "product_info",
+        "name": "Thông tin sản phẩm",
+        "items": [
+          {
+            "question": "LEGO chính hãng hay hàng nhái?",
+            "answer": "Tất cả sản phẩm đều là LEGO chính hãng 100% nhập khẩu từ Đan Mạch, Trung Quốc (nhà máy LEGO), và các quốc gia có nhà máy LEGO. Có hóa đơn VAT, tem chống hàng giả",
+            "keywords": [
+              "chính hãng",
+              "authentic",
+              "hàng thật",
+              "hàng nhái",
+              "fake"
+            ]
+          },
+          {
+            "question": "Bảo hành như thế nào?",
+            "answer": "Bảo hành 12 tháng lỗi nhà sản xuất (mảnh ghép bị lỗi, thiếu chi tiết). Hỗ trợ kỹ thuật lắp ráp miễn phí trọn đời. Liên hệ: dung.support@legoshop.vn hoặc 0967 890 123",
+            "keywords": ["bảo hành", "warranty", "lỗi", "hỏng"]
+          },
+          {
+            "question": "Có hướng dẫn lắp ráp không?",
+            "answer": "Có! Mỗi bộ đều kèm sách hướng dẫn chi tiết bằng hình ảnh. Ngoài ra có video hướng dẫn trên website và YouTube channel. Hỗ trợ qua hotline nếu gặp khó khăn",
+            "keywords": [
+              "hướng dẫn",
+              "lắp ráp",
+              "instructions",
+              "cách lắp",
+              "tutorial"
+            ]
+          },
+          {
+            "question": "Mua sỉ có giảm giá không?",
+            "answer": "Có! Mua từ 10 bộ trở lên giảm 5%, từ 20 bộ giảm 10%. Đơn doanh nghiệp/trường học có chính sách riêng. Liên hệ: minh.expert@legoshop.vn hoặc 0912 345 678",
+            "keywords": [
+              "mua sỉ",
+              "wholesale",
+              "số lượng lớn",
+              "doanh nghiệp",
+              "trường học"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "promotions",
+        "name": "Khuyến mãi & Ưu đãi",
+        "items": [
+          {
+            "question": "Có khuyến mãi gì không?",
+            "answer": "Khách mới: Giảm 10% đơn đầu + miễn phí ship + voucher 100k. Thành viên: Tích điểm, ưu đãi sinh nhật, xem hàng mới sớm. Theo dõi Facebook/Instagram để cập nhật flash sale",
+            "keywords": [
+              "khuyến mãi",
+              "promotion",
+              "giảm giá",
+              "sale",
+              "ưu đãi",
+              "discount"
+            ]
+          },
+          {
+            "question": "Làm sao để có voucher?",
+            "answer": "Voucher có từ: 1) Đăng ký thành viên mới, 2) Mua hàng tích điểm, 3) Sinh nhật, 4) Event đặc biệt, 5) Newsletter email. Đăng ký: register@legoshop.vn",
+            "keywords": ["voucher", "mã giảm giá", "coupon", "code"]
+          }
+        ]
+      },
+      {
+        "id": "account",
+        "name": "Tài khoản",
+        "items": [
+          {
+            "question": "Đăng ký tài khoản như thế nào?",
+            "answer": "Click 'Đăng ký' ở góc trên phải, điền email/số điện thoại và mật khẩu. Xác nhận qua email/SMS. Hoặc đăng ký nhanh qua Google/Facebook",
+            "keywords": ["đăng ký", "register", "tạo tài khoản", "sign up"]
+          },
+          {
+            "question": "Quên mật khẩu phải làm sao?",
+            "answer": "Click 'Quên mật khẩu' tại trang đăng nhập, nhập email đã đăng ký, làm theo hướng dẫn trong email để đặt lại mật khẩu. Hoặc liên hệ hotline để được hỗ trợ",
+            "keywords": [
+              "quên mật khẩu",
+              "forgot password",
+              "đặt lại mật khẩu",
+              "reset"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "product_recommendations",
+        "name": "Gợi ý sản phẩm",
+        "items": [
+          {
+            "question": "LEGO cho trẻ em độ tuổi nào?",
+            "answer": "LEGO DUPLO: 1.5-5 tuổi (mảnh lớn, an toàn)\nLEGO Classic/City: 4-12 tuổi (phổ biến nhất)\nLEGO Technic: 9+ tuổi (cơ khí, phức tạp)\nLEGO Creator Expert: 16+ tuổi (người lớn, display)\nLuôn kiểm tra độ tuổi khuyến nghị trên hộp",
+            "keywords": ["độ tuổi", "age", "trẻ em", "bé mấy tuổi", "phù hợp"]
+          },
+          {
+            "question": "Chủ đề LEGO nào phổ biến?",
+            "answer": "Top chủ đề bán chạy:\n1. LEGO City (xe, nhà, công việc)\n2. LEGO Technic (xe đua, máy móc)\n3. LEGO Star Wars\n4. LEGO Marvel/DC\n5. LEGO Friends (dành cho bé gái)\n6. LEGO Architecture (kiến trúc nổi tiếng)\n7. LEGO Creator (3-in-1)",
+            "keywords": ["chủ đề", "theme", "loại nào", "series", "bộ sưu tập"]
+          },
+          {
+            "question": "Nên mua LEGO gì làm quà?",
+            "answer": "Tùy người nhận:\n- Trẻ em: LEGO City, Friends, Classic\n- Người lớn: Creator Expert, Architecture, Technic\n- Fan phim: Star Wars, Marvel, Harry Potter\n- Người mới: Bộ nhỏ 200-500 mảnh\nGói quà miễn phí khi mua!",
+            "keywords": ["quà tặng", "gift", "sinh nhật", "tặng", "quà"]
+          }
+        ]
+      },
+      {
+        "id": "technical",
+        "name": "Kỹ thuật & Hỗ trợ",
+        "items": [
+          {
+            "question": "Thiếu mảnh ghép phải làm sao?",
+            "answer": "Liên hệ ngay dung.support@legoshop.vn hoặc 0967 890 123 với thông tin: mã sản phẩm, số mảnh thiếu (có ảnh nếu được). Chúng tôi sẽ gửi mảnh thay thế miễn phí trong 3-5 ngày",
+            "keywords": ["thiếu mảnh", "missing piece", "mất mảnh", "không đủ"]
+          },
+          {
+            "question": "Lắp sai phải làm sao?",
+            "answer": "Đừng lo! LEGO được thiết kế để tháo lắp nhiều lần. Kiểm tra lại sách hướng dẫn, hoặc xem video tutorial trên web. Vẫn khó? Gọi hotline hỗ trợ: 0967 890 123",
+            "keywords": ["lắp sai", "sai bước", "làm lại", "tháo ra"]
+          },
+          {
+            "question": "Làm sạch LEGO như thế nào?",
+            "answer": "Rửa bằng nước ấm + xà phòng nhẹ, dùng bàn chải mềm. KHÔNG dùng nước nóng >40°C, KHÔNG cho vào máy rửa chén. Để khô tự nhiên trước khi cất",
+            "keywords": ["làm sạch", "vệ sinh", "rửa", "clean", "bẩn"]
+          }
+        ]
+      }
+    ],
+    "quick_answers": {
+      "greeting": [
+        "Xin chào! Tôi là QBot - trợ lý AI của LEGO Shop. Tôi có thể giúp gì cho bạn hôm nay?",
+        "Chào bạn! Mình có thể tư vấn sản phẩm, kiểm tra đơn hàng, hoặc trả lời thắc mắc về LEGO. Bạn cần hỗ trợ gì nhé?"
+      ],
+      "thanks": [
+        "Rất vui được giúp bạn! Nếu có thắc mắc gì, cứ hỏi mình nhé! 😊",
+        "Không có gì! Chúc bạn có trải nghiệm mua sắm vui vẻ với LEGO! 🎉"
+      ],
+      "cant_help": [
+        "Xin lỗi, mình chưa thể xử lý yêu cầu này. Bạn vui lòng liên hệ hotline 1900-5346-86 để được hỗ trợ tốt hơn nhé!",
+        "Đây là yêu cầu đặc biệt mà mình cần chuyển cho tư vấn viên. Bạn có thể gọi 1900-5346-86 hoặc để lại email để được liên hệ?"
+      ]
+    },
+    "contact_info": {
+      "hotline": "1900-5346-86",
+      "phone": "0901 234 567",
+      "email": "support@legoshop.vn",
+      "working_hours": "8:00 - 22:00 hàng ngày",
+      "branches": [
+        {
+          "city": "Hà Nội",
+          "address": "123 Láng Hạ, Ba Đình",
+          "phone": "024 3456 7890",
+          "hours": "9:00 - 21:00"
+        },
+        {
+          "city": "TP.HCM",
+          "address": "456 Nguyễn Huệ, Quận 1",
+          "phone": "028 9876 5432",
+          "hours": "9:00 - 22:00"
+        },
+        {
+          "city": "Đà Nẵng",
+          "address": "789 Bạch Đằng, Hải Châu",
+          "phone": "0236 3333 4444",
+          "hours": "9:00 - 21:00"
+        }
+      ],
+      "experts": [
+        {
+          "name": "Anh Minh",
+          "specialty": "LEGO Technic & Architecture",
+          "phone": "0912 345 678",
+          "email": "minh.expert@legoshop.vn"
+        },
+        {
+          "name": "Chị Lan",
+          "specialty": "LEGO Friends & Disney",
+          "phone": "0923 456 789",
+          "email": "lan.expert@legoshop.vn"
+        },
+        {
+          "name": "Anh Tuấn",
+          "specialty": "LEGO Star Wars & Marvel",
+          "phone": "0934 567 890",
+          "email": "tuan.expert@legoshop.vn"
+        }
+      ]
+    },
+    "policies": {
+      "shipping": {
+        "free_threshold": 500000,
+        "fee_range": "30,000đ - 50,000đ",
+        "inner_city": "1-2 ngày",
+        "outer_city": "3-5 ngày",
+        "remote": "5-7 ngày"
+      },
+      "return": {
+        "period": "30 ngày",
+        "condition": "Hộp nguyên seal, chưa mở",
+        "free_return": "Lỗi nhà sản xuất",
+        "refund_time": "3-5 ngày làm việc"
+      },
+      "warranty": {
+        "period": "12 tháng",
+        "coverage": "Lỗi nhà sản xuất, mảnh ghép bị lỗi",
+        "lifetime_support": "Hỗ trợ kỹ thuật lắp ráp"
+      }
+    }
+  }
+}

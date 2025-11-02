@@ -19,6 +19,14 @@ const USE_GOOGLE_AUTH = Boolean(
     process.env.GOOGLE_CALLBACK_URL
 );
 
+const USE_FACEBOOK_AUTH = Boolean(
+  process.env.FACEBOOK_APP_ID &&
+    process.env.FACEBOOK_APP_SECRET &&
+    process.env.FACEBOOK_CALLBACK_URL
+);
+
+const USE_SOCIAL_AUTH = USE_GOOGLE_AUTH || USE_FACEBOOK_AUTH;
+
 const io = new Server(server, {
   cors: {
     origin: CLIENT_ORIGIN,
@@ -37,7 +45,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (USE_GOOGLE_AUTH) {
+if (USE_SOCIAL_AUTH) {
   app.use(
     session({
       secret:
@@ -127,18 +135,21 @@ app.get("/api/health", async (req, res) => {
 
 const User = require("./models/User");
 const Theme = require("./models/Theme");
+const ThemeCharacter = require("./models/ThemeCharacter");
 const AgeRange = require("./models/AgeRange");
 const Difficulty = require("./models/Difficulty");
 const Lego = require("./models/Lego");
 const Order = require("./models/Order");
 const Review = require("./models/Review");
 const Voucher = require("./models/Voucher");
+const aiChatRoutes = require("./routes/aiChatRoutes");
 
 app.get("/api/database/stats", async (req, res) => {
   try {
     const stats = {
       users: await User.countDocuments(),
       themes: await Theme.countDocuments(),
+      themeCharacters: await ThemeCharacter.countDocuments(),
       ageRanges: await AgeRange.countDocuments(),
       difficulties: await Difficulty.countDocuments(),
       legos: await Lego.countDocuments(),
@@ -209,7 +220,10 @@ const vnpayRoutes = require("./routes/vnpay");
 const recentlyViewedRoutes = require("./routes/recentlyViewedRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const themeRoutes = require("./routes/themeRoutes");
 
+// Mount auth routes at both /auth and /api/auth for compatibility
+app.use("/auth", authRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
@@ -220,14 +234,17 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/vnpay", vnpayRoutes);
 
+app.use("/api/themes", themeRoutes);
 app.use("/api/legos", (req, res) =>
   res.json({ message: "LEGO routes coming soon..." })
 );
-app.use("/recently-viewed", recentlyViewedRoutes);
+app.use("/api/recently-viewed", recentlyViewedRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/ai", aiChatRoutes);
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);

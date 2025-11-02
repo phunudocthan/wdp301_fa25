@@ -1,5 +1,5 @@
-export type UserRole = 'customer' | 'seller' | 'admin';
-export type UserStatus = 'active' | 'inactive' | 'locked';
+export type UserRole = "customer" | "seller" | "admin" | "employee";
+export type UserStatus = "active" | "inactive" | "locked";
 
 export interface Address {
   street?: string;
@@ -61,4 +61,3 @@ export interface AuthResponse {
   user: User;
   token: string;
 }
-

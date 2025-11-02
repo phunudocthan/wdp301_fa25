@@ -95,7 +95,6 @@ const handleSubmitReview = async () => {
     });
 
     // Navigate to product page (use legoId)
-    navigate("/product/" + legoId);
     message.success("Gửi đánh giá thành công!");
     setForm({ rating: 5, comment: "", images: [] });
     setReviewModal(false);
@@ -132,10 +131,10 @@ const handleSubmitReview = async () => {
     );
 
   return (
-    <>
-      <Header />
-      <div className="p-4">
-        <h2 className="text-xl font-semibold mb-4">Lịch sử đơn hàng</h2>
+    <> 
+    <div className="p-4"> 
+     
+      <h2 className="text-xl font-semibold mb-4">My History Orders</h2>
 
         <List
           dataSource={orders}
@@ -162,12 +161,21 @@ const handleSubmitReview = async () => {
                 </div>
               }
               extra={
+
+                <>
                 <Button
                   type="link"
                   onClick={() => navigate(`/orders/detail/${order._id}`)}
                 >
                   View Details
                 </Button>
+              <Button
+                type="link"
+                onClick={() => navigate(`/product/${order.items.map(item => item.legoId)}`)}
+              >
+                View Product
+              </Button>
+              </>
               }
             >
               <Descriptions column={2} size="small">

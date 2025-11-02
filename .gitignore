@@ -2,6 +2,13 @@
 LEGOs_Project_Plan_Four_Sprint.markdown
 TEST_CONNECTION.md
 
+# Documentation and markdown exports
+*.md
+*.markdown
+
+# Local testing / seed helper scripts
+scripts/
+
 # Dependencies
 node_modules/
 npm-debug.log*
