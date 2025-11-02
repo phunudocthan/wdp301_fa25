@@ -49,6 +49,7 @@ const buildSystemInstruction = () =>
     "3. Format each suggestion as: **Product Name [ID:product_id]** - reason (price if available)",
     "4. Use markdown bold for product names to make them stand out",
     "5. Maximum 3 product suggestions per response",
+    "6. PRIORITY: If you see '🔍 MATCHING PRODUCTS' section, suggest those products FIRST as they directly match what customer is asking for",
     "Never invent discounts or policies that are not provided in the context.",
   ].join(" ");
 
@@ -60,6 +61,53 @@ const buildContextPrompt = (context = {}, customer = {}) => {
       `Customer profile:\n- Name: ${customer.name ?? "Unknown"}\n- Email: ${
         customer.email ?? "Not provided"
       }`
+    );
+  }
+
+  // ⭐ PRIORITY 1: Search results (dynamic search based on user query)
+  // Show these FIRST so AI prioritizes matching products
+  if (Array.isArray(context.searchResults) && context.searchResults.length) {
+    const searchLines = context.searchResults.map((product) => {
+      const id = product.id ? ` [ID:${product.id}]` : "";
+      const details = [];
+
+      if (product.price != null) {
+        details.push(`${product.price} USD`);
+      }
+
+      if (product.theme) {
+        details.push(product.theme);
+      }
+
+      if (product.pieces) {
+        details.push(`${product.pieces} pieces`);
+      }
+
+      if (product.stock != null) {
+        details.push(product.stock > 0 ? "in stock" : "out of stock");
+      }
+
+      let line = `• ${product.name ?? "Unnamed"}${id}`;
+      if (details.length) {
+        line += ` (${details.join("; ")})`;
+      }
+
+      if (product.description) {
+        const snippet = product.description.slice(0, 100).trim();
+        if (snippet) {
+          line += `\n  ${snippet}${
+            product.description.length > 100 ? "..." : ""
+          }`;
+        }
+      }
+
+      return line;
+    });
+
+    lines.push(
+      `🔍 MATCHING PRODUCTS (found based on your question - PRIORITIZE THESE):\n${searchLines.join(
+        "\n\n"
+      )}`
     );
   }
 
@@ -470,7 +518,52 @@ const attachUserOptional = async (req, res, next) => {
 
 router.use(attachUserOptional);
 
-const buildServerContext = async (user) => {
+const searchProductsByKeywords = async (query) => {
+  if (!query || typeof query !== "string") return [];
+
+  // Extract potential product keywords from user query
+  const keywords = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((word) => word.length > 2);
+
+  if (keywords.length === 0) return [];
+
+  try {
+    // Build regex patterns for each keyword
+    const regexPatterns = keywords.map((keyword) => ({
+      $or: [
+        { name: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
+      ],
+    }));
+
+    // Search products matching any keyword
+    const products = await Lego.find({
+      status: "active",
+      $or: regexPatterns,
+    })
+      .limit(10)
+      .populate("themeId", "name")
+      .select("name price themeId categories description pieces stock")
+      .lean();
+
+    return products.map((product) => ({
+      id: product._id.toString(),
+      name: product.name,
+      price: product.price,
+      theme: product.themeId?.name,
+      description: product.description,
+      pieces: product.pieces,
+      stock: product.stock,
+    }));
+  } catch (error) {
+    console.error("[ai-chat] Product search failed:", error);
+    return [];
+  }
+};
+
+const buildServerContext = async (user, userQuery = "") => {
   if (!user?._id) return {};
 
   try {
@@ -500,7 +593,7 @@ const buildServerContext = async (user) => {
         .lean(),
       Lego.find({ status: "active" })
         .sort({ updatedAt: -1 })
-        .limit(10)
+        .limit(50)
         .populate("themeId", "name")
         .select("name price themeId categories description pieces stock")
         .lean(),
@@ -668,11 +761,18 @@ const buildServerContext = async (user) => {
         })
       : [];
 
+    // Dynamic product search based on user query
+    let searchResults = [];
+    if (userQuery) {
+      searchResults = await searchProductsByKeywords(userQuery);
+    }
+
     return {
       orders: mappedOrders,
       cart: mappedCart,
       recentClicks: mappedRecent,
       featuredProducts: mappedFeatured,
+      searchResults: searchResults.length > 0 ? searchResults : undefined,
     };
   } catch (error) {
     console.error("[ai-chat] Failed to build server context:", error);
@@ -1091,7 +1191,9 @@ router.post("/chat", async (req, res) => {
     }
   }
 
-  const serverContext = req.user ? await buildServerContext(req.user) : {};
+  const serverContext = req.user
+    ? await buildServerContext(req.user, latestMessage.content)
+    : {};
   const mergedContext = mergeContext(serverContext, context);
   const effectiveCustomer =
     customer ??

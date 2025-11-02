@@ -109,6 +109,9 @@ export default function Shop() {
       if (priceRange[1] < 1000)
         params.append("maxPrice", priceRange[1].toString());
 
+      // Lấy toàn bộ danh sách rồi phân trang phía client
+      params.append("limit", "0");
+
       const res = await axiosInstance.get(`/products?${params.toString()}`);
 
       // Dữ liệu BE trả về dạng { success, data: { products, pagination } }

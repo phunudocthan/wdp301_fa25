@@ -62,22 +62,61 @@
 .ai-chat-history-btn,
 .ai-chat-close-btn {
   border: none;
-  background: rgba(255, 255, 255, 0.12);
   color: #fff;
   border-radius: 999px;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.ai-chat-new-btn:hover,
-.ai-chat-history-btn:hover,
+/* New Chat Button - Green */
+.ai-chat-new-btn {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.ai-chat-new-btn:hover {
+  background: linear-gradient(135deg, #059669, #10b981);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+/* History Button - Blue */
+.ai-chat-history-btn {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.ai-chat-history-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Close Button - Red */
+.ai-chat-close-btn {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
 .ai-chat-close-btn:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+.ai-chat-new-btn svg,
+.ai-chat-history-btn svg,
+.ai-chat-close-btn svg {
+  width: 40px;
+  height: 40px;
+  stroke: #ffffff;
+  stroke-width: 2.2;
+  pointer-events: none;
 }
 
 .ai-chat-body {
@@ -143,20 +182,23 @@
 .ai-chat-quick-prompts button {
   border: none;
   border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  background: rgba(37, 99, 235, 0.12);
-  color: #1d4ed8;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  color: #fff;
   cursor: pointer;
-  transition: background 0.2s ease;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ai-chat-quick-prompts button:hover:not(:disabled) {
-  background: rgba(37, 99, 235, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.38);
 }
 
 .ai-chat-quick-prompts button:disabled {
-  opacity: 0.5;
+  opacity: 0.65;
+  filter: saturate(0.75);
   cursor: not-allowed;
 }
 
@@ -196,7 +238,8 @@
 }
 
 .ai-chat-footer button:disabled {
-  opacity: 0.5;
+  opacity: 0.7;
+  filter: saturate(0.8);
   cursor: not-allowed;
 }
 

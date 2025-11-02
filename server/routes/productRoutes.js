@@ -112,9 +112,13 @@ router.get("/", async (req, res) => {
       sortOrder = "desc",
     } = req.query;
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const skip = (pageNum - 1) * limitNum;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const requestedLimit = Number(limit);
+    const unlimited = Number.isFinite(requestedLimit) && requestedLimit === 0;
+    const limitNum = unlimited
+      ? 0
+      : Math.max(parseInt(limit, 10) || 10, 1);
+    const skip = unlimited ? 0 : (pageNum - 1) * limitNum;
 
     // 🔍 Build filter
     let filter = {};
@@ -163,28 +167,67 @@ router.get("/", async (req, res) => {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
 
     // 🔄 Truy vấn dữ liệu
-    let products = await Lego.find(filter)
+    const baseQuery = Lego.find(filter)
       .populate("themeId", "name")
       .populate("ageRangeId", "rangeLabel minAge maxAge")
       .populate("difficultyId", "label level")
       .populate("categories", "name slug")
       .populate("createdBy", "username email")
-      .sort(sort)
-      .skip(skip)
-      .limit(limitNum);
+      .sort(sort);
 
-    // Đếm tổng
     const total = await Lego.countDocuments(filter);
-    const totalPages = Math.ceil(total / limitNum);
+    const totalPages = unlimited
+      ? total > 0
+        ? 1
+        : 0
+      : total > 0
+      ? Math.ceil(total / limitNum)
+      : 0;
 
+    let products = [];
     let personalizationMeta = { personalized: false };
-    if (req.user?._id) {
-      const { products: sortedProducts, meta } = await applyPersonalizedSorting(
-        req.user._id,
-        products
+    const shouldPersonalize = Boolean(req.user?._id) && total > 0;
+
+    if (unlimited) {
+      const hydrated = baseQuery.clone();
+      products = await hydrated;
+
+      if (shouldPersonalize && products.length > 0) {
+        const { products: sortedProducts, meta } =
+          await applyPersonalizedSorting(req.user._id, products);
+        products = sortedProducts;
+        personalizationMeta = meta;
+      }
+    } else if (!shouldPersonalize) {
+      products = await baseQuery.clone().skip(skip).limit(limitNum);
+    } else {
+      const candidateCap = Number(
+        process.env.PERSONALIZATION_CANDIDATE_CAP || 60
       );
-      products = sortedProducts;
-      personalizationMeta = meta;
+      const dynamicBuffer = Math.max(limitNum * 3, limitNum + 12);
+      const candidateLimit = Math.max(
+        limitNum,
+        Math.min(candidateCap, dynamicBuffer)
+      );
+
+      const candidates = await baseQuery
+        .clone()
+        .skip(skip)
+        .limit(candidateLimit);
+
+      if (candidates.length > 0) {
+        const { products: sortedCandidates, meta } =
+          await applyPersonalizedSorting(req.user._id, candidates);
+        personalizationMeta = meta;
+
+        const topSlice = sortedCandidates.slice(0, limitNum);
+        products =
+          personalizationMeta.personalized && topSlice.length
+            ? topSlice
+            : candidates.slice(0, limitNum);
+      } else {
+        products = [];
+      }
     }
 
     res.json({

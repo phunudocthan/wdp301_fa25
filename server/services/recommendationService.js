@@ -4,6 +4,11 @@ const Order = require("../models/Order");
 const RecentlyViewed = require("../models/RecentlyViewed");
 const Lego = require("../models/Lego");
 
+const DEBUG_PERSONALIZATION =
+  String(process.env.DEBUG_PERSONALIZATION || "")
+    .trim()
+    .toLowerCase() === "true";
+
 const toIdString = (value) => {
   if (!value) return undefined;
   if (typeof value === "string") return value;
@@ -192,6 +197,16 @@ const buildUserProfile = async (userId) => {
   return profile;
 };
 
+const summarizeScoreMap = (map, limit = 5) => {
+  return Array.from(map.entries())
+    .sort((a, b) => (b[1] || 0) - (a[1] || 0))
+    .slice(0, limit)
+    .map(([id, score]) => ({
+      id,
+      score: Number((score || 0).toFixed(2)),
+    }));
+};
+
 const scoreProduct = (product, profile, index, baseScore) => {
   let score = baseScore ?? 0;
   const productId = toIdString(product._id);
@@ -265,6 +280,17 @@ const applyPersonalizedSorting = async (userId, products) => {
     meta: {
       personalized: true,
       strategy: "behaviour_score",
+      ...(DEBUG_PERSONALIZATION && {
+        debug: {
+          evaluated: scored.length,
+          topCategories: summarizeScoreMap(profile.categoryScores),
+          topThemes: summarizeScoreMap(profile.themeScores),
+          topLegos: summarizeScoreMap(profile.legoScores),
+          avgPrice: profile.avgPrice
+            ? Number(profile.avgPrice.toFixed(2))
+            : null,
+        },
+      }),
     },
   };
 };

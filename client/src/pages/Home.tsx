@@ -53,7 +53,6 @@ interface Category {
 }
 
 export default function Home() {
-  
   // Theme state
   const [isDarkMode, setIsDarkMode] = useState<boolean>(
     localStorage.getItem("theme") === "dark"
@@ -93,6 +92,23 @@ export default function Home() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const search = params.get("search") || "";
+  const { addToCart } = useCart();
+
+  // Helper: Save recently viewed product
+  const saveRecentlyViewed = (productId: string) => {
+    const key = "recentlyViewedIds";
+    let viewed = JSON.parse(localStorage.getItem(key) || "[]");
+    viewed = viewed.filter((id: string) => id !== productId);
+    viewed.unshift(productId);
+    if (viewed.length > 10) viewed = viewed.slice(0, 10);
+    localStorage.setItem(key, JSON.stringify(viewed));
+
+    if (storage.getToken()) {
+      void addRecentlyViewed(productId).catch((error) => {
+        console.warn("[recentlyViewed] failed to record view:", error);
+      });
+    }
+  };
 
   // Fetch recently viewed products
   useEffect(() => {
@@ -187,9 +203,12 @@ export default function Home() {
     const fetchNewProducts = async () => {
       try {
         setLoading(true);
-        const url = search
+        const baseUrl = search
           ? `/products?search=${encodeURIComponent(search)}`
           : "/products?sortBy=newest";
+        const url = baseUrl.includes("?")
+          ? `${baseUrl}&limit=0`
+          : `${baseUrl}?limit=0`;
         const res = await axiosInstance.get(url);
         const { products } = normalizeProductResponse(res.data);
         setNewProducts(products);
@@ -240,12 +259,14 @@ export default function Home() {
       setSelectedCategory(categoryId);
       setCurrentPage(1);
       if (!categoryId) {
-        const res = await axiosInstance.get("/products");
+        const res = await axiosInstance.get("/products?limit=0");
         const { products } = normalizeProductResponse(res.data);
         setFilteredProducts(products);
         return;
       }
-      const res = await axiosInstance.get(`/products/caterory_list/${categoryId}`);
+      const res = await axiosInstance.get(
+        `/products/caterory_list/${categoryId}`
+      );
       const { products } = normalizeProductResponse(res.data);
       setFilteredProducts(products);
       if (products.length === 0) {
@@ -279,7 +300,9 @@ export default function Home() {
   return (
     <ConfigProvider
       theme={{
-        algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        algorithm: isDarkMode
+          ? antdTheme.darkAlgorithm
+          : antdTheme.defaultAlgorithm,
         token: {
           colorPrimary: isDarkMode ? "#40c4ff" : "#1677ff",
           borderRadius: 8,
@@ -302,36 +325,267 @@ export default function Home() {
 
         {/* Recently Viewed Section */}
         <section style={{ padding: "24px 80px", margin: "16px 0" }}>
-          <Title level={3} style={{ textAlign: "left", marginBottom: 18, color: "#1677ff" }}>
+          <Title
+            level={3}
+            style={{ textAlign: "left", marginBottom: 18, color: "#1677ff" }}
+          >
             🕒 Sản phẩm đã xem gần đây
           </Title>
           {recentLoading ? (
-            <Spin />
+            <div style={{ textAlign: "center", padding: "30px" }}>
+              <Spin size="large" />
+            </div>
           ) : recentlyViewed.length === 0 ? (
             <Empty description="Bạn chưa xem sản phẩm nào gần đây." />
           ) : (
             <Row gutter={[24, 24]}>
               {recentlyViewed.map((p) => (
-                <Col key={p._id} xs={12} sm={8} md={6} lg={4}>
-                  <Card
-                    hoverable
-                    cover={
-                      <img
-                        alt={p.name}
-                        src={getFullImageURL(p.images?.[0])}
-                        style={{ height: 120, objectFit: "cover" }}
-                      />
+                <Col
+                  key={p._id}
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={6}
+                  style={{ display: "flex", justifyContent: "center" }}
+                >
+                  <Popover
+                    trigger="hover"
+                    placement="right"
+                    content={
+                      <div style={{ width: 300, padding: 10 }}>
+                        <img
+                          src={getFullImageURL(p.images?.[0])}
+                          alt={p.name}
+                          style={{
+                            width: "100%",
+                            height: 160,
+                            objectFit: "cover",
+                            borderRadius: 10,
+                            marginBottom: 10,
+                          }}
+                        />
+                        <h3
+                          style={{
+                            marginBottom: 6,
+                            fontWeight: 600,
+                            fontSize: 16,
+                          }}
+                        >
+                          {p.name}
+                        </h3>
+                        <p
+                          style={{
+                            fontSize: 16,
+                            fontWeight: "bold",
+                            color: "#1677ff",
+                            marginBottom: 6,
+                          }}
+                        >
+                          ${p.price.toFixed(2)}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            color: p.stock
+                              ? p.stock > 0
+                                ? "#28a745"
+                                : "#dc3545"
+                              : "#dc3545",
+                            marginBottom: 10,
+                          }}
+                        >
+                          {p.stock
+                            ? p.stock > 0
+                              ? `In stock: ${p.stock}`
+                              : "Out of stock"
+                            : "Out of stock"}
+                        </p>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "6px 10px",
+                            marginBottom: 12,
+                            fontSize: 12,
+                          }}
+                        >
+                          {p.themeId && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <Palette size={14} />
+                              <span>{p.themeId.name}</span>
+                            </div>
+                          )}
+                          {p.ageRangeId && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <User size={14} />
+                              <span>{p.ageRangeId.rangeLabel}</span>
+                            </div>
+                          )}
+                          {p.difficultyId && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <Settings size={14} />
+                              <span>{p.difficultyId.label}</span>
+                            </div>
+                          )}
+                          {p.pieces && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <Layers size={14} />
+                              <span>{p.pieces} pcs</span>
+                            </div>
+                          )}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4,
+                            }}
+                          >
+                            <Box size={14} />
+                            <span>{p.stock || 0} left</span>
+                          </div>
+                        </div>
+                        <p
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            marginBottom: 10,
+                          }}
+                        >
+                          {p.description?.slice(0, 80) ||
+                            "A creative LEGO set to spark imagination."}
+                        </p>
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<ShoppingCartOutlined />}
+                          block
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addToCart({
+                              id: p._id,
+                              name: p.name,
+                              price: p.price,
+                              image: p.images?.[0] || imagesDefault,
+                              quantity: 1,
+                              stock: p.stock,
+                            });
+                            message.success(
+                              `${p.name} đã được thêm vào giỏ hàng`
+                            );
+                          }}
+                        >
+                          Add to Bag
+                        </Button>
+                      </div>
                     }
-                    style={{ borderRadius: 10, marginBottom: 8 }}
                   >
-                    <Meta
-                      title={<span style={{ fontWeight: 500 }}>{p.name}</span>}
-                      description={<span style={{ color: "#1677ff" }}>${p.price?.toFixed(2)}</span>}
-                    />
-                    <Button type="link" href={`/product/${p._id}`} style={{ marginTop: 8 }}>
-                      Xem chi tiết
-                    </Button>
-                  </Card>
+                    <Link
+                      to={`/product/${p._id}`}
+                      onClick={() => saveRecentlyViewed(p._id)}
+                    >
+                      <Card
+                        hoverable
+                        style={{
+                          width: 260,
+                          position: "relative",
+                          borderRadius: 12,
+                          overflow: "hidden",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                          transition:
+                            "transform 0.25s ease, box-shadow 0.25s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "scale(1.04)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 16px rgba(0,0,0,0.2)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "scale(1)";
+                          e.currentTarget.style.boxShadow =
+                            "0 2px 8px rgba(0,0,0,0.1)";
+                        }}
+                        cover={
+                          <img
+                            alt={p.name}
+                            src={getFullImageURL(p.images?.[0])}
+                            style={{
+                              height: 220,
+                              objectFit: "cover",
+                              width: "100%",
+                            }}
+                          />
+                        }
+                      >
+                        <Meta
+                          title={
+                            <span style={{ color: "#1677ff" }}>{p.name}</span>
+                          }
+                          description={
+                            <div style={{ marginTop: "8px" }}>
+                              <b style={{ fontSize: "16px" }}>
+                                ${p.price.toFixed(2)}
+                              </b>
+                            </div>
+                          }
+                        />
+                        <Button
+                          type="primary"
+                          icon={<ShoppingCartOutlined />}
+                          block
+                          style={{ marginTop: "12px", borderRadius: 8 }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            try {
+                              addToCart({
+                                id: p._id,
+                                name: p.name,
+                                price: p.price,
+                                image: p.images?.[0] || imagesDefault,
+                                quantity: 1,
+                                stock: p.stock,
+                              });
+                              message.success(
+                                `${p.name} đã được thêm vào giỏ hàng`
+                              );
+                            } catch (err) {
+                              console.error("Add to cart error", err);
+                              message.error(
+                                "Không thể thêm sản phẩm vào giỏ hàng"
+                              );
+                            }
+                          }}
+                        >
+                          Add to cart
+                        </Button>
+                      </Card>
+                    </Link>
+                  </Popover>
                 </Col>
               ))}
             </Row>
@@ -339,8 +593,13 @@ export default function Home() {
         </section>
 
         {/* Voucher Section */}
-        <section style={{ padding: "24px 80px", borderRadius: 12, margin: "32px 0" }}>
-          <Title level={2} style={{ textAlign: "center", marginBottom: 24, color: "#d97706" }}>
+        <section
+          style={{ padding: "24px 80px", borderRadius: 12, margin: "32px 0" }}
+        >
+          <Title
+            level={2}
+            style={{ textAlign: "center", marginBottom: 24, color: "#d97706" }}
+          >
             🎁 Khuyến mãi & Voucher
           </Title>
           {voucherLoading ? (
@@ -352,7 +611,9 @@ export default function Home() {
               {vouchers.map((v) => {
                 const now = Date.now();
                 const expiry = new Date(v.expiryDate).getTime();
-                const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+                const daysLeft = Math.ceil(
+                  (expiry - now) / (1000 * 60 * 60 * 24)
+                );
                 let status = "Còn hạn";
                 let statusColor = "green";
                 if (daysLeft <= 3 && daysLeft > 0) {
@@ -366,20 +627,48 @@ export default function Home() {
                   <Col key={v._id} xs={24} sm={12} md={8} lg={6}>
                     <Card
                       bordered
-                      style={{ borderColor: "#f59e42", borderRadius: 10, boxShadow: "0 2px 8px #f59e4280" }}
+                      style={{
+                        borderColor: "#f59e42",
+                        borderRadius: 10,
+                        boxShadow: "0 2px 8px #f59e4280",
+                      }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div style={{ fontWeight: 700, fontSize: 18, color: "#d97706" }}>
-                          <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 20 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontWeight: 700,
+                            fontSize: 18,
+                            color: "#d97706",
+                          }}
+                        >
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: 6,
+                              fontSize: 20,
+                            }}
+                          >
                             {v.code}
                           </span>
                         </div>
-                        <Tag color={statusColor} style={{ fontWeight: 500, fontSize: 14 }}>
+                        <Tag
+                          color={statusColor}
+                          style={{ fontWeight: 500, fontSize: 14 }}
+                        >
                           {status}
                         </Tag>
                       </div>
                       <div style={{ margin: "8px 0", fontSize: 16 }}>
-                        Giảm <span style={{ color: "#16a34a", fontWeight: 600 }}>{v.discountPercent}%</span>
+                        Giảm{" "}
+                        <span style={{ color: "#16a34a", fontWeight: 600 }}>
+                          {v.discountPercent}%
+                        </span>
                       </div>
                       <div style={{ fontSize: 14, color: "#555" }}>
                         HSD: {new Date(v.expiryDate).toLocaleDateString()}
@@ -387,12 +676,23 @@ export default function Home() {
                       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                         <Button
                           type="primary"
-                          style={{ background: "#f59e42", border: "none", borderRadius: 6, fontWeight: 500 }}
+                          style={{
+                            background: "#f59e42",
+                            border: "none",
+                            borderRadius: 6,
+                            fontWeight: 500,
+                          }}
                           onClick={() => {
                             navigator.clipboard.writeText(v.code);
                             message.success({
                               content: `Đã copy mã ${v.code}!`,
-                              icon: <span style={{ color: "#16a34a", fontWeight: 700 }}>✔️</span>,
+                              icon: (
+                                <span
+                                  style={{ color: "#16a34a", fontWeight: 700 }}
+                                >
+                                  ✔️
+                                </span>
+                              ),
                             });
                           }}
                         >
@@ -471,7 +771,12 @@ export default function Home() {
                 label: "🆕 Product List",
                 children: (
                   <>
-                    <ProductGrid loading={loading} products={paginatedProducts} />
+                    <ProductGrid
+                      loading={loading}
+                      products={paginatedProducts}
+                      addToCart={addToCart}
+                      saveRecentlyViewed={saveRecentlyViewed}
+                    />
                     {safeProducts.length > pageSize && (
                       <div style={{ textAlign: "center", marginTop: 30 }}>
                         <Pagination
@@ -488,7 +793,14 @@ export default function Home() {
               {
                 key: "2",
                 label: "🔥 Best Sellers",
-                children: <ProductGrid loading={loading} products={bestSellers} />,
+                children: (
+                  <ProductGrid
+                    loading={loading}
+                    products={bestSellers}
+                    addToCart={addToCart}
+                    saveRecentlyViewed={saveRecentlyViewed}
+                  />
+                ),
               },
             ]}
           />
@@ -499,24 +811,17 @@ export default function Home() {
   );
 }
 
-function ProductGrid({ loading, products }: { loading: boolean; products: Product[] }) {
-  const { addToCart } = useCart();
-
-  const saveRecentlyViewed = (productId: string) => {
-    const key = "recentlyViewedIds";
-    let viewed = JSON.parse(localStorage.getItem(key) || "[]");
-    viewed = viewed.filter((id: string) => id !== productId);
-    viewed.unshift(productId);
-    if (viewed.length > 10) viewed = viewed.slice(0, 10);
-    localStorage.setItem(key, JSON.stringify(viewed));
-
-    if (storage.getToken()) {
-      void addRecentlyViewed(productId).catch((error) => {
-        console.warn("[recentlyViewed] failed to record view:", error);
-      });
-    }
-  };
-
+function ProductGrid({
+  loading,
+  products,
+  addToCart,
+  saveRecentlyViewed,
+}: {
+  loading: boolean;
+  products: Product[];
+  addToCart: any;
+  saveRecentlyViewed: (productId: string) => void;
+}) {
   if (loading) {
     return (
       <div className="loading-center">
@@ -532,7 +837,14 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
   return (
     <Row gutter={[24, 24]}>
       {products.map((p) => (
-        <Col key={p._id} xs={24} sm={12} md={8} lg={6} style={{ display: "flex", justifyContent: "center" }}>
+        <Col
+          key={p._id}
+          xs={24}
+          sm={12}
+          md={8}
+          lg={6}
+          style={{ display: "flex", justifyContent: "center" }}
+        >
           <Popover
             trigger="hover"
             placement="right"
@@ -541,47 +853,95 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
                 <img
                   src={getFullImageURL(p.images?.[0])}
                   alt={p.name}
-                  style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 10, marginBottom: 10 }}
+                  style={{
+                    width: "100%",
+                    height: 160,
+                    objectFit: "cover",
+                    borderRadius: 10,
+                    marginBottom: 10,
+                  }}
                 />
-                <h3 style={{ marginBottom: 6, fontWeight: 600, fontSize: 16 }}>{p.name}</h3>
-                <p style={{ fontSize: 16, fontWeight: "bold", color: "#1677ff", marginBottom: 6 }}>
+                <h3 style={{ marginBottom: 6, fontWeight: 600, fontSize: 16 }}>
+                  {p.name}
+                </h3>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    color: "#1677ff",
+                    marginBottom: 6,
+                  }}
+                >
                   ${p.price.toFixed(2)}
                 </p>
-                <p style={{ fontSize: 13, color: p.stock ? (p.stock > 0 ? "#28a745" : "#dc3545") : "#dc3545", marginBottom: 10 }}>
-                  {p.stock ? (p.stock > 0 ? `In stock: ${p.stock}` : "Out of stock") : "Out of stock"}
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: p.stock
+                      ? p.stock > 0
+                        ? "#28a745"
+                        : "#dc3545"
+                      : "#dc3545",
+                    marginBottom: 10,
+                  }}
+                >
+                  {p.stock
+                    ? p.stock > 0
+                      ? `In stock: ${p.stock}`
+                      : "Out of stock"
+                    : "Out of stock"}
                 </p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 10px", marginBottom: 12, fontSize: 12 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "6px 10px",
+                    marginBottom: 12,
+                    fontSize: 12,
+                  }}
+                >
                   {p.themeId && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
                       <Palette size={14} />
                       <span>{p.themeId.name}</span>
                     </div>
                   )}
                   {p.ageRangeId && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
                       <User size={14} />
                       <span>{p.ageRangeId.rangeLabel}</span>
                     </div>
                   )}
                   {p.difficultyId && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
                       <Settings size={14} />
                       <span>{p.difficultyId.label}</span>
                     </div>
                   )}
                   {p.pieces && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
                       <Layers size={14} />
                       <span>{p.pieces} pcs</span>
                     </div>
                   )}
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 4 }}
+                  >
                     <Box size={14} />
                     <span>{p.stock || 0} left</span>
                   </div>
                 </div>
                 <p style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>
-                  {p.description?.slice(0, 80) || "A creative LEGO set to spark imagination."}
+                  {p.description?.slice(0, 80) ||
+                    "A creative LEGO set to spark imagination."}
                 </p>
                 <Button
                   type="primary"
@@ -607,7 +967,10 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
               </div>
             }
           >
-            <Link to={`/product/${p._id}`} onClick={() => saveRecentlyViewed(p._id)}>
+            <Link
+              to={`/product/${p._id}`}
+              onClick={() => saveRecentlyViewed(p._id)}
+            >
               <Card
                 hoverable
                 style={{
@@ -620,7 +983,8 @@ function ProductGrid({ loading, products }: { loading: boolean; products: Produc
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "scale(1.04)";
-                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.2)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 16px rgba(0,0,0,0.2)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "scale(1)";
