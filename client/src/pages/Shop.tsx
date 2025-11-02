@@ -108,6 +108,8 @@ export default function Shop() {
       if (priceRange[0] > 0) params.append("minPrice", priceRange[0].toString());
       if (priceRange[1] < 1000)
         params.append("maxPrice", priceRange[1].toString());
+      params.append("limit", "0");
+      params.append("personalized", "false");
 
       const res = await axiosInstance.get(`/products?${params.toString()}`);
 

@@ -1,0 +1,56 @@
+@startuml UC32: User - List
+
+actor Admin
+participant ":AdminUsersPage" as AdminUsersPage
+participant ":AdminApi" as AdminApi
+participant ":AdminRoutes" as AdminRoutes
+participant ":AdminController" as AdminController
+participant ":UserModel" as UserModel
+database MongoDB
+
+Admin -> AdminUsersPage: 1. Navigate to users page
+activate AdminUsersPage
+AdminUsersPage -> AdminApi: 2. listUsers(params)
+activate AdminApi
+AdminApi -> AdminRoutes: 3. GET /admin/users?search=&role=&status=&page=
+activate AdminRoutes
+AdminRoutes -> AdminController: 4. listUsers(req, res)
+activate AdminController
+AdminController -> UserModel: 5. Find users with filters
+activate UserModel
+UserModel -> MongoDB: 6. Query users with pagination
+activate MongoDB
+MongoDB --> UserModel: 7. Users array / error
+deactivate MongoDB
+UserModel --> AdminController: 8. Users / error
+deactivate UserModel
+
+alt Success
+    activate AdminController
+    AdminController --> AdminRoutes: 8.1 200 {users, pagination}
+    deactivate AdminController
+    activate AdminRoutes
+    AdminRoutes --> AdminApi: 8.2 Response data
+    deactivate AdminRoutes
+    activate AdminApi
+    AdminApi --> AdminUsersPage: 8.3 AdminUserListResponse
+    deactivate AdminApi
+    activate AdminUsersPage
+    AdminUsersPage --> Admin: 8.4 Render users table
+    deactivate AdminUsersPage
+else Error
+    activate AdminController
+    AdminController --> AdminRoutes: 8.1 400/500 Error message
+    deactivate AdminController
+    activate AdminRoutes
+    AdminRoutes --> AdminApi: 8.2 Error
+    deactivate AdminRoutes
+    activate AdminApi
+    AdminApi --> AdminUsersPage: 8.3 Error
+    deactivate AdminApi
+    activate AdminUsersPage
+    AdminUsersPage --> Admin: 8.4 Show error
+    deactivate AdminUsersPage
+end
+
+@enduml

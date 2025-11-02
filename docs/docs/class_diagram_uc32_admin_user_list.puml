@@ -1,0 +1,43 @@
+@startuml UC32: User - List
+
+class "«component» AdminUsersPage" as AdminUsersPage {
+  - search: string
+  - role: RoleFilter
+  - status: StatusFilter
+  - page: number
+  - payload: AdminUserListResponse
+  - loading: boolean
+  + resetFilters(): void
+  + render(): JSX.Element
+}
+
+class "«service» AdminApi" as AdminApi {
+  + listUsers(params): Promise<AdminUserListResponse>
+}
+
+class "«router» AdminRoutes" as AdminRoutes {
+  + get('/admin/users', requireAuth, requireRole('admin'), listUsers)
+}
+
+class "«controller» AdminController" as AdminController {
+  + listUsers(req, res): Promise<void>
+  - buildSearchFilter(search): Object
+}
+
+class "«model» User" as UserModel {
+  o _id: ObjectId
+  o name: String
+  o email: String
+  o role: String
+  o status: String
+  o phone: String
+  o avatar: String
+  o createdAt: Date
+}
+
+AdminUsersPage ..> AdminApi : uses
+AdminApi ..> AdminRoutes : HTTP GET
+AdminRoutes ..> AdminController : routes to
+AdminController ..> UserModel : queries
+
+@enduml

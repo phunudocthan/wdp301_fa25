@@ -1,0 +1,55 @@
+@startuml Create Dish
+
+actor Admin as "Admin"
+
+boundary "DishListPage" as View #lightblue
+
+participant ":dishRoute" as Route #lightblue
+
+control "dishValidation" as Validation #orange
+
+control "dishController" as Controller #lightblue
+
+participant ":dishService" as Service #lightblue
+
+entity "dishModel" as Model #lightblue
+
+database "MongoDB" as MongoDB #yellow
+
+Admin -> View: 1. Click "Create Dish"
+
+activate Admin
+
+activate View
+
+View -> View: 2. Show create dish form
+
+activate View
+
+deactivate View
+
+Admin -> View: 2. Fill form(name, cookingTime,\n, calorie, difficulty, description, image)
+
+Admin -> View: 3. Click "Submit"
+
+View -> Route: 4. POST /api/v1/dishes (body)
+
+activate Route
+
+Route -> Validation: 5. validateCreateDish(data)
+
+activate Validation
+
+alt Validation Failed
+
+Validation --> Route: 6. Return 400 Bad Request Route --> View: 6.1. Show validation error View --> Admin: 6.1.1. Display error message 
+
+else Validation Passed
+
+Validation --> Route: 7. Proceed deactivate Validation Route -> Controller: 8. createNew(req, res) activate Controller Controller -> Service: 9. createNew(dishData) activate Service Service -> Model: 10. insertDish(dishData) activate Model Model -> MongoDB: 11. ExecuteQuery(insertDish) activate MongoDB MongoDB --> Model: 12. Return insert result deactivate MongoDB Model --> Service: 13. Return created dish deactivate Model Service --> Controller: 14. Return success deactivate Service Controller --> Route: 15. 201 Created + dish deactivate Route deactivate Controller Route --> View: 16. Show success deactivate Route View --> Admin: 17. Display "Dish created successfully" deactivate Admin deactivate View 
+
+end
+
+deactivate View
+
+@enduml

@@ -1,0 +1,51 @@
+@startuml UC15: Favourites - Add/Remove
+
+class "«context» FavoritesContext" as FavoritesContext {
+  - favorites: FavoriteProduct[]
+  - favoriteIds: string[]
+  - loading: boolean
+  + addFavorite(productId): Promise<void>
+  + removeFavorite(productId): Promise<void>
+  + toggleFavorite(productId): Promise<boolean>
+}
+
+class "«service» FavoritesApi" as FavoritesApi {
+  + addFavorite(productId): Promise<FavoritesPayload>
+  + removeFavorite(productId): Promise<FavoritesPayload>
+}
+
+class "«router» UserRoutes" as UserRoutes {
+  + post('/favorites/:productId', requireAuth, addFavorite)
+  + delete('/favorites/:productId', requireAuth, removeFavorite)
+}
+
+class "«controller» UserController" as UserController {
+  + addFavorite(req, res): Promise<void>
+  + removeFavorite(req, res): Promise<void>
+  - loadFavoritesForUser(userId): Promise<Object>
+}
+
+class "«model» User" as UserModel {
+  o _id: ObjectId
+  o name: String
+  o email: String
+  o favorites: [ObjectId]
+  o createdAt: Date
+}
+
+class "«model» Lego" as LegoModel {
+  o _id: ObjectId
+  o name: String
+  o price: Number
+  o images: [String]
+  o stock: Number
+  o status: String
+}
+
+FavoritesContext ..> FavoritesApi : uses
+FavoritesApi ..> UserRoutes : HTTP POST/DELETE
+UserRoutes ..> UserController : routes to
+UserController ..> UserModel : updates favorites
+UserController ..> LegoModel : populates
+
+@enduml

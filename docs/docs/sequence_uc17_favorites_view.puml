@@ -1,0 +1,65 @@
+@startuml UC17: Favourites - View
+
+actor Customer
+participant ":FavoritesPage" as FavoritesPage
+participant ":FavoritesContext" as FavoritesContext
+participant ":FavoritesApi" as FavoritesApi
+participant ":UserRoutes" as UserRoutes
+participant ":UserController" as UserController
+participant ":UserModel" as UserModel
+database MongoDB
+
+Customer -> FavoritesPage: 1. Navigate to favorites
+activate FavoritesPage
+FavoritesPage -> FavoritesContext: 2. Get favorites state
+activate FavoritesContext
+FavoritesContext -> FavoritesApi: 3. fetchFavorites()
+activate FavoritesApi
+FavoritesApi -> UserRoutes: 4. GET /favorites
+activate UserRoutes
+UserRoutes -> UserController: 5. listFavorites(req, res)
+activate UserController
+UserController -> UserModel: 6. Load user favorites
+activate UserModel
+UserModel -> MongoDB: 7. Query user with populated favorites
+activate MongoDB
+MongoDB --> UserModel: 8. User with Lego products / error
+deactivate MongoDB
+UserModel --> UserController: 9. Populated favorites / error
+deactivate UserModel
+
+alt Success
+    activate UserController
+    UserController --> UserRoutes: 9.1 200 {favorites, favoriteIds}
+    deactivate UserController
+    activate UserRoutes
+    UserRoutes --> FavoritesApi: 9.2 Response data
+    deactivate UserRoutes
+    activate FavoritesApi
+    FavoritesApi --> FavoritesContext: 9.3 FavoritesPayload
+    deactivate FavoritesApi
+    activate FavoritesContext
+    FavoritesContext --> FavoritesPage: 9.4 Favorites array
+    deactivate FavoritesContext
+    activate FavoritesPage
+    FavoritesPage --> Customer: 9.5 Render favorites list
+    deactivate FavoritesPage
+else Error
+    activate UserController
+    UserController --> UserRoutes: 9.1 400/500 Error message
+    deactivate UserController
+    activate UserRoutes
+    UserRoutes --> FavoritesApi: 9.2 Error
+    deactivate UserRoutes
+    activate FavoritesApi
+    FavoritesApi --> FavoritesContext: 9.3 Error
+    deactivate FavoritesApi
+    activate FavoritesContext
+    FavoritesContext --> FavoritesPage: 9.4 Error
+    deactivate FavoritesContext
+    activate FavoritesPage
+    FavoritesPage --> Customer: 9.5 Show error
+    deactivate FavoritesPage
+end
+
+@enduml

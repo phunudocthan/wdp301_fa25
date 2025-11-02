@@ -92,7 +92,7 @@ const AdminCategoryManagement: React.FC = () => {
           <div className="category-info">
             {category.image && (
               <img
-                src={`http://localhost:5000${category.image}`}
+                src={getFullImageURL(category.image)}
                 alt={category.name}
                 className="category-image"
               />

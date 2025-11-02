@@ -1,0 +1,57 @@
+@startuml UC30: Admin Dashboard Overview
+
+class "«component» AdminDashboard" as AdminDashboard {
+  - overview: AdminOverviewResponse
+  - loading: boolean
+  - error: string
+  + fetchOverview(): void
+  + render(): JSX.Element
+}
+
+class "«service» AdminApi" as AdminApi {
+  + getOverview(): Promise<AdminOverviewResponse>
+  + getRevenueDashboard(): Promise<RevenueDashboardResponse>
+  + getOrderDashboard(): Promise<OrderDashboardResponse>
+}
+
+class "«router» AdminRoutes" as AdminRoutes {
+  + get('/admin/dashboard/overview', requireAuth, requireRole('admin'), getOverviewStats)
+  + get('/admin/dashboard/revenue', requireAuth, requireRole('admin'), getRevenueStats)
+  + get('/admin/dashboard/orders', requireAuth, requireRole('admin'), getOrderStats)
+}
+
+class "«controller» AdminController" as AdminController {
+  + getOverviewStats(req, res): Promise<void>
+  + getRevenueStats(req, res): Promise<void>
+  + getOrderStats(req, res): Promise<void>
+  - aggregateRevenueByDate(options): Promise<Object>
+}
+
+class "«model» Order" as OrderModel {
+  o _id: ObjectId
+  o orderNumber: String
+  o userId: ObjectId
+  o status: String
+  o total: Number
+  o paymentStatus: String
+  o createdAt: Date
+  o updatedAt: Date
+}
+
+class "«model» User" as UserModel {
+  o _id: ObjectId
+  o name: String
+  o email: String
+  o role: String
+  o status: String
+  o createdAt: Date
+  o updatedAt: Date
+}
+
+AdminDashboard ..> AdminApi : uses
+AdminApi ..> AdminRoutes : HTTP GET
+AdminRoutes ..> AdminController : routes to
+AdminController ..> OrderModel : aggregates
+AdminController ..> UserModel : queries
+
+@enduml

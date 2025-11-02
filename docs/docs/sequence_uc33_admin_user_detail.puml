@@ -1,0 +1,64 @@
+@startuml UC33: User - Detail
+
+actor Admin
+participant ":AdminUserDetailPage" as AdminUserDetailPage
+participant ":AdminApi" as AdminApi
+participant ":AdminRoutes" as AdminRoutes
+participant ":AdminController" as AdminController
+participant ":UserModel" as UserModel
+participant ":OrderModel" as OrderModel
+database MongoDB
+
+Admin -> AdminUserDetailPage: 1. Click user row
+activate AdminUserDetailPage
+AdminUserDetailPage -> AdminApi: 2. getUserDetail(id)
+activate AdminApi
+AdminApi -> AdminRoutes: 3. GET /admin/users/:id
+activate AdminRoutes
+AdminRoutes -> AdminController: 4. getUserDetail(req, res)
+activate AdminController
+AdminController -> UserModel: 5. Find user by id
+activate UserModel
+UserModel -> MongoDB: 6. Query user
+activate MongoDB
+MongoDB --> UserModel: 7. User / error
+deactivate MongoDB
+UserModel --> AdminController: 8. User document / error
+deactivate UserModel
+
+alt User found
+    activate AdminController
+    AdminController -> OrderModel: 8.1 Aggregate order stats
+    activate OrderModel
+    OrderModel -> MongoDB: 8.1.1 Query orders by userId
+    activate MongoDB
+    MongoDB --> OrderModel: 8.1.2 Order stats
+    deactivate MongoDB
+    OrderModel --> AdminController: 8.1.3 {totalOrders, totalSpent, lastOrderAt}
+    deactivate OrderModel
+    AdminController --> AdminRoutes: 8.2 200 {user, orderStats, recentOrders}
+    deactivate AdminController
+    activate AdminRoutes
+    AdminRoutes --> AdminApi: 8.3 Response data
+    deactivate AdminRoutes
+    activate AdminApi
+    AdminApi --> AdminUserDetailPage: 8.4 AdminUserDetailResponse
+    deactivate AdminApi
+    activate AdminUserDetailPage
+    AdminUserDetailPage --> Admin: 8.5 Render user detail
+    deactivate AdminUserDetailPage
+else User not found
+    activate AdminController
+    AdminController --> AdminRoutes: 8.1 404 "User not found"
+    deactivate AdminController
+    activate AdminRoutes
+    AdminRoutes --> AdminApi: 8.2 Error
+    deactivate AdminRoutes
+    activate AdminApi
+    AdminApi --> AdminUserDetailPage: 8.3 Error
+    deactivate Admin    activate Mte AdminUserDetailPage
+    AdminUserDetailPage --> Admin: 8.4 S    deactivate MongoDB
+    OrderModelailPage
+end
+
+@enduml

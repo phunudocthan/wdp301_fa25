@@ -266,7 +266,7 @@ export default function Home() {
       }
 
       const res = await axiosInstance.get(
-        `/products/caterory_list/${categoryId}`
+        `/products/category_list/${categoryId}`
       );
       const { products } = normalizeProductResponse(res.data);
       setFilteredProducts(products);
