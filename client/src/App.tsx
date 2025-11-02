@@ -41,17 +41,13 @@ import OrdersList from "./pages/admin/OrdersList";
 import OrderDetail from "./pages/admin/OrderDetail";
 import AdminNotificationPage from "./views/AdminNotificationPage";
 import AdminVoucherStatistics from "./pages/AdminVoucherStatistics";
-<<<<<<< HEAD
 import NewsList from "./pages/NewsList";
 import NewsDetail from "./pages/NewsDetail";
 import EmployeeNews from "./pages/EmployeeNews";
-
-=======
 import OrderDetailUser from "./pages/OrderListUser";
 import OrderListUser from "./pages/OrderListUser";
 import OrderHistoryListUser from "./pages/OrderHistoryList";
 import CheckoutReorder from "./pages/CheckoutReorder";
->>>>>>> origin/develop
 function ProfileAdminWrapper() {
   const { user } = useAuth();
   if (!user) return <div>Loading...</div>;

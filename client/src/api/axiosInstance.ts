@@ -12,7 +12,8 @@ const parseEnvApiList = (value: string | undefined) =>
     .filter(Boolean)
     .map(normalizeBase);
 
-const devDefaultBases = ["http://localhost:5001/api", "http://localhost:5000/api"];
+// Prefer localhost:5000 as the primary dev API base
+const devDefaultBases = ["http://localhost:5000/api", "http://localhost:5001/api"];
 
 const currentOrigin = window.location.origin.replace(/\/$/, "");
 const defaultCandidates =
