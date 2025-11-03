@@ -12,7 +12,7 @@ const API_BASE_URL =
 
 const LegoLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, loginWithToken, user } = useAuth();
+  const { login, loginWithToken, user, booted } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,14 +29,14 @@ const LegoLoginPage: React.FC = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      if (user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/home");
-      }
+    if (!booted || !user) return;
+
+    if (user.role === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/home");
     }
-  }, [user, navigate]);
+  }, [booted, user, navigate]);
 
   // Fetch OAuth URLs from server
   useEffect(() => {
