@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Static Images</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .image-test {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+            border: 2px solid #ccc;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🖼️ Test Static Image Serving</h1>
+
+    <div class="image-test">
+        <h2>Test 1: Theme Banner (Absolute Path)</h2>
+        <p>URL: <code>http://localhost:5000/uploads/themes/banners/banner-1762019482073-364290311.jpg</code></p>
+        <img src="http://localhost:5000/uploads/themes/banners/banner-1762019482073-364290311.jpg" alt="Ninjago Banner"
+            onload="document.getElementById('test1').innerHTML='✅ SUCCESS'"
+            onerror="document.getElementById('test1').innerHTML='❌ FAILED'" />
+        <p id="test1">⏳ Loading...</p>
+    </div>
+
+    <div class="image-test">
+        <h2>Test 2: Character Image (Absolute Path)</h2>
+        <p>URL: <code>http://localhost:5000/uploads/themes/characters/character-1762015116279-424245931.jpg</code></p>
+        <img src="http://localhost:5000/uploads/themes/characters/character-1762015116279-424245931.jpg"
+            alt="Kai Character" onload="document.getElementById('test2').innerHTML='✅ SUCCESS'"
+            onerror="document.getElementById('test2').innerHTML='❌ FAILED'" />
+        <p id="test2">⏳ Loading...</p>
+    </div>
+
+    <div class="image-test">
+        <h2>Test 3: Relative Path from Root</h2>
+        <p>URL: <code>/uploads/themes/banners/banner-1762019482073-364290311.jpg</code></p>
+        <img src="/uploads/themes/banners/banner-1762019482073-364290311.jpg" alt="Ninjago Banner (relative)"
+            onload="document.getElementById('test3').innerHTML='✅ SUCCESS'"
+            onerror="document.getElementById('test3').innerHTML='❌ FAILED'" />
+        <p id="test3">⏳ Loading...</p>
+    </div>
+
+    <div class="image-test">
+        <h2>Test 4: From Vite Dev Server (port 3000)</h2>
+        <p>URL: <code>http://localhost:5000/uploads/themes/characters/character-1762015116279-424245931.jpg</code></p>
+        <img src="http://localhost:5000/uploads/themes/characters/character-1762015116279-424245931.jpg"
+            alt="Kai Character from Vite" onload="document.getElementById('test4').innerHTML='✅ SUCCESS'"
+            onerror="document.getElementById('test4').innerHTML='❌ FAILED'" />
+        <p id="test4">⏳ Loading...</p>
+    </div>
+
+    <script>
+        console.log("🧪 Testing image URLs...");
+        console.log("Current origin:", window.location.origin);
+    </script>
+</body>
+
+</html>

@@ -41,7 +41,7 @@ const getCategories = async (req, res) => {
       parentId,
     } = req.query;
 
-    const query = {};
+    const query = { deletedAt: null }; // Exclude soft deleted categories
 
     // Search filter
     if (search) {
@@ -223,7 +223,7 @@ const updateCategory = async (req, res) => {
   }
 };
 
-// Delete category
+// Delete category (soft delete)
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -233,24 +233,23 @@ const deleteCategory = async (req, res) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    // Check if category has subcategories
-    const subcategories = await Category.find({ parentId: id });
+    // Check if category has active subcategories
+    const subcategories = await Category.find({
+      parentId: id,
+      deletedAt: null,
+    });
     if (subcategories.length > 0) {
       return res.status(400).json({
         error:
-          "Cannot delete category that has subcategories. Please delete subcategories first.",
+          "Cannot delete category that has active subcategories. Please delete subcategories first.",
       });
     }
 
-    // Check if category is assigned to any products
-    const productsCount = await Lego.countDocuments({ categories: id });
-    if (productsCount > 0) {
-      return res.status(400).json({
-        error: `Cannot delete category. It is assigned to ${productsCount} product(s). Please remove the category from products first.`,
-      });
-    }
-
-    await Category.findByIdAndDelete(id);
+    // Soft delete: set deletedAt to current date and deactivate
+    await Category.findByIdAndUpdate(id, {
+      deletedAt: new Date(),
+      isActive: false,
+    });
 
     res.json({ message: "Category deleted successfully" });
   } catch (error) {
@@ -286,7 +285,7 @@ const toggleCategoryStatus = async (req, res) => {
 // Get category tree (hierarchical structure)
 const getCategoryTree = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true })
+    const categories = await Category.find({ isActive: true, deletedAt: null })
       .populate("subcategories")
       .sort({ order: 1, name: 1 });
 
@@ -312,11 +311,18 @@ const getCategoryTree = async (req, res) => {
 // Get category statistics
 const getCategoryStats = async (req, res) => {
   try {
-    const totalCategories = await Category.countDocuments();
-    const activeCategories = await Category.countDocuments({ isActive: true });
-    const parentCategories = await Category.countDocuments({ parentId: null });
+    const totalCategories = await Category.countDocuments({ deletedAt: null });
+    const activeCategories = await Category.countDocuments({
+      isActive: true,
+      deletedAt: null,
+    });
+    const parentCategories = await Category.countDocuments({
+      parentId: null,
+      deletedAt: null,
+    });
     const subcategories = await Category.countDocuments({
       parentId: { $ne: null },
+      deletedAt: null,
     });
 
     res.json({

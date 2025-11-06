@@ -49,6 +49,10 @@ import CharacterDetailPage from "./pages/CharacterDetailPage";
 
 // Employee pages
 import EmployeeNews from "./pages/EmployeeNews";
+import EmployeeThemeManagement from "./pages/EmployeeThemeManagement";
+import EmployeeCharacterManagement from "./pages/EmployeeCharacterManagement";
+import EmployeeOrdersList from "./pages/employee/OrdersList";
+import EmployeeOrderDetail from "./pages/employee/OrderDetail";
 
 // Admin pages
 import AdminDashboard from "./pages/AdminDashboard";
@@ -110,6 +114,7 @@ function AppContent() {
         <SessionNotifications />
         <main>
           <Routes>
+            {/* Employee News Management */}
             <Route
               path="/employee/news"
               element={
@@ -118,7 +123,60 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<Navigate to="/employee/news" replace />} />
+
+            {/* Employee Theme Management */}
+            <Route
+              path="/employee/themes"
+              element={
+                <ProtectedRoute>
+                  <EmployeeThemeManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Employee Character Management */}
+            <Route
+              path="/employee/characters"
+              element={
+                <ProtectedRoute>
+                  <EmployeeCharacterManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Employee Orders Management */}
+            <Route
+              path="/employee/orders"
+              element={
+                <ProtectedRoute>
+                  <EmployeeOrdersList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employee/orders/:id"
+              element={
+                <ProtectedRoute>
+                  <EmployeeOrderDetail />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Employee Profile */}
+            <Route
+              path="/employee/profile"
+              element={
+                <ProtectedRoute>
+                  <AdminProfile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Default redirect to themes */}
+            <Route
+              path="*"
+              element={<Navigate to="/employee/themes" replace />}
+            />
           </Routes>
         </main>
       </div>
@@ -139,26 +197,53 @@ function AppContent() {
 
           {/* --- USER ROUTES --- */}
           <Route path="/home" element={redirectIfAdmin(<HomePage />)} />
-          <Route path="/home/featured" element={redirectIfAdmin(<FeaturedPage />)} />
-          <Route path="/home/popular" element={redirectIfAdmin(<PopularPage />)} />
-          <Route path="/home/gaming" element={redirectIfAdmin(<GamingPage />)} />
+          <Route
+            path="/home/featured"
+            element={redirectIfAdmin(<FeaturedPage />)}
+          />
+          <Route
+            path="/home/popular"
+            element={redirectIfAdmin(<PopularPage />)}
+          />
+          <Route
+            path="/home/gaming"
+            element={redirectIfAdmin(<GamingPage />)}
+          />
           <Route path="/shop" element={redirectIfAdmin(<Shop />)} />
-          <Route path="/product/:id" element={redirectIfAdmin(<ProductDetail />)} />
+          <Route
+            path="/product/:id"
+            element={redirectIfAdmin(<ProductDetail />)}
+          />
           <Route path="/cart" element={redirectIfAdmin(<Cart />)} />
           <Route path="/checkout" element={redirectIfAdmin(<Checkout />)} />
           <Route
             path="/checkout-reorder/:reorderId"
             element={redirectIfAdmin(<CheckoutReorder />)}
           />
-          <Route path="/order-success" element={redirectIfAdmin(<OrderSuccess />)} />
+          <Route
+            path="/order-success"
+            element={redirectIfAdmin(<OrderSuccess />)}
+          />
           <Route path="/orders" element={redirectIfAdmin(<OrderListUser />)} />
-          <Route path="/history-orders" element={redirectIfAdmin(<OrderHistoryListUser />)} />
-          <Route path="/orders/detail/:id" element={redirectIfAdmin(<OrderDetailUser />)} />
+          <Route
+            path="/history-orders"
+            element={redirectIfAdmin(<OrderHistoryListUser />)}
+          />
+          <Route
+            path="/orders/detail/:id"
+            element={redirectIfAdmin(<OrderDetailUser />)}
+          />
 
           {/* --- CONTENT --- */}
           <Route path="/themes" element={redirectIfAdmin(<ThemesPage />)} />
-          <Route path="/themes/:id" element={redirectIfAdmin(<ThemeDetailPage />)} />
-          <Route path="/characters/:id" element={redirectIfAdmin(<CharacterDetailPage />)} />
+          <Route
+            path="/themes/:id"
+            element={redirectIfAdmin(<ThemeDetailPage />)}
+          />
+          <Route
+            path="/characters/:id"
+            element={redirectIfAdmin(<CharacterDetailPage />)}
+          />
           <Route path="/news" element={redirectIfAdmin(<NewsList />)} />
           <Route path="/news/:id" element={redirectIfAdmin(<NewsDetail />)} />
 
@@ -166,7 +251,10 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/resend-verification" element={<ResendVerificationPage />} />
+          <Route
+            path="/resend-verification"
+            element={<ResendVerificationPage />}
+          />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 

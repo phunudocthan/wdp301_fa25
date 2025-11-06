@@ -62,11 +62,9 @@ router.post("/", requireAuth, async (req, res) => {
         appliedVoucher.usagePerUser &&
         userUsedCount >= appliedVoucher.usagePerUser
       ) {
-        return res
-          .status(400)
-          .json({
-            error: `Bạn đã sử dụng voucher này tối đa ${appliedVoucher.usagePerUser} lần.`,
-          });
+        return res.status(400).json({
+          error: `Bạn đã sử dụng voucher này tối đa ${appliedVoucher.usagePerUser} lần.`,
+        });
       }
     }
 
@@ -102,36 +100,44 @@ router.post("/", requireAuth, async (req, res) => {
           .json({ error: "out_of_stock", details: outOfStock });
       }
 
-        // normalize shippingAddress shape so both checkout payloads and schema-based docs work
-        const normalizedShipping = {};
-        if (shippingAddress) {
-          // prefer explicit schema fields, fall back to checkout payload keys
-          normalizedShipping.fullName = shippingAddress.fullName || shippingAddress.name || "";
-          normalizedShipping.phone = shippingAddress.phone || "";
-          // street may come as `street` or `address` from different clients
-          if (shippingAddress.street || shippingAddress.address) {
-            normalizedShipping.street = shippingAddress.street || shippingAddress.address;
-          }
-          if (shippingAddress.ward) normalizedShipping.ward = shippingAddress.ward;
-          if (shippingAddress.district) normalizedShipping.district = shippingAddress.district;
-          if (shippingAddress.city) normalizedShipping.city = shippingAddress.city;
-          if (shippingAddress.note) normalizedShipping.note = shippingAddress.note;
+      // normalize shippingAddress shape so both checkout payloads and schema-based docs work
+      const normalizedShipping = {};
+      if (shippingAddress) {
+        // prefer explicit schema fields, fall back to checkout payload keys
+        normalizedShipping.fullName =
+          shippingAddress.fullName || shippingAddress.name || "";
+        normalizedShipping.phone = shippingAddress.phone || "";
+        // street may come as `street` or `address` from different clients
+        if (shippingAddress.street || shippingAddress.address) {
+          normalizedShipping.street =
+            shippingAddress.street || shippingAddress.address;
         }
+        if (shippingAddress.ward)
+          normalizedShipping.ward = shippingAddress.ward;
+        if (shippingAddress.district)
+          normalizedShipping.district = shippingAddress.district;
+        if (shippingAddress.city)
+          normalizedShipping.city = shippingAddress.city;
+        if (shippingAddress.note)
+          normalizedShipping.note = shippingAddress.note;
+      }
 
-        // create order document within session
-        const orderDoc = {
-          userId: req.user._id,
-          items: items.map((it) => ({
-            legoId: it.legoId,
-            quantity: it.quantity,
-            price: it.price,
-          })),
-          total,
-          shippingAddress: Object.keys(normalizedShipping).length ? normalizedShipping : undefined,
-          paymentMethod: paymentMethod === "VNPay" ? "VNPay" : "COD",
-          paymentStatus: paymentMethod === "VNPay" ? "unpaid" : "unpaid",
-          voucherId: voucherId || undefined,
-        };
+      // create order document within session
+      const orderDoc = {
+        userId: req.user._id,
+        items: items.map((it) => ({
+          legoId: it.legoId,
+          quantity: it.quantity,
+          price: it.price,
+        })),
+        total,
+        shippingAddress: Object.keys(normalizedShipping).length
+          ? normalizedShipping
+          : undefined,
+        paymentMethod: paymentMethod === "VNPay" ? "VNPay" : "COD",
+        paymentStatus: paymentMethod === "VNPay" ? "unpaid" : "unpaid",
+        voucherId: voucherId || undefined,
+      };
 
       const [savedOrder] = await Order.create([orderDoc], { session });
 
@@ -166,41 +172,47 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/orders - admin list with pagination and filter
-router.get("/", requireAuth, requireRole("admin"), async (req, res) => {
-  try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 200);
-    const skip = (page - 1) * limit;
+// GET /api/orders - admin/employee list with pagination and filter
+router.get(
+  "/",
+  requireAuth,
+  requireRole("admin", "employee"),
+  async (req, res) => {
+    try {
+      const page = parseInt(req.query.page, 10) || 1;
+      const limit = Math.min(parseInt(req.query.limit, 10) || 20, 200);
+      const skip = (page - 1) * limit;
 
-    const filter = {};
-    if (req.query.status) filter.status = req.query.status;
-    if (req.query.paymentStatus) filter.paymentStatus = req.query.paymentStatus;
-    if (req.query.userId) filter.userId = req.query.userId;
-    if (req.query.search) {
-      const q = req.query.search;
-      filter.$or = [{ orderNumber: new RegExp(q, "i") }];
+      const filter = {};
+      if (req.query.status) filter.status = req.query.status;
+      if (req.query.paymentStatus)
+        filter.paymentStatus = req.query.paymentStatus;
+      if (req.query.userId) filter.userId = req.query.userId;
+      if (req.query.search) {
+        const q = req.query.search;
+        filter.$or = [{ orderNumber: new RegExp(q, "i") }];
+      }
+
+      const [itemsRaw, total] = await Promise.all([
+        Order.find(filter)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .populate("userId", "name email")
+          .lean(),
+        Order.countDocuments(filter),
+      ]);
+
+      // normalize to include a `user` field (containing populated name/email) for client convenience
+      const items = (itemsRaw || []).map((it) => ({ ...it, user: it.userId }));
+
+      res.json({ items, total, page, pageSize: limit });
+    } catch (err) {
+      console.error("Orders list error", err);
+      res.status(500).json({ error: "Failed to fetch orders" });
     }
-
-    const [itemsRaw, total] = await Promise.all([
-      Order.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate("userId", "name email")
-        .lean(),
-      Order.countDocuments(filter),
-    ]);
-
-    // normalize to include a `user` field (containing populated name/email) for client convenience
-    const items = (itemsRaw || []).map((it) => ({ ...it, user: it.userId }));
-
-    res.json({ items, total, page, pageSize: limit });
-  } catch (err) {
-    console.error("Orders list error", err);
-    res.status(500).json({ error: "Failed to fetch orders" });
   }
-});
+);
 
 // GET /api/orders/my - current user's orders (paginated)
 router.get("/my", requireAuth, async (req, res) => {
@@ -219,7 +231,7 @@ router.get("/my", requireAuth, async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate({ path: 'items.legoId', select: 'name images price' })
+        .populate({ path: "items.legoId", select: "name images price" })
         .lean(),
       Order.countDocuments(filter),
     ]);
@@ -248,7 +260,7 @@ router.get("/my-order-history", requireAuth, async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate({ path: 'items.legoId', select: 'name images price' })
+        .populate({ path: "items.legoId", select: "name images price" })
         .lean(),
       Order.countDocuments(filter),
     ]);
@@ -260,19 +272,23 @@ router.get("/my-order-history", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
-// GET /api/orders/:id - order detail (admin or owner)
+// GET /api/orders/:id - order detail (admin/employee or owner)
 router.get("/:id", requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const orderRaw = await Order.findById(id)
       .populate("userId", "name email")
-      .populate({ path: 'items.legoId', select: 'name images price' })
+      .populate({ path: "items.legoId", select: "name images price" })
       .lean();
     if (!orderRaw) return res.status(404).json({ error: "Order not found" });
 
-    // allow admin to view any order, otherwise only owner
-    const isAdmin = req.user && req.user.role === "admin";
-    if (!isAdmin && String(orderRaw.userId) !== String(req.user._id)) {
+    // allow admin/employee to view any order, otherwise only owner
+    const isAdminOrEmployee =
+      req.user && (req.user.role === "admin" || req.user.role === "employee");
+    if (
+      !isAdminOrEmployee &&
+      String(orderRaw.userId) !== String(req.user._id)
+    ) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -289,7 +305,7 @@ router.get("/:id/user", requireAuth, async (req, res) => {
     const id = req.params.id;
     const orderRaw = await Order.findById(id)
       .populate("userId", "name email")
-      .populate({ path: 'items.legoId', select: 'name images price' })
+      .populate({ path: "items.legoId", select: "name images price" })
       .lean();
     if (!orderRaw) return res.status(404).json({ error: "Order not found" });
 
@@ -301,7 +317,7 @@ router.get("/:id/user", requireAuth, async (req, res) => {
   }
 });
 
-// PATCH /api/orders/:id - update status/payment/tracking (admin or owner-cancel)
+// PATCH /api/orders/:id - update status/payment/tracking (admin/employee or owner-cancel)
 router.patch("/:id", requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
@@ -310,10 +326,11 @@ router.patch("/:id", requireAuth, async (req, res) => {
     const order = await Order.findById(id);
     if (!order) return res.status(404).json({ error: "Order not found" });
 
-    const isAdmin = req.user && req.user.role === "admin";
+    const isAdminOrEmployee =
+      req.user && (req.user.role === "admin" || req.user.role === "employee");
 
-    // If non-admin, only allow owner to cancel a pending order
-    if (!isAdmin) {
+    // If non-admin/non-employee, only allow owner to cancel a pending order
+    if (!isAdminOrEmployee) {
       if (String(order.userId) !== String(req.user._id)) {
         return res.status(403).json({ error: "Forbidden" });
       }
@@ -368,7 +385,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
       }
     }
 
-    // Admin path: allow full updates with existing validation
+    // Admin/Employee path: allow full updates with existing validation
     const updates = {};
     const historyEntry = { by: req.user._id, at: new Date(), changes: {} };
 
@@ -376,11 +393,9 @@ router.patch("/:id", requireAuth, async (req, res) => {
       // validate transition
       const allowed = allowedTransitions[order.status] || [];
       if (!allowed.includes(status)) {
-        return res
-          .status(400)
-          .json({
-            error: `Invalid status transition from ${order.status} to ${status}`,
-          });
+        return res.status(400).json({
+          error: `Invalid status transition from ${order.status} to ${status}`,
+        });
       }
       updates.status = status;
       historyEntry.changes.status = { from: order.status, to: status };

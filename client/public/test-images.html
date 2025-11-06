@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Image URLs</title>
+</head>
+
+<body>
+    <h1>Testing Image URLs from Vite Dev Server (port 3000)</h1>
+
+    <h2>Test 1: Theme Banner</h2>
+    <img src="/uploads/themes/banners/banner-1762019482073-364290311.jpg" alt="Ninjago Banner"
+        style="max-width: 400px; border: 2px solid green;"
+        onload="console.log('✅ Banner loaded!'); this.style.borderColor='green'"
+        onerror="console.error('❌ Banner failed!'); this.style.borderColor='red'" />
+
+    <h2>Test 2: Character Image</h2>
+    <img src="/uploads/themes/characters/character-1762015116279-424245931.jpg" alt="Kai Character"
+        style="max-width: 400px; border: 2px solid green;"
+        onload="console.log('✅ Character loaded!'); this.style.borderColor='green'"
+        onerror="console.error('❌ Character failed!'); this.style.borderColor='red'" />
+</body>
+
+</html>

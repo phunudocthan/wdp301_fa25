@@ -12,19 +12,16 @@ const parseEnvApiList = (value: string | undefined) =>
     .filter(Boolean)
     .map(normalizeBase);
 
-// Prefer localhost:5001 as the primary dev API base, fall back to 5000 if needed
+// Prefer localhost:5000 as the primary dev API base
 const devDefaultBases = [
-  "http://localhost:5001/api",
   "http://localhost:5000/api",
+  "http://localhost:5001/api",
 ];
 
 const currentOrigin = window.location.origin.replace(/\/$/, "");
-const isLocalhost = [
-  "localhost",
-  "127.0.0.1",
-  "0.0.0.0",
-  "::1",
-].includes(window.location.hostname);
+const isLocalhost = ["localhost", "127.0.0.1", "0.0.0.0", "::1"].includes(
+  window.location.hostname
+);
 const defaultCandidates = isLocalhost
   ? [...devDefaultBases, `${currentOrigin}/api`]
   : [`${currentOrigin}/api`];
@@ -186,5 +183,9 @@ export const getFullImageURL = (imgPath?: string) => {
 
   // Bỏ /api nếu có, để lấy URL gốc (localhost:5001 hoặc domain)
   const rootURL = getApiOriginURL();
-  return `${rootURL}${imgPath}`;
+
+  // Ensure imgPath starts with /
+  const normalizedPath = imgPath.startsWith("/") ? imgPath : `/${imgPath}`;
+
+  return `${rootURL}${normalizedPath}`;
 };

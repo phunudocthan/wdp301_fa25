@@ -12,19 +12,22 @@ const { default: mongoose } = require("mongoose");
 const parseIdsFromReq = (req) => {
   // Try query parameter first: ?ids=id1,id2,id3
   if (req.query && req.query.ids) {
-    if (typeof req.query.ids === 'string') {
-      return req.query.ids.split(',').map(id => id.trim()).filter(Boolean);
+    if (typeof req.query.ids === "string") {
+      return req.query.ids
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
     }
     if (Array.isArray(req.query.ids)) {
-      return req.query.ids.map(id => String(id).trim()).filter(Boolean);
+      return req.query.ids.map((id) => String(id).trim()).filter(Boolean);
     }
   }
-  
+
   // Try body parameter: { ids: [...] }
   if (req.body && req.body.ids && Array.isArray(req.body.ids)) {
-    return req.body.ids.map(id => String(id).trim()).filter(Boolean);
+    return req.body.ids.map((id) => String(id).trim()).filter(Boolean);
   }
-  
+
   return [];
 };
 
@@ -50,7 +53,7 @@ const getAllProducts = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    let filter = {};
+    let filter = { deletedAt: null }; // Exclude soft deleted products
 
     if (search) {
       filter.$or = [
@@ -322,7 +325,7 @@ const updateProduct = async (req, res) => {
 };
 
 /**
- * @desc Xóa sản phẩm
+ * @desc Xóa sản phẩm (soft delete)
  * @route DELETE /api/admin/products/:id
  * @access Private (Admin)
  */
@@ -338,7 +341,11 @@ const deleteProduct = async (req, res) => {
       });
     }
 
-    await Lego.findByIdAndDelete(id);
+    // Soft delete: set deletedAt to current date
+    await Lego.findByIdAndUpdate(id, {
+      deletedAt: new Date(),
+      status: "inactive",
+    });
 
     res.json({
       success: true,
@@ -547,7 +554,7 @@ const getRecentlyViewedProducts = async (req, res) => {
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Danh sách sản phẩm đã xem không hợp lệ',
+        message: "Danh sách sản phẩm đã xem không hợp lệ",
       });
     }
 
@@ -564,14 +571,14 @@ const getRecentlyViewedProducts = async (req, res) => {
     if (validObjectIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Không có productId hợp lệ',
+        message: "Không có productId hợp lệ",
       });
     }
 
     const docs = await Lego.find({ _id: { $in: validObjectIds } })
-      .populate('themeId', 'name')
-      .populate('characterId', 'name')
-      .populate('categories', 'name slug')
+      .populate("themeId", "name")
+      .populate("characterId", "name")
+      .populate("categories", "name slug")
       .lean();
 
     // Preserve input order
@@ -586,10 +593,10 @@ const getRecentlyViewedProducts = async (req, res) => {
       products: sorted,
     });
   } catch (error) {
-    console.error('Get recently viewed products error:', error);
+    console.error("Get recently viewed products error:", error);
     return res.status(500).json({
       success: false,
-      message: 'Lỗi server khi lấy sản phẩm đã xem gần đây',
+      message: "Lỗi server khi lấy sản phẩm đã xem gần đây",
       error: error.message,
     });
   }

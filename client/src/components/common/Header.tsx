@@ -40,10 +40,13 @@ export default function Header() {
   const role = user?.role ?? "guest";
   const isAdmin = role === "admin";
   const isEmployee = role === "employee";
-  const isAdminSection = isAdmin || (isEmployee && location.pathname.startsWith("/admin"));
+  const isAdminSection =
+    isAdmin || (isEmployee && location.pathname.startsWith("/admin"));
 
   // --- Dark mode ---
-  const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem("theme") === "dark");
+  const [isDarkMode, setIsDarkMode] = useState(
+    localStorage.getItem("theme") === "dark"
+  );
   const toggleTheme = (checked: boolean) => {
     setIsDarkMode(checked);
     localStorage.setItem("theme", checked ? "dark" : "light");
@@ -55,7 +58,10 @@ export default function Header() {
   // --- Close dropdown when clicking outside ---
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -87,7 +93,11 @@ export default function Header() {
     <header className="header">
       <div className="container header-inner">
         {/* Logo */}
-        <Link to="/home" className="brand" onClick={() => setShowDropdown(false)}>
+        <Link
+          to="/home"
+          className="brand"
+          onClick={() => setShowDropdown(false)}
+        >
           <img src={logo} alt="LEGO Logo" className="logo" />
           <span>LEGOs</span>
         </Link>
@@ -96,28 +106,34 @@ export default function Header() {
         <nav className="nav">
           {isAdminSection ? (
             <>
-              <NavLink to="/admin" end>Dashboard</NavLink>
+              <NavLink to="/admin" end>
+                Dashboard
+              </NavLink>
               <NavLink to="/admin/dashboard/revenue">Revenue</NavLink>
               <NavLink to="/admin/dashboard/orders">Order Stats</NavLink>
-              <NavLink to="/admin/orders">Orders</NavLink>
+              {/* <NavLink to="/admin/orders">Orders</NavLink> */}
               <NavLink to="/admin/products">Products</NavLink>
               <NavLink to="/admin/categories">Categories</NavLink>
               <NavLink to="/admin/users">Users</NavLink>
               <NavLink to="/admin/notifications">Notifications</NavLink>
               <NavLink to="/admin/vouchers">Vouchers</NavLink>
               <NavLink to="/admin/reviews">Reviews</NavLink>
-              <NavLink to="/admin/themes">Themes</NavLink>
-              <NavLink to="/admin/characters">Characters</NavLink>
+              {/* <NavLink to="/admin/themes">Themes</NavLink> */}
+              {/* <NavLink to="/admin/characters">Characters</NavLink> */}
             </>
           ) : (
             <>
               <NavLink to="/home">Home</NavLink>
               <NavLink to="/shop">Shop</NavLink>
-              {(isEmployee || isAdmin) && <NavLink to="/employee/news">Manage News</NavLink>}
+              {(isEmployee || isAdmin) && (
+                <NavLink to="/employee/news">Manage News</NavLink>
+              )}
               <NavLink to="/news">News</NavLink>
               <NavLink to="/themes">Themes</NavLink>
               <NavLink to="/addresses">Address Book</NavLink>
-              {user && user.role !== "admin" && <NavLink to="/orders">My Orders</NavLink>}
+              {user && user.role !== "admin" && (
+                <NavLink to="/orders">My Orders</NavLink>
+              )}
               <NavLink to="/history-orders">History Orders</NavLink>
               <NavLink to="/notifications">Notifications</NavLink>
             </>
@@ -160,11 +176,16 @@ export default function Header() {
                   title="Favourites"
                 >
                   {favoriteIds?.length > 0 && (
-                    <span className="notification-badge">{favoriteIds.length}</span>
+                    <span className="notification-badge">
+                      {favoriteIds.length}
+                    </span>
                   )}
                   <FaHeart className="icon" />
                 </div>
-                <div className="icon cursor-pointer" onClick={() => navigate("/cart")}>
+                <div
+                  className="icon cursor-pointer"
+                  onClick={() => navigate("/cart")}
+                >
                   <FaShoppingBag />
                   <span className="cart-count">{cart?.items?.length ?? 0}</span>
                 </div>
@@ -181,7 +202,12 @@ export default function Header() {
             >
               <div className="rounded-full overflow-hidden h-9 w-9">
                 {avatar ? (
-                  <img src={avatar} alt="avatar" className="user-avatar" referrerPolicy="no-referrer" />
+                  <img
+                    src={avatar}
+                    alt="avatar"
+                    className="user-avatar"
+                    referrerPolicy="no-referrer"
+                  />
                 ) : (
                   <div className="bg-blue-600 text-white flex items-center justify-center h-full w-full text-sm font-bold rounded-full">
                     {(name ?? "U").charAt(0)}
@@ -199,7 +225,9 @@ export default function Header() {
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                 <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
                   <p className="font-medium truncate">{name}</p>
-                  <p className="text-gray-500 text-xs truncate">{user?.email ?? ""}</p>
+                  <p className="text-gray-500 text-xs truncate">
+                    {user?.email ?? ""}
+                  </p>
                 </div>
 
                 <button
