@@ -61,6 +61,21 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             <button type="button" onClick={() => go('/home/gaming')} className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">
               Guides
             </button>
+            <button type="button" onClick={() => go('/themes')} className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">
+              Themes
+            </button>
+            <button type="button" onClick={() => go('/addresses')} className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">
+              Address Book
+            </button>
+            <button type="button" onClick={() => go('/orders')} className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">
+              My Orders
+            </button>
+            <button type="button" onClick={() => go('/history-orders')} className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">
+              History Orders
+            </button>
+            <button type="button" onClick={() => go('/notifications')} className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">
+              Notifications
+            </button>
           </div>
 
           {/* Search Bar */}

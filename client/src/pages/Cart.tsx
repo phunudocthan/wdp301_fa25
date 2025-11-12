@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../components/context/CartContext";
 import "../styles/cart.scss";
 import { Button, InputNumber, Divider, Modal, message } from "antd";
-import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 
 export default function Cart() {

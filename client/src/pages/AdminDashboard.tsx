@@ -7,7 +7,6 @@ import {
   OrderStatusInfo,
 } from "../api/admin";
 import "../styles/AdminDashboard.css";
-import Header from "../components/common/Header";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",

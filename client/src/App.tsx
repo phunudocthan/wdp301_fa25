@@ -109,7 +109,7 @@ function AppContent() {
   // --- EMPLOYEE ---
   if (isEmployee) {
     return (
-      <div>
+      <div className="app-background">
         {shouldShowHeader && <EmployeeHeader />}
         <SessionNotifications />
         <main>
@@ -187,7 +187,7 @@ function AppContent() {
     isAdmin ? <Navigate to="/admin" replace /> : element;
 
   return (
-    <div>
+    <div className="app-background">
       {shouldShowHeader && <Header />}
       <SessionNotifications />
       <main>

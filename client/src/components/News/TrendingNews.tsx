@@ -71,39 +71,41 @@ const TrendingNews: React.FC<{ limit?: number }> = ({ limit = 5 }) => {
 
   return (
     <section className="trending-section">
-      <div className="trending-header">
+      <div className="trending-inner">
+        <div className="trending-header">
         <Title level={3} style={{ margin: 0, color: "var(--primary)" }}>🔥 Trending</Title>
         <p className="lead">Most-read articles this week based on views and engagement.</p>
       </div>
 
+      {/* Top row: two equal cards side-by-side */}
       <Row gutter={[24, 24]}>
-        <Col xs={24} lg={16}>
+        <Col xs={24} lg={12}>
           {hero && (
-            <article className="trending-hero" onClick={() => navigate(`/news/${hero._id}`)}>
-              <div className="trending-hero-media">
+            <article className="trending-top-card" onClick={() => navigate(`/news/${hero._id}`)}>
+              <div className="top-media">
                 <img src={getFullImageURL(hero.images?.[0])} alt={hero.title} />
               </div>
-              <div className="trending-hero-body">
-                <h2 className="trending-hero-title">{hero.title}</h2>
-                <p className="trending-hero-excerpt">{hero.excerpt}</p>
-                <div className="trending-hero-meta">{typeof hero.views === 'number' ? `${hero.views} views` : ''}</div>
+              <div className="top-body">
+                <h3 className="top-title">{hero.title}</h3>
+                <p className="top-excerpt">{hero.excerpt}</p>
+                <div className="top-meta">{typeof hero.views === 'number' ? `${hero.views} views` : ''}</div>
               </div>
             </article>
           )}
         </Col>
 
-        <Col xs={24} lg={8}>
+        <Col xs={24} lg={12}>
           {topRight && (
-            <div className="trending-medium-card" onClick={() => navigate(`/news/${topRight._id}`)}>
-              <div className="medium-media">
+            <article className="trending-top-card" onClick={() => navigate(`/news/${topRight._id}`)}>
+              <div className="top-media">
                 <img src={getFullImageURL(topRight.images?.[0])} alt={topRight.title} />
               </div>
-              <div className="medium-body">
-                <h3 className="medium-title">{topRight.title}</h3>
-                <p className="medium-excerpt">{topRight.excerpt}</p>
-                <div className="medium-meta">{typeof topRight.views === 'number' ? `${topRight.views} views` : ''}</div>
+              <div className="top-body">
+                <h3 className="top-title">{topRight.title}</h3>
+                <p className="top-excerpt">{topRight.excerpt}</p>
+                <div className="top-meta">{typeof topRight.views === 'number' ? `${topRight.views} views` : ''}</div>
               </div>
-            </div>
+            </article>
           )}
         </Col>
       </Row>
@@ -123,6 +125,7 @@ const TrendingNews: React.FC<{ limit?: number }> = ({ limit = 5 }) => {
           </Col>
         ))}
       </Row>
+      </div>
     </section>
   );
 };

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, Row, Col, Spin, Empty, Typography, message } from "antd";
 import themeApi, { Theme } from "../api/theme";
 import { getFullImageURL } from "../api/axiosInstance";
-import Header from "../components/common/Header";
+// Header is provided globally by App; remove per-page Header import
 import Footer from "../components/common/Footer";
 import "../styles/themes.scss";
 
@@ -34,7 +34,6 @@ export default function ThemesPage() {
   if (loading) {
     return (
       <>
-        <Header />
         <div className="themes-page-loading">
           <Spin size="large" tip="Loading themes..." />
         </div>

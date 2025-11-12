@@ -2,6 +2,23 @@
 .homepage {
   font-family: Arial, sans-serif;
 
+  /* Page background matching header warm theme in light mode,
+     and a subtle dark gradient in dark mode. Sections use
+     transparent backgrounds so cards and sliders float above it. */
+  &.light {
+    background: linear-gradient(180deg, #fff8ef 0%, #fff3d6 30%, #fff 100%);
+    color: #111;
+  }
+
+  &.dark {
+    background: linear-gradient(180deg, #0b1220 0%, #141414 40%, #1b1f27 100%);
+    color: #e6eef8;
+  }
+
+  /* Ensure the background fills the viewport underneath sticky header */
+  min-height: calc(100vh - 72px);
+  background-attachment: fixed;
+
   /* TRENDING */
   .trending-section {
     padding: 24px 80px;

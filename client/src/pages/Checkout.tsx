@@ -7,7 +7,7 @@ import { getAddresses } from "../api/user";
 import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../components/context/AuthContext";
 import type { UserAddress } from "../types/user";
-import Header from "../components/common/Header";
+// Header is provided globally by App; remove per-page Header to avoid duplication
 
 export default function Checkout() {
   const { cart, clearCart } = useCart();
@@ -178,7 +178,7 @@ const handleSubmit = async () => {
 
   return (
     <>
-      <Header /> <button onClick={() => navigate(-1)}>Back</button>
+      <button onClick={() => navigate(-1)}>Back</button>
       <div style={{ padding: 24, display: "flex", gap: 24 }}>
         <div
           style={{ flex: 1, background: "#fff", padding: 20, borderRadius: 8 }}

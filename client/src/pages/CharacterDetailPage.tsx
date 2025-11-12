@@ -22,7 +22,7 @@ import themeApi, { ThemeCharacter } from "../api/theme";
 import productApi, { Product } from "../api/product";
 import { useCart } from "../components/context/CartContext";
 import { getFullImageURL } from "../api/axiosInstance";
-import Header from "../components/common/Header";
+// Header rendered globally by App; remove local Header import to avoid duplicate headers
 import Footer from "../components/common/Footer";
 import "../styles/character-detail.scss";
 
@@ -156,7 +156,6 @@ export default function CharacterDetailPage() {
   if (loading) {
     return (
       <>
-        <Header />
         <div className="character-detail-loading">
           <Spin size="large" tip="Loading character..." />
         </div>
@@ -168,7 +167,6 @@ export default function CharacterDetailPage() {
   if (!character) {
     return (
       <>
-        <Header />
         <Empty
           description="Character not found"
           style={{ margin: "80px auto" }}
@@ -180,7 +178,6 @@ export default function CharacterDetailPage() {
 
   return (
     <>
-      <Header />
       <div className="character-detail-page">
         {/* Breadcrumb with Back Button */}
         {/* <div className="breadcrumb-section">

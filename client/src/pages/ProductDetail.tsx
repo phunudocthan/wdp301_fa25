@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
-import Header from "../components/common/Header";
 import {
   Settings,
   User,
@@ -200,40 +199,20 @@ export default function ProductDetail() {
               <span className="badge new">New</span>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
-              <h1 className="title" style={{ marginBottom: 0 }}>
-                {product.name}
-              </h1>
+            <div className="title-row">
+              <h1 className="title">{product.name}</h1>
               <button
                 type="button"
                 onClick={handleFavoriteToggle}
                 disabled={favoritePending}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  border: "1px solid #f0f0f0",
-                  background: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
-                  cursor: favoritePending ? "not-allowed" : "pointer",
-                  opacity: favoritePending ? 0.6 : 1,
-                  transition: "transform 0.2s ease",
-                }}
+                className={`fav-btn ${favoritePending ? "disabled" : ""}`}
+                aria-pressed={isFavorite}
+                aria-label={isFavorite ? "Remove favorite" : "Add favorite"}
               >
                 {isFavorite ? (
-                  <HeartFilled style={{ color: "#f5222d", fontSize: 20 }} />
+                  <HeartFilled className="fav-icon filled" />
                 ) : (
-                  <HeartOutlined style={{ color: "#555", fontSize: 20 }} />
+                  <HeartOutlined className="fav-icon" />
                 )}
               </button>
             </div>
@@ -294,37 +273,26 @@ export default function ProductDetail() {
               Add to Bag
             </button>
             {/* === Product Details beside Add to Bag === */}
+
+            {/* Compact theme block shown above other meta */}
+            <div className="theme-block">
+              <Palette size={16} className="icon" />
+              <div>
+                <span className="label">Theme</span>
+                <span className="value">
+                  {product.themeId?.name} — {product.themeId?.description}
+                </span>
+              </div>
+            </div>
+
             <div className="product-meta inline">
               <div className="meta-grid">
-                <div className="meta-item">
-                  <Palette size={16} className="icon" />
-                  <div>
-                    <span className="label">Theme</span>
-                    <span className="value">
-                      {product.themeId?.name} — {product.themeId?.description}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="meta-item">
-                  <User size={16} className="icon" />
-                  <div>
-                    <span className="label">Age</span>
-                    <span className="value">
-                      {product.ageRangeId?.rangeLabel} (
-                      {product.ageRangeId?.minAge}–{product.ageRangeId?.maxAge}{" "}
-                      years)
-                    </span>
-                  </div>
-                </div>
-
                 <div className="meta-item">
                   <Settings size={16} className="icon" />
                   <div>
                     <span className="label">Difficulty</span>
                     <span className="value">
-                      {product.difficultyId?.label} (Level{" "}
-                      {product.difficultyId?.level})
+                      {product.difficultyId?.label} (Level {product.difficultyId?.level})
                     </span>
                   </div>
                 </div>
@@ -350,12 +318,21 @@ export default function ProductDetail() {
                   <div>
                     <span className="label">Updated</span>
                     <span className="value">
-                      {new Date(product.updatedAt || "").toLocaleDateString(
-                        "en-GB"
-                      )}
+                      {new Date(product.updatedAt || "").toLocaleDateString("en-GB")}
                     </span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Age moved down into its own compact row */}
+            <div className="age-block">
+              <User size={16} className="icon" />
+              <div>
+                <span className="label">Age</span>
+                <span className="value">
+                  {product.ageRangeId?.rangeLabel} ({product.ageRangeId?.minAge}–{product.ageRangeId?.maxAge} years)
+                </span>
               </div>
             </div>
 

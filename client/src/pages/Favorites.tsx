@@ -23,7 +23,6 @@ import type { FavoriteProduct } from "../api/favorites";
 import imagesDefault from "../../../client/public/images/1827380.png";
 import { resolveAssetUrl } from "../utils/assets";
 import { ArrowLeftRightIcon } from "lucide-react";
-import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 
 const { Title } = Typography;
