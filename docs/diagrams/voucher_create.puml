@@ -1,0 +1,47 @@
+@startuml
+' Voucher - Create (Admin) class diagram aligned to source code
+title Voucher - Create (Admin) - class diagram
+class VoucherRoutes {
+  +listVouchers(req,res)
+  +getVoucher(req,res)
+  +createVoucher(req,res)
+  +updateVoucher(req,res)
+  +deleteVoucher(req,res)
+  +updateVoucherStatus(req,res)
+}
+class AuthMiddleware {
+  +requireAuth(req,res,next)
+  +requireRole(role)(req,res,next)
+  -- internal: jwt.verify(token)
+}
+class VoucherController {
+  +listVouchers(req,res)
+  +getVoucher(req,res)
+  +createVoucher(req,res)
+  +updateVoucher(req,res)
+  +deleteVoucher(req,res)
+  +updateVoucherStatus(req,res)
+  -- helper: buildFilters(query)
+}
+class Voucher {
+  -code: String
+  -discountPercent: Number
+  -expiryDate: Date
+  -usageLimit: Number
+  -usagePerUser: Number
+  -status: String
+  +create(doc)
+  +findOne(filter)
+  +findById(id)
+  +findByIdAndUpdate(id, updates, opts)
+  +findByIdAndDelete(id)
+  +countDocuments(filter)
+  +find(filter)
+}
+database MongoDB
+
+VoucherRoutes --> AuthMiddleware : uses (requireAuth, requireRole)
+VoucherRoutes --> VoucherController : calls (createVoucher)
+VoucherController --> Voucher : uses (create, findOne)
+Voucher --> MongoDB : persists / queries
+@enduml

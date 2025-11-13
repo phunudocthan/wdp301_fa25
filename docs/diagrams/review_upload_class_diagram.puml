@@ -1,0 +1,67 @@
+@startuml
+ ' Review Image Upload - class diagram (aligned to sequence + source)
+title Review Image Upload - class diagram
+
+class Customer {
+}
+
+class ProductPage {
+  +openReviewModal()
+  +showThumbnails(urls: string[])
+}
+
+class ReviewModal {
+  +attachImages(files)
+  +submitImages()
+  +showError(msg)
+}
+
+class UploadRouter {
+  +POST /review-images(req,res)
+  +POST /review-image(req,res)
+  ' file: server/routes/uploadRoutes.js
+  +handler_uploadReviewImages(req,res)
+  +handler_uploadReviewImage(req,res)
+}
+
+class AuthMiddleware {
+  +requireAuth(req,res,next)
+  +requireRole(...roles)(req,res,next)
+}
+
+class UploadHandler {
+  +handleUploadReviewImages(req,res)
+  +handleUploadReviewImage(req,res)
+}
+
+class uploadReview <<(M,#FFEEAA)>> {
+  ' variable exported from server/utils/multerReviewConfig.js
+  -uploadDir: String
+  -storage: diskStorage
+  -fileFilter(req,file,cb)
+  -limits: Object
+  +array(fieldName, maxCount)
+  +single(fieldName)
+}
+
+class DiskStorage {
+  +write(file): filename
+  +ensureDir(path)
+}
+
+database MongoDB
+
+' relationships (use exact names from sequence/source)
+ProductPage --> ReviewModal : openModal()
+ReviewModal --> UploadRouter : POST /api/upload/review-images
+UploadRouter --> AuthMiddleware : requireAuth
+UploadRouter --> uploadReview : uploadReview.array("images",5) / uploadReview.single("image")
+uploadReview --> DiskStorage : diskStorage -> write to uploads/reviews
+DiskStorage --> uploadReview : returns filenames
+UploadRouter --> UploadHandler : calls handler_uploadReviewImages(req,res)
+UploadHandler --> UploadRouter : returns 201 / 400 / 500
+UploadRouter --> ReviewModal : returns response JSON (201/400/500)
+ReviewModal --> ProductPage : show thumbnails(urls)
+ProductPage --> Customer : render thumbnails / show error
+
+@enduml

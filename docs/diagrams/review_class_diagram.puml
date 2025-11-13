@@ -1,0 +1,51 @@
+@startuml
+' Review - Product - class diagram aligned to source code
+title Review - Product - class diagram
+
+class ReviewRoutes {
+  +getProductReviews(req,res)
+}
+
+class AuthMiddleware {
+  +requireAuth(req,res,next)
+  +requireRole(role)(req,res,next)
+}
+
+class ReviewController {
+  +getProductReviews(req,res)
+  +buildFilter(query)
+  -- pagination, filters, returns {reviews, meta}
+}
+
+class ReviewModel << (M,#FFAAAA) >> {
+  ' file: server/models/Review.js
+  -legoId: String
+  -userId: ObjectId
+  -rating: Number
+  -comment: String
+  -images: [String]
+  -votes: Object
+  -replies: [Object]
+  -status: String
+  -createdAt: Date
+  +countDocuments(filter)
+  +find(filter)
+  +findById(id)
+  +findOne(filter)
+}
+
+database MongoDB
+
+ReviewRoutes --> AuthMiddleware : uses (requireAuth)
+ReviewRoutes --> ReviewController : calls (getProductReviews)
+ReviewController --> ReviewModel : calls (countDocuments, find)
+ReviewModel --> MongoDB : query list / count
+
+note top
+  Contracts / Behavior:
+  - GET /api/reviews/product/:legoId?page=&limit=&rating=&q=
+  - ReviewController parses params, builds filter (exclude status=hidden), uses ReviewModel
+  - Response: { reviews: [...], meta: { total, page, limit } }
+end note
+
+@enduml

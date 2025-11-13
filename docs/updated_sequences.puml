@@ -1,0 +1,517 @@
+@startuml
+' Voucher - Create (Admin) — aligned to source code
+
+title Voucher - Create (Admin)
+
+actor Admin
+participant VoucherPage
+participant ":VoucherRoutes" as VoucherRoutes
+participant ":AuthMiddleware" as AuthMiddleware
+participant ":VoucherController" as VoucherController
+participant ":VoucherModel" as VoucherModel
+database MongoDB
+
+Admin-> VoucherPage: 1. Click "Create Voucher" (UI form)
+activate Admin
+activate VoucherPage
+VoucherPage-> VoucherRoutes : 2. POST /api/vouchers/admin { body: {code,discountPercent,expiryDate,usageLimit,status}, Authorization }
+activate VoucherRoutes
+
+VoucherRoutes -> AuthMiddleware : 3. requireAuth(req)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 4. jwt.verify(token)
+activate AuthMiddleware 
+deactivate AuthMiddleware 
+AuthMiddleware --> VoucherRoutes : 5. attaches req.user, next()
+deactivate AuthMiddleware
+
+VoucherRoutes -> AuthMiddleware : 6. requireRole('admin')(req)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 7. check req.user.role
+activate AuthMiddleware 
+deactivate AuthMiddleware 
+AuthMiddleware --> VoucherRoutes : 8. next()
+deactivate AuthMiddleware
+
+VoucherRoutes -> VoucherController : 9. createVoucher(req)
+activate VoucherController
+VoucherController -> VoucherController : 10. validate fields (code,discountPercent,expiryDate,usageLimit)
+activate VoucherController
+deactivate VoucherController
+alt Validation fails
+  VoucherController --> VoucherRoutes : 10.1 res.status(400).json({message})
+  VoucherRoutes --> VoucherPage: 10.1.1 400 Bad Request
+else Validation ok
+  VoucherController -> VoucherModel: 11. create({ code, discountPercent, expiryDate, usageLimit, status })
+  activate VoucherModel
+  VoucherModel-> MongoDB : 12. insertOne / create
+  activate MongoDB
+  MongoDB --> VoucherModel: 13. createdDoc
+  deactivate MongoDB
+  VoucherModel--> VoucherController : 13.1 created voucher
+deactivate VoucherModel
+  VoucherController --> VoucherRoutes : 13.1.1 res.status(201).json({data: voucher})
+deactivate VoucherController
+  VoucherRoutes --> VoucherPage: 13.1.2 201 Created (new voucher)
+  deactivate VoucherModel
+
+deactivate VoucherRoutes
+end
+
+
+VoucherPage--> Admin : 14. Show toast & refresh list
+deactivate VoucherPage
+deactivate Admin
+
+@enduml
+
+@startuml
+' Product - Get Detail (Public) — aligned to source code (no dedicated quickview endpoint)
+
+title Product - Get Detail (Public)
+
+actor Customer
+participant ProductListPage
+participant ":ProductRoutes" as ProductRoutes
+participant ":ProductController" as ProductController
+participant ":LegoModel" as LegoModel
+database MongoDB
+
+Customer-> ProductListPage: 1. Click "Quick View" on product card (client may request /api/products/:id)
+activate Customer
+activate ProductListPage
+ProductListPage -> ProductRoutes : 2. GET /api/products/:id
+activate ProductRoutes
+
+ProductRoutes -> ProductController : 3. getProductById(req)
+activate ProductController
+ProductController -> LegoModel : 3.1 findById(req.params.id).populate(...)
+activate LegoModel
+LegoModel -> MongoDB : 3.1.1 query by _id and populate refs
+activate MongoDB
+MongoDB --> LegoModel : 3.1.2 product doc + populated refs
+deactivate MongoDB
+LegoModel --> ProductController : 3.1.3 product
+deactivate LegoModel
+
+alt Not found
+  ProductController --> ProductRoutes : 3.2 res.status(404).json({message: 'Product not found'})
+  ProductRoutes --> ProductListPage : 3.2.1 404 Not Found
+else Found
+  ProductController --> ProductRoutes : 3.3 res.json(product)
+  ProductRoutes --> ProductListPage : 3.3.1 200 OK (product payload)
+end
+
+deactivate ProductController
+ProductListPage --> Customer : 4. Show modal with product data (client can pick subset for quick view)
+deactivate ProductListPage
+deactivate Customer
+
+@enduml
+
+@startuml
+' Voucher - Update (Admin) — aligned to source code
+
+title Voucher - Update (Admin)
+
+actor Admin
+participant VoucherPage
+participant ":VoucherRoutes" as VoucherRoutes
+participant ":AuthMiddleware" as AuthMiddleware
+participant ":VoucherController" as VoucherController
+participant ":VoucherModel" as VoucherModel
+database MongoDB
+
+Admin-> VoucherPage: 1. Click "Edit" on voucher row
+activate Admin
+activate VoucherPage
+VoucherPage -> VoucherRoutes : 2. PUT /api/vouchers/admin/:id {body, Authorization}
+activate VoucherRoutes
+
+VoucherRoutes -> AuthMiddleware : 3. requireAuth(req)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 4. jwt.verify(token)
+activate AuthMiddleware 
+deactivate AuthMiddleware 
+AuthMiddleware --> VoucherRoutes : 5. next()
+deactivate AuthMiddleware
+
+VoucherRoutes -> AuthMiddleware : 6. requireRole('admin')
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 7. check role
+activate AuthMiddleware 
+deactivate AuthMiddleware 
+AuthMiddleware --> VoucherRoutes : 8. next()
+deactivate AuthMiddleware
+
+VoucherRoutes -> VoucherController : 9. updateVoucher(req)
+activate VoucherController
+VoucherController -> VoucherController : 10. normalize & validate updates (code, discountPercent, usageLimit, expiryDate)
+activate VoucherController
+deactivate VoucherController
+
+alt Validation fails
+  VoucherController --> VoucherRoutes : 10.1 res.status(400)
+  VoucherRoutes --> VoucherPage : 10.1.1 Show validation errors
+else Validation ok
+  VoucherController -> VoucherModel : 11. findOne({code, _id: {$ne: id}}) (if code updated)
+  activate VoucherModel
+  VoucherModel -> MongoDB : 12. check duplicate code
+  activate MongoDB
+  MongoDB --> VoucherModel : 13. exists / null
+  deactivate MongoDB
+
+  alt Duplicate code
+    VoucherModel --> VoucherController : 13.1 exists
+    VoucherController --> VoucherRoutes : 13.1.1 res.status(409)
+    VoucherRoutes --> VoucherPage : 13.1.2 Show conflict
+  else No duplicate
+    VoucherModel --> VoucherController : 14. ok
+    VoucherController -> VoucherModel : 15. findByIdAndUpdate(id, updates, {new: true})
+    VoucherModel -> MongoDB : 16. update operation
+    activate MongoDB
+    MongoDB --> VoucherModel : 17. updatedDoc / null
+    deactivate MongoDB
+    alt Not found
+      VoucherModel --> VoucherController : 17.1 null
+      VoucherController --> VoucherRoutes : 17.1.1 res.status(404)
+      VoucherRoutes --> VoucherPage : 17.1.2 Show "Voucher not found"
+    else Updated
+      VoucherModel --> VoucherController : 17.2 updatedDoc
+      VoucherController --> VoucherRoutes : 17.2.1 res.json({success:true, data: updatedDoc})
+      VoucherRoutes --> VoucherPage : 17.2.2 Show success
+    end
+  end
+  deactivate VoucherModel
+end
+
+deactivate VoucherController
+
+VoucherPage --> Admin : 18. Show toast & reload list
+deactivate Admin
+
+
+@enduml
+@startuml
+' Voucher - Delete (Admin) — aligned to source code
+
+title Voucher - Delete (Admin)
+
+actor Admin
+participant VoucherPage
+participant ":VoucherRoutes" as VoucherRoutes
+participant ":AuthMiddleware" as AuthMiddleware
+participant ":VoucherController" as VoucherController
+participant ":VoucherModel" as VoucherModel
+database MongoDB
+
+Admin-> VoucherPage: 1. Click "Delete" on voucher
+activate Admin
+activate VoucherPage
+VoucherPage -> VoucherRoutes : 2. DELETE /api/vouchers/admin/:id {Authorization}
+activate VoucherRoutes
+
+VoucherRoutes -> AuthMiddleware : 3. requireAuth(req)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 4. jwt.verify
+activate AuthMiddleware 
+deactivate AuthMiddleware 
+AuthMiddleware --> VoucherRoutes : 5. next()
+deactivate AuthMiddleware
+
+VoucherRoutes -> AuthMiddleware : 6. requireRole('admin')
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 7. check role
+activate AuthMiddleware 
+deactivate AuthMiddleware 
+AuthMiddleware --> VoucherRoutes : 8. next()
+deactivate AuthMiddleware
+
+VoucherRoutes -> VoucherController : 9. deleteVoucher(req)
+activate VoucherController
+VoucherController -> VoucherModel : 10. findByIdAndDelete(id)
+activate VoucherModel
+VoucherModel -> MongoDB : 11. delete by _id
+activate MongoDB
+MongoDB --> VoucherModel : 12. deletedDoc / null
+deactivate MongoDB
+VoucherModel --> VoucherController : 13. deletedDoc / null
+deactivate VoucherModel
+alt Not found
+  VoucherController --> VoucherRoutes : 13.1 res.status(404)
+  VoucherRoutes --> VoucherPage : 13.1.1 Show "Voucher not found"
+else Deleted
+  VoucherController --> VoucherRoutes : 13.2 res.json({success: true})
+deactivate VoucherController
+
+  VoucherRoutes --> VoucherPage : 13.2.1 Show success
+deactivate VoucherRoutes
+
+end
+
+
+VoucherPage --> Admin : 14. Redirect / refresh list
+deactivate VoucherPage
+deactivate Admin
+
+
+@enduml
+@startuml
+' Voucher - List (Admin) — aligned to source code
+
+actor Admin
+participant VoucherPage
+participant ":VoucherRoutes" as VoucherRoutes
+participant ":AuthMiddleware" as AuthMiddleware
+participant ":VoucherController" as VoucherController
+participant ":VoucherModel" as VoucherModel
+database MongoDB
+
+Admin-> VoucherPage: 1. Open "Voucher List" page
+activate Admin
+activate VoucherPage
+VoucherPage -> VoucherRoutes : 2. GET /api/vouchers/admin?page&limit&search&status
+activate VoucherRoutes
+
+VoucherRoutes -> AuthMiddleware : 3. requireAuth(req)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 4. jwt.verify
+activate AuthMiddleware 
+deactivate AuthMiddleware 
+AuthMiddleware --> VoucherRoutes : 5. next()
+deactivate AuthMiddleware
+
+VoucherRoutes -> AuthMiddleware : 6. requireRole('admin')
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 7. check role
+activate AuthMiddleware 
+deactivate AuthMiddleware 
+AuthMiddleware --> VoucherRoutes : 8. next()
+deactivate AuthMiddleware
+
+VoucherRoutes -> VoucherController : 9. listVouchers(req)
+activate VoucherController
+VoucherController -> VoucherModel : 10. countDocuments(filters)
+activate VoucherModel
+VoucherModel -> MongoDB : 11. countDocuments
+activate MongoDB
+MongoDB --> VoucherModel : 12. total
+deactivate MongoDB
+VoucherModel --> VoucherController : 13. total
+
+VoucherController -> VoucherModel : 14. find(filters).sort(...).skip(...).limit(...)
+VoucherModel -> MongoDB : 15. query list
+activate MongoDB
+MongoDB --> VoucherModel : 16. docs[]
+deactivate MongoDB
+VoucherModel --> VoucherController : 17. vouchers
+deactivate VoucherModel
+
+VoucherController --> VoucherRoutes : 18. res.json({data:{vouchers, pagination}})
+deactivate VoucherController
+VoucherRoutes --> VoucherPage : 19. 200 OK (list)
+deactivate VoucherRoutes
+VoucherPage --> Admin : 20. Render table / paginate
+deactivate Admin
+deactivate VoucherPage
+
+
+@enduml
+
+
+@startuml
+' Apply Voucher - Customer
+' Compatible with PlantUML 1.2025.2 (no colon syntax)
+
+title Apply Voucher - Customer (During Checkout)
+
+actor Customer
+participant CheckoutUI
+participant ":CheckoutRouter" as CheckoutRouter
+participant ":AuthMiddleware" as AuthMiddleware
+participant ":VoucherController" as VoucherController
+participant ":VoucherModel" as VoucherModel
+database MongoDB
+
+Customer -> CheckoutUI : 1. Enter voucher code in checkout form
+activate Customer
+activate CheckoutUI
+
+CheckoutUI -> CheckoutRouter : 2. POST /checkout/apply-voucher {code, orderTotal, token}
+activate CheckoutRouter
+
+CheckoutRouter -> AuthMiddleware : 2.1 requireAuth(req)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 2.1.1 verify token/session
+AuthMiddleware --> CheckoutRouter : 2.1.2 next()
+deactivate AuthMiddleware
+
+CheckoutRouter -> VoucherController : 3. applyVoucher(req)
+activate VoucherController
+
+VoucherController -> VoucherModel : 3.1 findOne({ code })
+activate VoucherModel
+VoucherModel -> MongoDB : 3.1.1 query voucher by code
+activate MongoDB
+MongoDB --> VoucherModel : 3.1.2 voucher doc / null
+deactivate MongoDB
+
+alt Voucher not found
+  VoucherModel --> VoucherController : 3.2.1 null
+  VoucherController --> CheckoutRouter : 3.2.2 404 Not Found
+  CheckoutRouter --> CheckoutUI : 3.2.3 Show "Invalid voucher code"
+else Voucher found
+  VoucherModel --> VoucherController : 3.3.1 voucher doc
+  VoucherController -> VoucherController : 3.3.2 check validity (date range, usage limit)
+
+  alt Invalid or expired
+    VoucherController --> CheckoutRouter : 3.3.3 400 Invalid voucher
+    CheckoutRouter --> CheckoutUI : 3.3.4 Show "Voucher expired or invalid"
+  else Valid
+    VoucherController -> VoucherController : 3.3.5 verify order meets min value
+    alt Order not eligible
+      VoucherController --> CheckoutRouter : 3.3.6 400 Not applicable
+      CheckoutRouter --> CheckoutUI : 3.3.7 Show "Order value too low"
+    else Eligible
+      VoucherController -> VoucherController : 3.3.8 calculate discount
+      VoucherController --> CheckoutRouter : 3.3.9 200 OK (discounted total)
+      CheckoutRouter --> CheckoutUI : 3.3.10 Update order total
+    end
+  end
+end
+
+deactivate VoucherModel
+deactivate VoucherController
+deactivate CheckoutRouter
+
+CheckoutUI --> Customer : 4. Show updated total & discount
+deactivate CheckoutUI
+deactivate Customer
+
+note left of CheckoutRouter
+Exception cases:
+- Invalid token → 401
+- DB error → 500
+- Voucher expired → 400
+- Not applicable → 400
+end note
+
+@enduml
+
+@startuml
+' Promotion Section (Homepage)
+title Promotion Section - Homepage (Customer/Guest)
+
+actor Customer
+participant HomePage
+participant ":PromotionRouter" as PromotionRouter
+participant ":PromotionController" as PromotionController
+participant ":PromotionModel" as PromotionModel
+database MongoDB
+
+Customer -> HomePage : 1. Open homepage
+activate Customer
+activate HomePage
+HomePage -> PromotionRouter : 2. GET /promotions/homepage?lang&device
+activate PromotionRouter
+
+PromotionRouter -> PromotionController : 3.1 getHomepagePromotions(req)
+activate PromotionController
+PromotionController -> PromotionModel : 3.1.1 find({isActive:true, placement:'homepage_section'}).sort(priority)
+activate PromotionModel
+PromotionModel -> MongoDB : 3.1.2 query promotions
+activate MongoDB
+MongoDB --> PromotionModel : 3.1.3 promotions[]
+deactivate MongoDB
+PromotionModel --> PromotionController : 3.1.4 promotions
+deactivate PromotionModel
+
+PromotionController --> PromotionRouter : 3.2 res.status(200).json(promotions)
+PromotionRouter --> HomePage : 3.3 200 OK
+deactivate PromotionController
+
+HomePage --> Customer : 4. Render promotion banners/cards
+deactivate HomePage
+deactivate Customer
+
+note left of PromotionRouter
+Notes:
+- Visitor may be Guest (session) or Customer (logged)
+- Promotions cached at CDN for performance
+end note
+
+@enduml
+
+@startuml
+' Recently Viewed Products
+title Recently Viewed Products (Customer/Guest)
+
+actor Customer
+participant ProductUI
+participant ViewRouter
+participant ":AuthMiddleware" as AuthMiddleware
+participant ViewController
+participant RecentlyViewedModel
+participant ProductModel
+database MongoDB
+
+Customer -> ProductUI : 1. Open product detail (productId)
+activate Customer
+activate ProductUI
+ProductUI -> ViewRouter : 2. POST /views {productId, sessionId, token?}
+activate ViewRouter
+
+ViewRouter -> AuthMiddleware : 2.1 optionalAuth(req)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware : 2.1.1 check token/session
+AuthMiddleware --> ViewRouter : 2.1.2 attach user/session
+deactivate AuthMiddleware
+
+ViewRouter -> ViewController : 3.1 addView(req)
+activate ViewController
+ViewController -> RecentlyViewedModel : 3.1.1 upsert {userId/sessionId, push productId, trim limit}
+activate RecentlyViewedModel
+RecentlyViewedModel -> MongoDB : 3.1.2 upsert operation
+activate MongoDB
+MongoDB --> RecentlyViewedModel : 3.1.3 ack
+deactivate MongoDB
+RecentlyViewedModel --> ViewController : 3.1.4 ok
+deactivate RecentlyViewedModel
+
+ViewController --> ViewRouter : 3.2 res.status(200)
+ViewRouter --> ProductUI : 3.3 200 OK
+deactivate ViewController
+
+ProductUI --> Customer : 4. Optionally fetch recent list:
+ProductUI -> ViewRouter : 5. GET /views
+activate ViewRouter
+ViewRouter -> ViewController : 5.1 getRecent(req)
+activate ViewController
+ViewController -> RecentlyViewedModel : 5.1.1 findOne by user/session
+activate RecentlyViewedModel
+RecentlyViewedModel -> MongoDB : 5.1.2 query
+activate MongoDB
+MongoDB --> RecentlyViewedModel : 5.1.3 ids[]
+deactivate MongoDB
+RecentlyViewedModel --> ViewController : 5.1.4 ids
+deactivate RecentlyViewedModel
+ViewController -> ProductModel : 5.2 find products by ids (preserve order)
+activate ProductModel
+ProductModel -> MongoDB : 5.2.1 query products
+activate MongoDB
+MongoDB --> ProductModel : 5.2.2 productList
+deactivate MongoDB
+ProductModel --> ViewController : 5.2.3 products
+ViewController --> ViewRouter : 5.3 res.status(200).json(products)
+ViewRouter --> ProductUI : 5.4 200 OK
+deactivate ViewController
+ProductUI --> Customer : 6. Render "Recently viewed"
+deactivate ProductUI
+deactivate Customer
+
+note left of ViewRouter
+- Uses sessionId for guest, userId for authenticated users
+- Limit stored items (e.g., last 20)
+end note
+
+@enduml

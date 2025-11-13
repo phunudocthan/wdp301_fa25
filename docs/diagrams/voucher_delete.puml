@@ -1,0 +1,38 @@
+@startuml
+' Voucher - Delete (Admin) class diagram aligned to source code
+title Voucher - Delete (Admin) - class diagram
+class VoucherRoutes {
+  +deleteVoucher(req,res)
+  +getVoucher(req,res)
+  +listVouchers(req,res)
+}
+class AuthMiddleware {
+  +requireAuth(req,res,next)
+  +requireRole(role)(req,res,next)
+}
+class VoucherController {
+  +deleteVoucher(req,res)
+  +getVoucher(req,res)
+  +listVouchers(req,res)
+  -- uses: validate id, respond 404/200
+}
+class VoucherModel << (M,#FFAAAA) >> {
+  ' file: server/models/Voucher.js
+  -code: String
+  -discountPercent: Number
+  -expiryDate: Date
+  -usageLimit: Number
+  -usagePerUser: Number
+  -status: String
+  +findById(id)
+  +findByIdAndDelete(id)
+  +countDocuments(filter)
+  +find(filter)
+}
+database MongoDB
+
+VoucherRoutes --> AuthMiddleware : uses (requireAuth, requireRole)
+VoucherRoutes --> VoucherController : calls (deleteVoucher)
+VoucherController --> VoucherModel : calls (findById, findByIdAndDelete)
+VoucherModel --> MongoDB : delete by _id / query
+@enduml

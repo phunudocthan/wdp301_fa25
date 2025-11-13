@@ -1,0 +1,48 @@
+@startuml
+' Product - Get Detail (Public) class diagram aligned to source code
+title Product - Get Detail (Public) - class diagram
+class ProductRoutes {
+  +getAllProducts(req,res)
+  +getProductById(req,res)
+  +createProduct(req,res)
+  +updateProduct(req,res)
+  +deleteProduct(req,res)
+  +getProductsByTheme(req,res)
+  +getProductsByCharacter(req,res)
+}
+class ProductController {
+  +getAllProducts(req,res)
+  +getProductById(req,res)
+  +createProduct(req,res)
+  +updateProduct(req,res)
+  +deleteProduct(req,res)
+  +getProductsByTheme(req,res)
+  +getProductsByCharacter(req,res)
+  +getRecentlyViewedProducts(req,res)
+  -- helper: parseIdsFromReq(req)
+}
+class Lego {
+  -name: String
+  -themeId: ObjectId (Theme)
+  -characterId: ObjectId (ThemeCharacter)
+  -ageRangeId: ObjectId
+  -difficultyId: ObjectId
+  -pieces: Number
+  -price: Number
+  -stock: Number
+  -status: String
+  -images: [String]
+  -categories: [ObjectId]
+  -createdBy: ObjectId (User)
+  -deletedAt: Date
+  +findById(id)
+  +find(filter)
+  +countDocuments(filter)
+  +findByIdAndUpdate(id, updates, opts)
+}
+database MongoDB
+
+ProductRoutes --> ProductController : calls (GET /:id => getProductById)
+ProductController --> Lego : uses (findById, populate)
+Lego --> MongoDB : queries & populate
+@enduml

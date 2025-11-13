@@ -1,0 +1,37 @@
+@startuml
+' Voucher - Update (Admin) class diagram aligned to source code
+title Voucher - Update (Admin) - class diagram
+class VoucherRoutes {
+  +updateVoucher(req,res)
+  +updateVoucherStatus(req,res)
+  +...()
+}
+class AuthMiddleware {
+  +requireAuth(req,res,next)
+  +requireRole(role)(req,res,next)
+}
+class VoucherController {
+  +updateVoucher(req,res)
+  +createVoucher(req,res)
+  +getVoucher(req,res)
+  +deleteVoucher(req,res)
+  -- validation/normalization logic (normalize code, validate pct/usage/expiry)
+}
+class Voucher {
+  -code: String
+  -discountPercent: Number
+  -expiryDate: Date
+  -usageLimit: Number
+  -status: String
+  +findOne(filter)
+  +findByIdAndUpdate(id, updates, opts)
+  +findById(id)
+  +create(doc)
+}
+database MongoDB
+
+VoucherRoutes --> AuthMiddleware : uses
+VoucherRoutes --> VoucherController : calls (updateVoucher)
+VoucherController --> Voucher : calls (findOne, findByIdAndUpdate)
+Voucher --> MongoDB : update operation
+@enduml
