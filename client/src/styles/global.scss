@@ -20,33 +20,10 @@ body {
   font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif);
   font-weight: var(--fw-regular, 400);
   line-height: 1.45; // slightly more readable for body/content
-  /* Subtle gradient to avoid too much white on full page */
-  background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+  background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Utility surfaces */
-.surface-card {
-  background: var(--surface) !important;
-  border-radius: $radius;
-  padding: 16px;
-  box-shadow: var(--shadow-1);
-  transition: transform var(--motion-duration) var(--motion-easing),
-    box-shadow var(--motion-duration) var(--motion-easing);
-  will-change: transform, box-shadow;
-  backface-visibility: hidden;
-}
-
-/* Apply neutral surface to Ant Design cards by default */
-.ant-card, .ant-card-body {
-  background: var(--surface) !important;
-}
-
-.page-block {
-  background: transparent;
-  padding: 24px 0;
 }
 
 a {
@@ -68,14 +45,10 @@ button {
   color: var(--on-primary);
   font-weight: var(--fw-semibold, 600);
   box-shadow: 0 0 0 0 transparent;
-  transition: background var(--motion-duration-short) var(--motion-easing),
-    transform var(--motion-duration-short) var(--motion-easing),
-    box-shadow var(--motion-duration-short) var(--motion-easing);
+  transition: 0.2s ease;
 
   &:hover {
     background: var(--primary-600);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-2);
   }
 }
 
@@ -94,52 +67,6 @@ input, .input {
 .link {
   color: var(--secondary);
   font-weight: var(--fw-semibold, 600);
-}
-
-/* Motion utilities */
-.motion-fade {
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity var(--motion-duration) var(--motion-easing),
-    transform var(--motion-duration) var(--motion-easing);
-}
-
-.motion-fade.in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.appear {
-  animation: appear var(--motion-duration) var(--motion-easing) both;
-}
-
-@keyframes appear {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* accessible preference: reduce motion */
-@media (prefers-reduced-motion: reduce) {
-  .surface-card,
-  button,
-  .motion-fade,
-  .appear {
-    transition: none !important;
-    animation: none !important;
-    transform: none !important;
-  }
-}
-
-/* Card hover elevation (applies when not in reduced motion) */
-.surface-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-2);
 }
 
 /* Headings: heavier weight and the same family (Poppins) */
