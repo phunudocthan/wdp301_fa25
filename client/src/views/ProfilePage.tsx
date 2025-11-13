@@ -1,11 +1,10 @@
 ﻿import { useMemo } from "react";
-import Profile from "../components/ProfileNew";
 import { useAuth } from "../components/context/AuthContext";
 import AdminProfile from "../pages/AdminProfile";
 import "../styles/profile.scss";
 
 const ProfilePage = () => {
-  const { user, booted, updateUser } = useAuth();
+  const { user, booted } = useAuth();
 
   const profileUser = useMemo(() => user, [user]);
 
