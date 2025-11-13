@@ -1,13 +1,16 @@
 /* 🎨 HEADER CHÍNH */
 .header {
-  background: #ffcf00; // Màu vàng LEGO
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08); // nhẹ hơn, không tạo đường trắng cắt khối
+  /* brighter, modern gradient with subtle shadow */
+  background: linear-gradient(90deg, #ff8a00 0%, #ffcf00 60%);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 10px 20px;
-  margin-bottom: 0 !important; // dính liền hero
-  line-height: 1; // loại bỏ spacing do font baseline
+  padding: 12px 20px;
+  margin-bottom: 0 !important;
+  line-height: 1;
+  box-shadow: 0 4px 18px rgba(16, 24, 40, 0.06);
+  backdrop-filter: blur(2px);
 
   .header-inner {
     display: flex;
@@ -15,52 +18,70 @@
     justify-content: space-between;
     gap: 20px;
     flex-wrap: nowrap;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   /* 🔶 Logo + Brand */
   .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     cursor: pointer;
-    flex: 0 0 auto; /* don't grow to fill space and overlap other items */
+    flex: 0 0 auto;
     z-index: 5;
 
     .logo {
-      width: 55px;
+      width: 64px;
       height: auto;
       object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
     }
 
     span {
-      font-weight: 800;
-      font-size: 22px;
-      color: #000;
+      font-weight: 900;
+      font-size: 20px;
+      color: #fff;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+      letter-spacing: 0.6px;
     }
   }
 
   /* 🔸 Navigation */
   .nav {
     display: flex;
-    gap: 24px;
+    gap: 18px;
     flex-wrap: nowrap;
     align-items: center;
+    /* prevent nav items from wrapping to next line; enable horizontal scroll if container is too narrow */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* hide scrollbar in Firefox */
+
+    &::-webkit-scrollbar {
+      display: none;
+    } /* hide scrollbar in WebKit */
 
     a {
-      color: #000;
-      font-weight: bold;
+      color: rgba(0, 0, 0, 0.9);
+      font-weight: 700;
       text-transform: uppercase;
-      padding: 8px 4px;
+      padding: 8px 10px;
       position: relative;
-      border-radius: 4px;
-      transition: 0.2s;
+      border-radius: 10px;
+      transition: all 0.18s ease;
+      font-size: 13px;
+      white-space: nowrap; /* ensure link text stays on one line */
 
       &.active {
-        border-bottom: 2px solid #000;
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.06);
       }
 
       &:hover {
-        opacity: 0.8;
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.12);
       }
     }
   }
@@ -75,39 +96,61 @@
     .search-box {
       display: flex;
       align-items: center;
-      background: #fff;
-      border-radius: 25px;
-      padding: 6px 12px;
-      min-width: 200px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 999px;
+      padding: 6px 10px;
+      /* keep the search compact so it doesn't overlap nearby controls */
+      flex: 0 0 auto;
+      min-width: 140px;
+      max-width: 260px;
       position: relative;
+      box-shadow: 0 4px 14px rgba(16, 24, 40, 0.06);
 
       .search-icon {
-        color: #555;
+        color: #6b7280;
       }
 
       input {
         border: none;
         outline: none;
         padding-left: 8px;
-        font-size: 14px;
+        font-size: 13px;
         width: 100%;
+        min-width: 80px;
         background: transparent;
       }
     }
+
+    /* (theme switch was removed) */
 
     .icons {
       display: flex;
       align-items: center;
       gap: 14px;
       z-index: 10;
+
       .icon {
-        font-size: 20px;
+        /* make heart/cart icons visually match the bell (no square background)
+           - larger font-size to match bell (22px)
+           - transparent background (no square), no box-shadow
+           - keep inline-flex for alignment but minimal padding for hit area
+        */
+        font-size: 22px;
         cursor: pointer;
-        color: #000;
-        transition: 0.2s;
+        color: #fff;
+        transition: 0.12s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px; /* small hit area while avoiding a visible square */
+        border-radius: 0; /* no rounded box around icon */
+        background: transparent; /* remove translucent square */
+        box-shadow: none;
 
         &:hover {
-          color: #333;
+          transform: translateY(-2px);
+          /* subtle brightness change rather than showing a box */
+          filter: brightness(1.05);
         }
       }
     }
@@ -133,22 +176,34 @@
         right: -6px;
         background-color: #ef4444;
         color: #fff;
-        font-size: 10px;
-        font-weight: bold;
+        font-size: 11px;
+        font-weight: 700;
         padding: 2px 6px;
-        border-radius: 12px;
-        box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+        border-radius: 999px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
       }
     }
 
     .user-menu {
       position: relative;
+      /* ensure the avatar trigger sits above other header elements and is clickable */
+      z-index: 999;
+
+      > div {
+        position: relative;
+        z-index: 1000;
+        cursor: pointer;
+        pointer-events: auto; /* ensure the trigger container accepts clicks */
+      }
 
       .user-avatar {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 6px 16px rgba(16, 24, 40, 0.12);
+        pointer-events: auto; /* make sure avatar image accepts clicks */
       }
 
       .user-initial {
@@ -224,6 +279,50 @@
     }
   }
 }
+
+/* ─────────────────────────────────────────────────────
+   Global app background wrapper (applies to all pages)
+   Uses persisted theme on <body data-theme>
+   ───────────────────────────────────────────────────── */
+.app-background {
+  min-height: 100vh;
+  /* keep content above a subtle global backdrop */
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-position: center top;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* Light theme default */
+body[data-theme="light"] .app-background {
+  background: linear-gradient(180deg, #fffaf0 0%, #fffefb 40%);
+  color: #111827;
+}
+
+/* Dark theme */
+body[data-theme="dark"] .app-background {
+  background: linear-gradient(180deg, #071129 0%, #071622 60%);
+  color: #e6eef6;
+}
+
+/* Global back button visual style: pages control position (top/left) per-page */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 6px;
+  border-radius: 50%;
+  background: transparent; /* no visible square */
+  border: none;
+  box-shadow: none;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+  z-index: 60;
+}
+.back-btn:hover { transform: translateY(-2px); background: rgba(0,0,0,0.04); }
 
 /* 🔍 Dropdown kết quả tìm kiếm */
 .search-results {

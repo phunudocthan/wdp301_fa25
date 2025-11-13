@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
-import Header from "../components/common/Header";
 import {
   Card,
   Row,

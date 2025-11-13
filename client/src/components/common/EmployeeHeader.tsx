@@ -64,6 +64,26 @@ export default function EmployeeHeader() {
           >
             Orders
           </Link>
+          <Link
+            to="/history-orders"
+            style={{
+              textDecoration: "none",
+              color: isActive("/history-orders") ? "#1976d2" : "#666",
+              fontWeight: isActive("/history-orders") ? 600 : 400,
+            }}
+          >
+            History Orders
+          </Link>
+          <Link
+            to="/notifications"
+            style={{
+              textDecoration: "none",
+              color: isActive("/notifications") ? "#1976d2" : "#666",
+              fontWeight: isActive("/notifications") ? 600 : 400,
+            }}
+          >
+            Notifications
+          </Link>
         </nav>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

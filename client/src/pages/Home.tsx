@@ -17,7 +17,6 @@ import {
   Switch,
 } from "antd";
 import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
-import Header from "../components/common/Header";
 import HeroSlider from "../components/HeroSlider/HeroSlider";
 import HighlightNews from "../components/News/HighlightNews";
 import TrendingNews from "../components/News/TrendingNews";
@@ -310,7 +309,7 @@ export default function Home() {
         },
       }}
     >
-      <div style={{ backgroundColor: isDarkMode ? "#141414" : "var(--bg)" }}>
+  <div className={`homepage ${isDarkMode ? "dark" : "light"}`}>
         {/* Theme switch */}
         <div style={{ position: "fixed", top: 20, right: 20, zIndex: 1000 }}>
           <Switch

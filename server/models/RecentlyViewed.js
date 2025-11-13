@@ -52,6 +52,7 @@ RecentlyViewedSchema.pre("findOneAndUpdate", function (next) {
 });
 
 RecentlyViewedSchema.index({ updatedAt: -1 });
-RecentlyViewedSchema.index({ userId: 1 });
+// `userId` is declared with `unique: true` on the field which already creates an index.
+// Removing the explicit userId index to prevent duplicate index warnings.
 
 module.exports = mongoose.model("RecentlyViewed", RecentlyViewedSchema);

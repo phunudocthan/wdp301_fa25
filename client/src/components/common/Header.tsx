@@ -5,21 +5,26 @@ import {
   FaShoppingBag,
   FaSignOutAlt,
   FaUser,
+  FaBell,
+  FaHistory,
 } from "react-icons/fa";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import logo from "/logo.png";
 import "../../styles/layout.scss";
-import { Switch, Tooltip } from "antd";
-import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
 
 export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [query, setQuery] = useState("");
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [portalPos, setPortalPos] = useState<{ top: number; left: number } | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,6 +41,13 @@ export default function Header() {
   );
   const avatar = user?.avatar || localStorage.getItem("avatar");
 
+  // DEBUG: log when the dropdown render state changes so we can trace
+  // whether the dropdown is being mounted but possibly clipped/hidden.
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("Header: showDropdown =>", showDropdown);
+  }, [showDropdown]);
+
   // --- Roles ---
   const role = user?.role ?? "guest";
   const isAdmin = role === "admin";
@@ -43,31 +55,59 @@ export default function Header() {
   const isAdminSection =
     isAdmin || (isEmployee && location.pathname.startsWith("/admin"));
 
-  // --- Dark mode ---
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem("theme") === "dark"
-  );
-  const toggleTheme = (checked: boolean) => {
-    setIsDarkMode(checked);
-    localStorage.setItem("theme", checked ? "dark" : "light");
-  };
+  // --- Apply persisted dark mode at startup (no toggle UI) ---
   useEffect(() => {
-    document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
+    const stored = localStorage.getItem("theme");
+    document.body.setAttribute("data-theme", stored === "dark" ? "dark" : "light");
+  }, []);
 
   // --- Close dropdown when clicking outside ---
+  // We attach the document click listener only when the dropdown is open.
+  // Doing so ensures the listener is added after the opening click and
+  // therefore won't see the event that opened the menu (avoids the open-then-
+  // immediately-close race).
   useEffect(() => {
+    if (!showDropdown) return undefined;
+
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      try {
+        const target = e.target as Node;
+
+        // If click is inside the trigger button, ignore
+        if (triggerRef.current && triggerRef.current.contains(target)) return;
+
+        // If click is inside the portal menu, ignore
+        if (portalRef.current && portalRef.current.contains(target)) return;
+
+        // Otherwise close
+        setShowDropdown(false);
+      } catch (err) {
         setShowDropdown(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showDropdown]);
+
+  // compute portal position when the dropdown opens
+  useEffect(() => {
+    if (!showDropdown) {
+      setPortalPos(null);
+      return;
+    }
+
+    const node = triggerRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const menuWidth = 200;
+    const padding = 8;
+    const top = rect.bottom + padding; // viewport coords
+    let left = rect.right - menuWidth;
+    // clamp within viewport with small padding
+    left = Math.min(Math.max(padding, left), window.innerWidth - menuWidth - padding);
+    setPortalPos({ top, left });
+  }, [showDropdown]);
 
   const handleLogout = () => {
     logout();
@@ -90,7 +130,7 @@ export default function Header() {
   };
 
   return (
-    <header className="header">
+    <header className={`header ${isSearchActive ? "search-active" : ""}`}>
       <div className="container header-inner">
         {/* Logo */}
         <Link
@@ -116,6 +156,7 @@ export default function Header() {
               <NavLink to="/admin/categories">Categories</NavLink>
               <NavLink to="/admin/users">Users</NavLink>
               <NavLink to="/admin/notifications">Notifications</NavLink>
+              {/* removed public notifications nav to avoid duplicate link left of search */}
               <NavLink to="/admin/vouchers">Vouchers</NavLink>
               <NavLink to="/admin/reviews">Reviews</NavLink>
               {/* <NavLink to="/admin/themes">Themes</NavLink> */}
@@ -134,8 +175,7 @@ export default function Header() {
               {user && user.role !== "admin" && (
                 <NavLink to="/orders">My Orders</NavLink>
               )}
-              <NavLink to="/history-orders">History Orders</NavLink>
-              <NavLink to="/notifications">Notifications</NavLink>
+              {/* removed public notifications nav to avoid duplicate link left of search */}
             </>
           )}
         </nav>
@@ -150,20 +190,21 @@ export default function Header() {
                 placeholder="Search products..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setIsSearchActive(true)}
+                onBlur={() => setIsSearchActive(false)}
               />
             </form>
           )}
 
-          {/* Dark / light toggle */}
-          <div className="mx-2">
-            <Tooltip title={isDarkMode ? "Dark mode" : "Light mode"}>
-              <Switch
-                checkedChildren={<MoonOutlined />}
-                unCheckedChildren={<BulbOutlined />}
-                checked={isDarkMode}
-                onChange={toggleTheme}
-              />
-            </Tooltip>
+
+          {/* quick icons: history & notifications (always visible) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 6 }}>
+            <button type="button" onClick={() => navigate('/history-orders')} title="History Orders" className="icon" style={{ background: 'transparent', border: 'none', color: '#fff' }}>
+              <FaHistory />
+            </button>
+            <button type="button" onClick={() => navigate('/notifications')} title="Notifications" className="icon" style={{ background: 'transparent', border: 'none', color: '#fff' }}>
+              <FaBell />
+            </button>
           </div>
 
           {/* Icons */}
@@ -187,7 +228,9 @@ export default function Header() {
                   onClick={() => navigate("/cart")}
                 >
                   <FaShoppingBag />
-                  <span className="cart-count">{cart?.items?.length ?? 0}</span>
+                  {(cart?.items?.length ?? 0) > 0 && (
+                    <span className="cart-count">{cart!.items.length}</span>
+                  )}
                 </div>
               </>
             )}
@@ -195,9 +238,18 @@ export default function Header() {
 
           {/* User dropdown */}
           <div className="relative user-menu" ref={dropdownRef}>
-            <div
-              onClick={() => setShowDropdown((prev) => !prev)}
-              className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded-full px-2 py-1 transition"
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                // debug log to ensure click handler fires
+                // eslint-disable-next-line no-console
+                console.log('avatar trigger clicked, showDropdown=', showDropdown);
+                setShowDropdown((prev) => !prev);
+              }}
+              onMouseDown={(e) => e.stopPropagation()} /* prevent document click race */
+              className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded-full px-2 py-1 transition user-trigger"
+              ref={triggerRef}
               title="User Menu"
             >
               <div className="rounded-full overflow-hidden h-9 w-9">
@@ -219,35 +271,56 @@ export default function Header() {
                   showDropdown ? "rotate-180" : ""
                 }`}
               />
-            </div>
+            </button>
 
-            {showDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
-                  <p className="font-medium truncate">{name}</p>
-                  <p className="text-gray-500 text-xs truncate">
-                    {user?.email ?? ""}
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleProfileClick}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+            {showDropdown && portalPos &&
+              createPortal(
+                <div
+                  ref={portalRef}
+                  className="dropdown-menu-portal"
+                  style={{
+                    position: "fixed",
+                    top: portalPos.top,
+                    left: portalPos.left,
+                    width: 200,
+                    background: "#fff",
+                    borderRadius: 8,
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                    border: "1px solid #e5e7eb",
+                    padding: 8,
+                    zIndex: 12000,
+                  }}
                 >
-                  <FaUser className="text-gray-500" />
-                  <span>Profile</span>
-                </button>
+                  <div className="user-info" style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb" }}>
+                    <p className="user-name" style={{ fontWeight: 600, color: "#374151", fontSize: 14 }}>{name}</p>
+                    <p className="user-email" style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>{user?.email ?? ""}</p>
+                  </div>
 
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                >
-                  <FaSignOutAlt className="text-red-500" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
+                  <button
+                    type="button"
+                    onClick={handleProfileClick}
+                    className="dropdown-item"
+                    style={{ width: "100%", padding: "10px 16px", textAlign: "left", background: "none", border: "none", display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    <FaUser className="text-gray-500" />
+                    <span>Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="dropdown-item logout"
+                    style={{ width: "100%", padding: "10px 16px", textAlign: "left", background: "none", border: "none", display: "flex", alignItems: "center", gap: 8, color: "#dc2626" }}
+                  >
+                    <FaSignOutAlt className="text-red-500" />
+                    <span>Logout</span>
+                  </button>
+                </div>,
+                document.body
+              )}
           </div>
+
+          {/* theme toggle removed per request */}
         </div>
       </div>
     </header>
