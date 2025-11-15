@@ -328,7 +328,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="price">Giá (USD) *</label>
+              <label htmlFor="price">Giá (VND) *</label>
               <input
                 type="number"
                 id="price"
@@ -337,12 +337,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                 onChange={handleInputChange}
                 required
                 min="0"
-                step="0.01"
-                placeholder="Ví dụ: 159.99"
-                title="Nhập giá sản phẩm bằng USD, có thể sử dụng số thập phân (ví dụ: 159.99)"
+                step="1000"
+                placeholder="Ví dụ: 159000"
+                title="Nhập giá sản phẩm bằng VND (số nguyên). Có thể dùng bước 1000 VND."
               />
               <small className="form-help">
-                Nhập giá bằng USD, có thể sử dụng số thập phân (ví dụ: 159.99)
+                Nhập giá bằng VND (số nguyên). Bước đề xuất: 1.000 VND.
               </small>
             </div>
 

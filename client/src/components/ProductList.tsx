@@ -29,11 +29,11 @@ const ProductList: React.FC<ProductListProps> = ({
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("vi-VN", {
       style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      currency: "VND",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(price || 0);
   };
 

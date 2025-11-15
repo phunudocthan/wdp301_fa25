@@ -26,9 +26,6 @@ import type {
   UserStatus,
   Address,
 } from "../types/user";
-// no navigation needed in this component
-
-// removed unused legoThemes to avoid unused-variable lint warnings
 
 const roleLabels: Record<UserRole, string> = {
   customer: "Khách hàng",
@@ -57,11 +54,11 @@ type LocalUser = Omit<
 };
 
 interface ProfileProps {
-  user: UserType;
+  user: UserType | null;
   onUpdateUser?: (user: UserType) => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
+const AdminProfileUI: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
   const [showPasswords, setShowPasswords] = useState({
     old: false,
     new: false,
@@ -91,7 +88,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  // removed favorite-theme editing for admin profile UI
   const [passwords, setPasswords] = useState({
     oldPassword: "",
     newPassword: "",
@@ -108,7 +104,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const profile = await getProfile();
+        const profile = user ? user : await getProfile();
         const normalized: LocalUser = {
           name: profile?.name || "Người dùng",
           email: profile?.email || "unknown@example.com",
@@ -132,17 +128,16 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
           updatedAt: profile?.updatedAt,
         };
         setEditData(normalized);
-        onUpdateUser?.(normalized);
+        onUpdateUser?.(normalized as any);
       } catch (error: unknown) {
         const message =
-          error instanceof Error
-            ? error.message
-            : "Không thể lấy thông tin người dùng";
+          error instanceof Error ? error.message : "Không thể lấy thông tin người dùng";
         setErrorMsg(message);
       }
     }
     fetchProfile();
-  }, [onUpdateUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -155,7 +150,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
     }
 
     try {
-      const updatedUser = await updateProfile(editData);
+      const updatedUser = await updateProfile(editData as any);
       const normalized: LocalUser = {
         name: updatedUser?.name || "Người dùng",
         email: updatedUser?.email || "unknown@example.com",
@@ -179,11 +174,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
         updatedAt: updatedUser?.updatedAt,
       };
       setEditData(normalized);
-      onUpdateUser?.(normalized);
+      onUpdateUser?.(normalized as any);
       setIsEditing(false);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Cập nhật thất bại";
+      const message = error instanceof Error ? error.message : "Cập nhật thất bại";
       setErrorMsg(message);
     } finally {
       setIsLoading(false);
@@ -223,12 +217,9 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
           updatedAt: updatedUser?.updatedAt,
         };
         setEditData(normalized);
-        // update parent if provided
-        onUpdateUser?.(normalized);
-        // also update global auth context so header and other components refresh
+        onUpdateUser?.(normalized as any);
         try {
           updateUser?.(normalized as any);
-          // also mirror into localStorage keys used by Header if present
           try {
             localStorage.setItem("avatar", normalized.avatar || "");
             localStorage.setItem("name", normalized.name || "");
@@ -269,37 +260,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
     }
 
     try {
-      const res = await changePassword(
-        passwords.oldPassword,
-        passwords.newPassword
-      );
+      const res = await changePassword(passwords.oldPassword, passwords.newPassword);
       setPasswordMsg(res.msg);
       setPasswords({ oldPassword: "", newPassword: "" });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Đổi mật khẩu thất bại";
+      const message = error instanceof Error ? error.message : "Đổi mật khẩu thất bại";
       setPasswordMsg(message);
     }
   };
-
-  // const addFavoriteTheme = () => {
-  //   if (newTheme && !editData.favoriteThemes?.includes(newTheme)) {
-  //     setEditData((prev) => ({
-  //       ...prev,
-  //       favoriteThemes: [...(prev.favoriteThemes || []), newTheme],
-  //     }));
-  //     setNewTheme("");
-  //   }
-  // };
-
-  // const removeFavoriteTheme = (themeToRemove: string) => {
-  //   setEditData((prev) => ({
-  //     ...prev,
-  //     favoriteThemes: (prev.favoriteThemes || []).filter(
-  //       (theme) => theme !== themeToRemove
-  //     ),
-  //   }));
-  // };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -325,7 +293,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
 
   const isAdmin = editData.role === "admin";
 
-  // left card ref (kept for potential future measurements)
   const leftCardRef = useRef<HTMLDivElement | null>(null);
 
   return (
@@ -336,103 +303,106 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
         <div className="profile-header">
           <div className="profile-banner"></div>
 
-              <div className="profile-info">
-                <div className="profile-avatar" style={{ position: 'relative' }}>
+          <div className="profile-info">
+            <div className="profile-avatar" style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setShowAvatarMenu((s) => !s)}
+                aria-haspopup="true"
+                aria-expanded={showAvatarMenu}
+                style={{ background: "transparent", border: "none", padding: 0, cursor: 'pointer' }}
+                title="Xem hoặc thay đổi ảnh đại diện"
+              >
+                <img src={editData.avatar} alt="Profile" style={{ display: "block" }} />
+              </button>
+
+              {showAvatarMenu && (
+                <div
+                  className="avatar-menu"
+                  style={{
+                    position: "absolute",
+                    top: "110%",
+                    left: 0,
+                    background: "#fff",
+                    boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+                    borderRadius: 8,
+                    padding: "8px",
+                    zIndex: 40,
+                    minWidth: 160,
+                  }}
+                >
                   <button
                     type="button"
-                    onClick={() => setShowAvatarMenu((s) => !s)}
-                    aria-haspopup="true"
-                    aria-expanded={showAvatarMenu}
-                    style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
-                    title="Xem hoặc thay đổi ảnh đại diện"
-                  >
-                    <img src={editData.avatar} alt="Profile" style={{ display: 'block' }} />
-                  </button>
-
-                  {/* Avatar menu popover */}
-                  {showAvatarMenu && (
-                    <div
-                      className="avatar-menu"
-                      style={{
-                        position: 'absolute',
-                        top: '110%',
-                        left: 0,
-                        background: '#fff',
-                        boxShadow: '0 6px 18px rgba(0,0,0,0.08)',
-                        borderRadius: 8,
-                        padding: '8px',
-                        zIndex: 40,
-                        minWidth: 160,
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => { setShowAvatarModal(true); setShowAvatarMenu(false); }}
-                        className="btn-link"
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '8px 10px', border: 'none', background: 'transparent', cursor: 'pointer' }}
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span>Xem ảnh</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { fileInputRef.current?.click(); setShowAvatarMenu(false); }}
-                        className="btn-link"
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '8px 10px', border: 'none', background: 'transparent', cursor: 'pointer' }}
-                      >
-                        <Camera className="h-4 w-4" />
-                        <span>Thay đổi avatar</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* hidden file input used by the avatar menu and existing avatar change */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    style={{ display: 'none' }}
-                    aria-label="Upload avatar"
-                  />
-                </div>
-
-                {/* Avatar preview modal */}
-                {showAvatarModal && (
-                  <div
-                    role="dialog"
-                    aria-modal="true"
-                    className="avatar-modal"
-                    style={{
-                      position: 'fixed',
-                      inset: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'rgba(0,0,0,0.5)',
-                      zIndex: 60,
+                    onClick={() => {
+                      setShowAvatarModal(true);
+                      setShowAvatarMenu(false);
                     }}
-                    onClick={() => setShowAvatarModal(false)}
+                    className="btn-link"
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", background: "transparent", cursor: "pointer" }}
                   >
-                    <div
-                      style={{
-                        background: '#fff',
-                        padding: 16,
-                        borderRadius: 8,
-                        maxWidth: '90%',
-                        maxHeight: '90%',
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button onClick={() => setShowAvatarModal(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }} aria-label="Đóng">
-                          <X />
-                        </button>
-                      </div>
-                      <img src={editData.avatar} alt="Avatar preview" style={{ display: 'block', maxWidth: '80vw', maxHeight: '70vh', borderRadius: 8 }} />
-                    </div>
+                    <Eye className="h-4 w-4" />
+                    <span>Xem ảnh</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                      setShowAvatarMenu(false);
+                    }}
+                    className="btn-link"
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", background: "transparent", cursor: "pointer" }}
+                  >
+                    <Camera className="h-4 w-4" />
+                    <span>Thay đổi avatar</span>
+                  </button>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                style={{ display: "none" }}
+                aria-label="Upload avatar"
+              />
+            </div>
+
+            {showAvatarModal && (
+              <div
+                role="dialog"
+                aria-modal="true"
+                className="avatar-modal"
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(0,0,0,0.5)",
+                  zIndex: 60,
+                }}
+                onClick={() => setShowAvatarModal(false)}
+              >
+                <div
+                  style={{
+                    background: "#fff",
+                    padding: 16,
+                    borderRadius: 8,
+                    maxWidth: "90%",
+                    maxHeight: "90%",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button onClick={() => setShowAvatarModal(false)} style={{ border: "none", background: "transparent", cursor: "pointer" }} aria-label="Đóng">
+                      <X />
+                    </button>
                   </div>
-                )}
+                  <img src={editData.avatar} alt="Avatar preview" style={{ display: "block", maxWidth: "80vw", maxHeight: "70vh", borderRadius: 8 }} />
+                </div>
+              </div>
+            )}
 
             <div className="profile-details">
               <h1>{editData.name}</h1>
@@ -454,7 +424,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
                 </div>
               </div>
 
-              {/* For admin we render edit controls inside the admin card below; keep header actions for non-admin users */}
               {!isAdmin && (
                 <div className="profile-actions">
                   {!isEditing ? (
@@ -477,7 +446,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
           </div>
         </div>
 
-        {/* For admins show a simplified profile with admin info on the left and security on the right */}
         {isAdmin ? (
           <div className="profile-content">
             <div style={{ display: "flex", gap: 20, alignItems: "stretch", width: "100%", padding: '0 12px', flexWrap: 'nowrap', justifyContent: 'space-between' }}>
@@ -531,7 +499,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
                     )}
                   </div>
 
-                  {/* Edit controls under admin info */}
                   <div style={{ marginTop: 'auto' }} className="profile-actions">
                     {!isEditing ? (
                       <button onClick={() => setIsEditing(true)} className="btn-primary">
@@ -558,7 +525,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
                     <h3>Bảo mật</h3>
                   </div>
 
-                    <div className="password-section" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <div className="password-section" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <label className="form-label">Đổi mật khẩu</label>
                     <div className="password-grid" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
@@ -604,7 +571,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
 
                     <div style={{ marginTop: 'auto' }}>
                       <button onClick={handleChangePassword} className="btn-primary" style={{ marginTop: "1rem" }}>
-                      Đổi mật khẩu
+                        Đổi mật khẩu
                       </button>
                     </div>
 
@@ -616,130 +583,75 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
                   </div>
                 </div>
               </div>
-              
-              {/* Recent activity removed per request */}
             </div>
           </div>
         ) : (
           <div className="profile-content">
-          <div className="profile-card">
-            <div className="card-header">
-              <User className="card-icon" />
-              <h3>Thông tin cá nhân</h3>
-            </div>
+            <div className="profile-card">
+              <div className="card-header">
+                <User className="card-icon" />
+                <h3>Thông tin cá nhân</h3>
+              </div>
 
-            <div className="form-group">
-              <label className="form-label">Họ và tên</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="name"
-                  value={editData.name}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Nhập họ và tên"
-                />
-              ) : (
-                <div className="form-input" style={{ background: "#f8f9fa" }}>
-                  {editData.name}
-                </div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                <Mail
-                  className="h-4 w-4"
-                  style={{ display: "inline", marginRight: "0.5rem" }}
-                />
-                Email
-              </label>
-              <input
-                type="email"
-                value={editData.email}
-                disabled
-                className="form-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                <Phone
-                  className="h-4 w-4"
-                  style={{ display: "inline", marginRight: "0.5rem" }}
-                />
-                Số điện thoại
-              </label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  name="phone"
-                  value={editData.phone}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Nhập số điện thoại"
-                />
-              ) : (
-                <div className="form-input" style={{ background: "#f8f9fa" }}>
-                  {editData.phone}
-                </div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                <MapPin
-                  className="h-4 w-4"
-                  style={{ display: "inline", marginRight: "0.5rem" }}
-                />
-                Địa chỉ
-              </label>
-              {isEditing ? (
-                <div className="form-grid">
+              <div className="form-group">
+                <label className="form-label">Họ và tên</label>
+                {isEditing ? (
                   <input
                     type="text"
-                    name="address.street"
-                    value={editData.address?.street || ""}
+                    name="name"
+                    value={editData.name}
                     onChange={handleInputChange}
-                    placeholder="Đường"
                     className="form-input"
+                    placeholder="Nhập họ và tên"
                   />
-                  <input
-                    type="text"
-                    name="address.city"
-                    value={editData.address?.city || ""}
-                    onChange={handleInputChange}
-                    placeholder="Thành phố"
-                    className="form-input"
-                  />
-                  <input
-                    type="text"
-                    name="address.state"
-                    value={editData.address?.state || ""}
-                    onChange={handleInputChange}
-                    placeholder="Tỉnh/Thành"
-                    className="form-input"
-                  />
-                  <input
-                    type="text"
-                    name="address.postalCode"
-                    value={editData.address?.postalCode || ""}
-                    onChange={handleInputChange}
-                    placeholder="Mã bưu chính"
-                    className="form-input"
-                  />
-                </div>
-              ) : (
-                <div className="form-input" style={{ background: "#f8f9fa" }}>
-                  {renderAddress(editData.address)}
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="form-input" style={{ background: "#f8f9fa" }}>
+                    {editData.name}
+                  </div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <Mail className="h-4 w-4" style={{ display: "inline", marginRight: "0.5rem" }} />
+                  Email
+                </label>
+                <input type="email" value={editData.email} disabled className="form-input" />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <Phone className="h-4 w-4" style={{ display: "inline", marginRight: "0.5rem" }} />
+                  Số điện thoại
+                </label>
+                {isEditing ? (
+                  <input type="tel" name="phone" value={editData.phone} onChange={handleInputChange} className="form-input" placeholder="Nhập số điện thoại" />
+                ) : (
+                  <div className="form-input" style={{ background: "#f8f9fa" }}>{editData.phone}</div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <MapPin className="h-4 w-4" style={{ display: "inline", marginRight: "0.5rem" }} />
+                  Địa chỉ
+                </label>
+                {isEditing ? (
+                  <div className="form-grid">
+                    <input type="text" name="address.street" value={editData.address?.street || ""} onChange={handleInputChange} placeholder="Đường" className="form-input" />
+                    <input type="text" name="address.city" value={editData.address?.city || ""} onChange={handleInputChange} placeholder="Thành phố" className="form-input" />
+                    <input type="text" name="address.state" value={editData.address?.state || ""} onChange={handleInputChange} placeholder="Tỉnh/Thành" className="form-input" />
+                    <input type="text" name="address.postalCode" value={editData.address?.postalCode || ""} onChange={handleInputChange} placeholder="Mã bưu chính" className="form-input" />
+                  </div>
+                ) : (
+                  <div className="form-input" style={{ background: "#f8f9fa" }}>{renderAddress(editData.address)}</div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
-        {!isAdmin && (
+        {/* {!isAdmin && (
           <div className="profile-content" style={{ marginTop: "2rem" }}>
             <div className="profile-card">
               <div className="card-header">
@@ -761,92 +673,51 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
                 </div>
               </div>
             </div>
-
-            {/* Recent activity removed per request */}
           </div>
-        )}
+        )} */}
 
         {!isAdmin && (
           <div className="profile-card" style={{ marginTop: "2rem" }}>
-          <div className="card-header">
-            <Shield className="card-icon" />
-            <h3>Bảo mật</h3>
-          </div>
-
-          <div className="password-section">
-            <label className="form-label">Đổi mật khẩu</label>
-            <div className="password-grid" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Mật khẩu cũ */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-                <input
-                  type={showPasswords.old ? "text" : "password"}
-                  placeholder="Mật khẩu cũ"
-                  value={passwords.oldPassword}
-                  onChange={(e) =>
-                    setPasswords((p) => ({ ...p, oldPassword: e.target.value }))
-                  }
-                  className="form-input"
-                  style={{ flex: 1 }}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowPasswords((p) => ({ ...p, old: !p.old }))
-                  }
-                  className="eye-toggle"
-                  aria-label="Toggle old password visibility"
-                  style={{ background: 'transparent', border: 'none', padding: 6, cursor: 'pointer' }}
-                >
-                  {showPasswords.old ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-
-              {/* Mật khẩu mới */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-                <input
-                  type={showPasswords.new ? "text" : "password"}
-                  placeholder="Mật khẩu mới"
-                  value={passwords.newPassword}
-                  onChange={(e) =>
-                    setPasswords((p) => ({ ...p, newPassword: e.target.value }))
-                  }
-                  className="form-input"
-                  style={{ flex: 1 }}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowPasswords((p) => ({ ...p, new: !p.new }))
-                  }
-                  className="eye-toggle"
-                  aria-label="Toggle new password visibility"
-                  style={{ background: 'transparent', border: 'none', padding: 6, cursor: 'pointer' }}
-                >
-                  {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+            <div className="card-header">
+              <Shield className="card-icon" />
+              <h3>Bảo mật</h3>
             </div>
 
-            <button
-              onClick={handleChangePassword}
-              className="btn-primary"
-              style={{ marginTop: "1rem" }}
-            >
-              Đổi mật khẩu
-            </button>
+            <div className="password-section">
+              <label className="form-label">Đổi mật khẩu</label>
+              <div className="password-grid" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                  <input
+                    type={showPasswords.old ? "text" : "password"}
+                    placeholder="Mật khẩu cũ"
+                    value={passwords.oldPassword}
+                    onChange={(e) => setPasswords((p) => ({ ...p, oldPassword: e.target.value }))}
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <button type="button" onClick={() => setShowPasswords((p) => ({ ...p, old: !p.old }))} className="eye-toggle" aria-label="Toggle old password visibility" style={{ background: 'transparent', border: 'none', padding: 6, cursor: 'pointer' }}>
+                    {showPasswords.old ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
 
-            {passwordMsg && (
-              <div
-                className={
-                  passwordMsg.toLowerCase().includes("success")
-                    ? "success-message"
-                    : "error-message"
-                }
-              >
-                {passwordMsg}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                  <input type={showPasswords.new ? "text" : "password"} placeholder="Mật khẩu mới" value={passwords.newPassword} onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))} className="form-input" style={{ flex: 1 }} />
+                  <button type="button" onClick={() => setShowPasswords((p) => ({ ...p, new: !p.new }))} className="eye-toggle" aria-label="Toggle new password visibility" style={{ background: 'transparent', border: 'none', padding: 6, cursor: 'pointer' }}>
+                    {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
+
+              <button onClick={handleChangePassword} className="btn-primary" style={{ marginTop: "1rem" }}>
+                Đổi mật khẩu
+              </button>
+
+              {passwordMsg && (
+                <div className={passwordMsg.toLowerCase().includes("success") ? "success-message" : "error-message"}>
+                  {passwordMsg}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -854,4 +725,4 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
   );
 };
 
-export default Profile;
+export default AdminProfileUI;

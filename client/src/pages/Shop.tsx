@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
-import Header from "../components/common/Header";
 import {
   Card,
   Row,
@@ -44,6 +43,13 @@ interface Product {
   stock?: number;
   images?: string[];
 }
+
+const formatVND = (value: number) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+  }).format(value || 0);
 
 export default function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -325,7 +331,7 @@ export default function Shop() {
                         </div> */}
 
                         <p style={{ fontSize: 16, fontWeight: "bold", color: "#1677ff", marginBottom: 6 }}>
-                          ${p.price.toFixed(2)}
+                          {formatVND(p.price)}
                         </p>
                         <p style={{ fontSize: 13, color: p.stock > 0 ? "#28a745" : "#dc3545", marginBottom: 10 }}>
                           {p.stock > 0 ? `In stock: ${p.stock}` : "Out of stock"}
@@ -439,7 +445,7 @@ export default function Shop() {
                           description={
                             <div style={{ marginTop: "8px" }}>
                               <b style={{ fontSize: "16px", color: "#000" }}>
-                                ${p.price.toFixed(2)}
+                                {formatVND(p.price)}
                               </b>
                             </div>
                           }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Input, Radio, Button, message, Modal } from "antd";
 import axiosInstance from "../api/axiosInstance";
-import Header from "../components/common/Header";
+// Header is rendered globally by App; remove local Header import to avoid duplicate headers
 import { useAuth } from "../components/context/AuthContext";
 import { getAddresses } from "../api/user";
 import { useCart } from "../components/context/CartContext";
@@ -196,7 +196,6 @@ message.success(
 
   return (
     <>
-      <Header />
       <Button style={{ margin: 16 }} onClick={() => navigate(-1)}>
         Quay lại
       </Button>

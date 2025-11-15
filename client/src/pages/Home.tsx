@@ -17,7 +17,6 @@ import {
   Switch,
 } from "antd";
 import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
-import Header from "../components/common/Header";
 import HeroSlider from "../components/HeroSlider/HeroSlider";
 import HighlightNews from "../components/News/HighlightNews";
 import TrendingNews from "../components/News/TrendingNews";
@@ -76,6 +75,13 @@ const normalizeProductResponse = (
   }
   return { products: [] };
 };
+
+const formatVND = (value: number) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+  }).format(value || 0);
 
 /* ------------------------------------------------------------------ */
 /* Main component                                                     */
@@ -310,7 +316,7 @@ export default function Home() {
         },
       }}
     >
-      <div style={{ backgroundColor: isDarkMode ? "#141414" : "var(--bg)" }}>
+  <div className={`homepage ${isDarkMode ? "dark" : "light"}`}>
         {/* Theme switch */}
         <div style={{ position: "fixed", top: 20, right: 20, zIndex: 1000 }}>
           <Switch
@@ -375,7 +381,7 @@ export default function Home() {
                             marginBottom: 6,
                           }}
                         >
-                          ${p.price.toFixed(2)}
+                          {formatVND(p.price)}
                         </p>
                         <p
                           style={{
@@ -489,7 +495,7 @@ export default function Home() {
                           title={<span style={{ color: "#1677ff" }}>{p.name}</span>}
                           description={
                             <div style={{ marginTop: 8 }}>
-                              <b style={{ fontSize: 16 }}>${p.price.toFixed(2)}</b>
+                              <b style={{ fontSize: 16 }}>{formatVND(p.price)}</b>
                             </div>
                           }
                         />
@@ -673,7 +679,6 @@ export default function Home() {
             ))}
           </div>
         </section>
-
         {/* ------------------- Product Grid (Tabs) ------------------- */}
         <section style={{ padding: "20px 80px" }}>
           <Tabs
@@ -791,7 +796,7 @@ function ProductGrid({
                     marginBottom: 6,
                   }}
                 >
-                  ${p.price.toFixed(2)}
+                  {formatVND(p.price)}
                 </p>
                 <p
                   style={{
@@ -905,7 +910,7 @@ function ProductGrid({
                   title={<span style={{ color: "#1677ff" }}>{p.name}</span>}
                   description={
                     <div style={{ marginTop: 8 }}>
-                      <b style={{ fontSize: 16 }}>${p.price.toFixed(2)}</b>
+                      <b style={{ fontSize: 16 }}>{formatVND(p.price)}</b>
                     </div>
                   }
                 />

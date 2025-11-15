@@ -18,6 +18,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/common/Header";
 import ReviewAPI from "../api/review";
 import UploadAPI from "../api/upload";
+import { log } from "console";
 
 const currencyFormatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -34,6 +35,7 @@ const OrderHistoryListUser: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [reviewModal, setReviewModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  console.log(orders,"Asdsad");
 
   // Form đánh giá
   const [form, setForm] = useState({
@@ -73,36 +75,36 @@ const OrderHistoryListUser: React.FC = () => {
     setSelectedOrder(order);
     setReviewModal(true);
   };
-const handleSubmitReview = async () => {
-  try {
-    // Determine product id to review. If the order has items, use the first item's legoId.
-    const legoId = selectedOrder?.items?.[0]?.legoId || selectedOrder?._id;
+  const handleSubmitReview = async () => {
+    try {
+      // Determine product id to review. If the order has items, use the first item's legoId.
+      const legoId = selectedOrder?.items?.[0]?.legoId || selectedOrder?._id;
 
-    // Upload images first (server expects image URLs)
-    const imageFiles = form.images.map((f: any) => f.originFileObj).filter(Boolean);
-    let uploadedUrls: string[] = [];
-    if (imageFiles.length > 0) {
-      const res = await UploadAPI.uploadReviewImages(imageFiles);
-      // upload API returns { success, message, data: { images: [...] } }
-      uploadedUrls = res?.data?.images || res?.images || [];
+      // Upload images first (server expects image URLs)
+      const imageFiles = form.images.map((f: any) => f.originFileObj).filter(Boolean);
+      let uploadedUrls: string[] = [];
+      if (imageFiles.length > 0) {
+        const res = await UploadAPI.uploadReviewImages(imageFiles);
+        // upload API returns { success, message, data: { images: [...] } }
+        uploadedUrls = res?.data?.images || res?.images || [];
+      }
+
+      await ReviewAPI.submitReview({
+        legoId,
+        rating: form.rating,
+        comment: form.comment,
+        images: uploadedUrls,
+      });
+
+      // Navigate to product page (use legoId)
+      message.success("Gửi đánh giá thành công!");
+      setForm({ rating: 5, comment: "", images: [] });
+      setReviewModal(false);
+    } catch (err: any) {
+      console.error(err);
+      message.error(err?.response?.data?.message || "Không thể gửi đánh giá!");
     }
-
-    await ReviewAPI.submitReview({
-      legoId,
-      rating: form.rating,
-      comment: form.comment,
-      images: uploadedUrls,
-    });
-
-    // Navigate to product page (use legoId)
-    message.success("Gửi đánh giá thành công!");
-    setForm({ rating: 5, comment: "", images: [] });
-    setReviewModal(false);
-  } catch (err: any) {
-    console.error(err);
-    message.error(err?.response?.data?.message || "Không thể gửi đánh giá!");
-  }
-};
+  };
 
   if (loading)
     return (
@@ -131,10 +133,10 @@ const handleSubmitReview = async () => {
     );
 
   return (
-    <> 
-    <div className="p-4"> 
-     
-      <h2 className="text-xl font-semibold mb-4">My History Orders</h2>
+    <>
+      <div className="p-4">
+
+        <h2 className="text-xl font-semibold mb-4">My History Orders</h2>
 
         <List
           dataSource={orders}
@@ -150,10 +152,10 @@ const handleSubmitReview = async () => {
                       order.status === "pending"
                         ? "orange"
                         : order.status === "confirmed"
-                        ? "blue"
-                        : order.status === "delivered"
-                        ? "green"
-                        : "red"
+                          ? "blue"
+                          : order.status === "delivered"
+                            ? "green"
+                            : "red"
                     }
                   >
                     {order.status}
@@ -163,19 +165,19 @@ const handleSubmitReview = async () => {
               extra={
 
                 <>
-                <Button
-                  type="link"
-                  onClick={() => navigate(`/orders/detail/${order._id}`)}
-                >
-                  View Details
-                </Button>
-              <Button
-                type="link"
-                onClick={() => navigate(`/product/${order.items.map(item => item.legoId)}`)}
-              >
-                View Product
-              </Button>
-              </>
+                  <Button
+                    type="link"
+                    onClick={() => navigate(`/orders/detail/${order._id}`)}
+                  >
+                    View Details
+                  </Button>
+                  <Button
+                    type="link"
+                    onClick={() => navigate(`/product/${order.items.map(item => item.legoId._id)}`)}
+                  >
+                    View Product
+                  </Button>
+                </>
               }
             >
               <Descriptions column={2} size="small">

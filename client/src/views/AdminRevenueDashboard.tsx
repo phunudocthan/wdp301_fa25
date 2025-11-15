@@ -12,14 +12,14 @@ const timeframeLabels: Record<Timeframe, string> = {
   year: "Last 12 months",
 };
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+const currencyFormatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  currency: "VND",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 });
 
-const compactFormatter = new Intl.NumberFormat("en-US", {
+const compactFormatter = new Intl.NumberFormat("vi-VN", {
   notation: "compact",
   maximumFractionDigits: 1,
 });

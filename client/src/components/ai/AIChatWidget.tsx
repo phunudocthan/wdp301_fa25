@@ -93,9 +93,16 @@ const renderWithBreaks = (text: string) => {
   ));
 };
 
+const vndFormatter = new Intl.NumberFormat("vi-VN", {
+  style: "currency",
+  currency: "VND",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
 const formatUiPrice = (value?: number) => {
   if (value == null) return null;
-  return `${Number(value).toLocaleString("vi-VN")} USD`;
+  return vndFormatter.format(Number(value));
 };
 
 const AIChatWidget: React.FC = () => {

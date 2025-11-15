@@ -7,13 +7,12 @@ import {
   OrderStatusInfo,
 } from "../api/admin";
 import "../styles/AdminDashboard.css";
-import Header from "../components/common/Header";
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+const currencyFormatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  currency: "VND",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 });
 
 const numberFormatter = new Intl.NumberFormat("en-US");

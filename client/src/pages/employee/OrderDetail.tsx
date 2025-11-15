@@ -3,11 +3,11 @@ import { Card, Descriptions, List, Button, message, Tag } from "antd";
 import axiosInstance from "../../api/axiosInstance";
 import { useParams, useNavigate } from "react-router-dom";
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+const currencyFormatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  currency: "VND",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 });
 
 const EmployeeOrderDetail: React.FC = () => {

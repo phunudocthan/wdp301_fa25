@@ -80,7 +80,8 @@ categorySchema.pre("save", function (next) {
 
 // Add indexes
 categorySchema.index({ name: 1 });
-categorySchema.index({ slug: 1 });
+// `slug` field has `unique: true` at the field level which creates an index.
+// Removing the explicit single-field slug index to avoid duplicate index warnings.
 categorySchema.index({ parentId: 1 });
 categorySchema.index({ isActive: 1 });
 categorySchema.index({ createdBy: 1 });

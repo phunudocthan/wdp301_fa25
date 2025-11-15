@@ -23,7 +23,6 @@ import type { FavoriteProduct } from "../api/favorites";
 import imagesDefault from "../../../client/public/images/1827380.png";
 import { resolveAssetUrl } from "../utils/assets";
 import { ArrowLeftRightIcon } from "lucide-react";
-import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 
 const { Title } = Typography;
@@ -79,6 +78,13 @@ const FavoritesPage = () => {
     });
 
   const isPending = (id: string) => pendingIds.includes(id);
+
+  const formatVND = (value: number) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      minimumFractionDigits: 0,
+    }).format(value || 0);
 
   const handleToggleFavorite = async (product: FavoriteProduct) => {
     if (isPending(product.id)) return;
@@ -191,7 +197,7 @@ const FavoritesPage = () => {
                     description={
                       <div style={{ marginTop: "8px" }}>
                         <b style={{ fontSize: "16px", color: "#000" }}>
-                          ${Number(item.price || 0).toFixed(2)}
+                          {formatVND(Number(item.price || 0))}
                         </b>
                       </div>
                     }

@@ -16,7 +16,7 @@ import themeApi, { ThemeCharacter } from "../api/theme";
 import productApi, { Product } from "../api/product";
 import { getFullImageURL } from "../api/axiosInstance";
 import { useCart } from "../components/context/CartContext";
-import Header from "../components/common/Header";
+// Header is provided by App globally; remove local Header import
 import Footer from "../components/common/Footer";
 import "../styles/theme-detail.scss";
 
@@ -127,7 +127,7 @@ export default function ThemeDetailPage() {
           title={product.name}
           description={
             <>
-              <div className="product-price">${product.price.toFixed(2)}</div>
+              <div className="product-price">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(product.price)}</div>
               {product.pieces && (
                 <Text type="secondary">{product.pieces} pieces</Text>
               )}
@@ -148,7 +148,6 @@ export default function ThemeDetailPage() {
   if (loading) {
     return (
       <>
-        <Header />
         <div className="theme-detail-loading">
           <Spin size="large" tip="Loading theme..." />
         </div>
@@ -160,7 +159,6 @@ export default function ThemeDetailPage() {
   if (!theme) {
     return (
       <>
-        <Header />
         <Empty description="Theme not found" style={{ margin: "80px auto" }} />
         <Footer />
       </>
@@ -169,7 +167,6 @@ export default function ThemeDetailPage() {
 
   return (
     <>
-      <Header />
       <div className="theme-detail-page">
         {/* Theme Banner */}
         <div

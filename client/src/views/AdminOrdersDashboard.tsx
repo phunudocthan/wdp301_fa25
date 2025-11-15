@@ -15,11 +15,11 @@ const statusLabel: Record<(typeof statusOrder)[number], string> = {
   refunded: "Refunded",
 };
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+const currencyFormatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  currency: "VND",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 });
 
 const formatCurrency = (value: number) => currencyFormatter.format(value || 0);

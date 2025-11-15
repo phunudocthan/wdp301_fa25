@@ -13,19 +13,19 @@ export default function FeaturedPage() {
           <div className="product-card">
             <img src="/lego1.jpg" alt="LEGO City" />
             <h4>LEGO® City</h4>
-            <p className="price">$49.99</p>
+            <p className="price">49.99 Đ</p>
           </div>
 
           <div className="product-card">
             <img src="/lego2.jpg" alt="LEGO Friends" />
             <h4>LEGO® Friends</h4>
-            <p className="price">$59.99</p>
+            <p className="price">59.99 Đ</p>
           </div>
 
           <div className="product-card">
             <img src="/lego3.jpg" alt="LEGO Star Wars" />
             <h4>LEGO® Star Wars</h4>
-            <p className="price">$79.99</p>
+            <p className="price">79.99 Đ</p>
           </div>
         </div>
       </section>

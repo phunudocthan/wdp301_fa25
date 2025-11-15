@@ -70,10 +70,25 @@ const AddressBookPage: React.FC = () => {
     const target = e.target as HTMLInputElement | HTMLSelectElement;
     const { name, value, type } = target;
     const checked = (target as HTMLInputElement).checked;
-    // sanitize phone: remove non-digit
+    // sanitize phone: allow +84 or 84 prefixes, normalize to 0xxxxxxxxx
+    const normalizePhone = (raw: string) => {
+      if (!raw) return "";
+      let digits = String(raw).replace(/\D/g, "");
+      // if starts with country code 84 (or +84) -> remove leading 84 and add 0
+      if (digits.startsWith("84") && digits.length > 2) {
+        digits = "0" + digits.slice(2);
+      }
+      // if it already starts with 0 keep it
+      if (!digits.startsWith("0") && digits.length === 9) {
+        // maybe missing leading 0
+        digits = "0" + digits;
+      }
+      return digits.slice(0, 10);
+    };
+
     const newValue =
       name === "phone"
-        ? String(value).replace(/\D/g, "").slice(0, 10)
+        ? normalizePhone(String(value))
         : type === "checkbox"
           ? checked
           : value;
@@ -107,6 +122,18 @@ const AddressBookPage: React.FC = () => {
     if (name === "street") {
       if (!v.trim()) return "Street is required";
     }
+    if (name === "city") {
+      if (!v.trim()) return "City is required";
+    }
+    if (name === "country") {
+      if (!v.trim()) return "Country is required";
+    }
+    if (name === "label") {
+      if (v.length > 50) return "Label must be 50 characters or less";
+    }
+    if (name === "state") {
+      if (v.length > 50) return "State must be 50 characters or less";
+    }
     return "";
   };
 
@@ -118,6 +145,12 @@ const AddressBookPage: React.FC = () => {
     if (p) errors.phone = p;
     const s = validateField("street", data.street);
     if (s) errors.street = s;
+    const c = validateField("city", data.city || "");
+    if (c) errors.city = c;
+    const co = validateField("country", data.country || "");
+    if (co) errors.country = co;
+    const l = validateField("label", data.label || "");
+    if (l) errors.label = l;
     return errors;
   };
 
@@ -125,7 +158,9 @@ const AddressBookPage: React.FC = () => {
     Object.keys(fieldErrors).length === 0 &&
     !!formData.recipientName &&
     phoneRegex.test(String(formData.phone)) &&
-    !!formData.street;
+    !!formData.street &&
+    !!formData.city &&
+    !!formData.country;
 
   // 📌 Sửa địa chỉ
   const handleEdit = (address: UserAddress) => {
@@ -391,11 +426,12 @@ const AddressBookPage: React.FC = () => {
                   value={formData.label}
                   onChange={handleChange}
                   placeholder="Home, Office, etc."
+                  maxLength={50}
                 />
               </label>
 
               <label htmlFor="recipientName">
-                Recipient <span className="required">*</span>
+                Recipient <span className="required"></span>
                 <input
                   id="recipientName"
                   name="recipientName"
@@ -410,7 +446,7 @@ const AddressBookPage: React.FC = () => {
               </label>
 
               <label htmlFor="phone">
-                Phone <span className="required">*</span>
+                Phone <span className="required"></span>
                 <input
                   id="phone"
                   name="phone"
@@ -419,6 +455,8 @@ const AddressBookPage: React.FC = () => {
                   onChange={handleChange}
                   placeholder="0xxxxxxxxx"
                   aria-invalid={!!fieldErrors.phone}
+                  maxLength={10}
+                  required
                 />
                 {fieldErrors.phone && (
                   <div className="field-error">{fieldErrors.phone}</div>
@@ -426,7 +464,7 @@ const AddressBookPage: React.FC = () => {
               </label>
 
               <label htmlFor="street">
-                Street <span className="required">*</span>
+                Street <span className="required"></span>
                 <input
                   id="street"
                   name="street"
@@ -449,7 +487,13 @@ const AddressBookPage: React.FC = () => {
                     value={formData.city}
                     onChange={handleChange}
                     placeholder="Hanoi"
+                    aria-invalid={!!fieldErrors.city}
+                    required
+                    maxLength={100}
                   />
+                  {fieldErrors.city && (
+                    <div className="field-error">{fieldErrors.city}</div>
+                  )}
                 </label>
                 <label htmlFor="state">
                   State
@@ -459,7 +503,11 @@ const AddressBookPage: React.FC = () => {
                     value={formData.state}
                     onChange={handleChange}
                     placeholder="District / Province"
+                    maxLength={50}
                   />
+                  {fieldErrors.state && (
+                    <div className="field-error">{fieldErrors.state}</div>
+                  )}
                 </label>
               </div>
 
@@ -472,7 +520,13 @@ const AddressBookPage: React.FC = () => {
                     value={formData.country}
                     onChange={handleChange}
                     placeholder="Vietnam"
+                    aria-invalid={!!fieldErrors.country}
+                    required
+                    maxLength={100}
                   />
+                  {fieldErrors.country && (
+                    <div className="field-error">{fieldErrors.country}</div>
+                  )}
                 </label>
                 <div className="align-self-center"></div>
               </div>

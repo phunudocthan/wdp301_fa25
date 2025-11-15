@@ -56,7 +56,6 @@ import EmployeeOrderDetail from "./pages/employee/OrderDetail";
 
 // Admin pages
 import AdminDashboard from "./pages/AdminDashboard";
-import ProfileAdminPage from "./components/ProfileNew";
 import AdminProfile from "./pages/AdminProfile";
 import AdminRevenueDashboard from "./views/AdminRevenueDashboard";
 import AdminOrdersDashboard from "./views/AdminOrdersDashboard";
@@ -77,11 +76,7 @@ import AdminCharacterManagement from "./pages/AdminCharacterManagement";
 
 import AIChatWidget from "./components/ai/AIChatWidget";
 
-function ProfileAdminWrapper() {
-  const { user } = useAuth();
-  if (!user) return <div>Loading...</div>;
-  return <ProfileAdminPage user={user} />;
-}
+
 
 function AppContent() {
   useTokenExpirationCheck();
@@ -109,7 +104,7 @@ function AppContent() {
   // --- EMPLOYEE ---
   if (isEmployee) {
     return (
-      <div>
+      <div className="app-background">
         {shouldShowHeader && <EmployeeHeader />}
         <SessionNotifications />
         <main>
@@ -187,7 +182,7 @@ function AppContent() {
     isAdmin ? <Navigate to="/admin" replace /> : element;
 
   return (
-    <div>
+    <div className="app-background">
       {shouldShowHeader && <Header />}
       <SessionNotifications />
       <main>
@@ -325,7 +320,7 @@ function AppContent() {
             path="/profileAdmin"
             element={
               <ProtectedRoute>
-                <ProfileAdminWrapper />
+                <AdminProfile />
               </ProtectedRoute>
             }
           />

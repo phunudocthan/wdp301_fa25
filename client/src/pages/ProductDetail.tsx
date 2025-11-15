@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axiosInstance, { getFullImageURL } from "../api/axiosInstance";
-import Header from "../components/common/Header";
 import {
   Settings,
   User,
@@ -37,6 +36,13 @@ interface Product {
   updatedAt?: string;
 }
 
+const formatVND = (value: number) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+  }).format(value || 0);
+
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
@@ -50,6 +56,8 @@ export default function ProductDetail() {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<any[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [searchText, setSearchText] = useState<string>("");
+  const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const [form, setForm] = useState<{ rating: number; comment: string; images: string[] }>({ rating: 0, comment: "", images: [] });
   const [favoritePending, setFavoritePending] = useState(false);
 
@@ -200,58 +208,46 @@ export default function ProductDetail() {
               <span className="badge new">New</span>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
-              <h1 className="title" style={{ marginBottom: 0 }}>
-                {product.name}
-              </h1>
+            <div className="title-row">
+              <h1 className="title">{product.name}</h1>
               <button
                 type="button"
                 onClick={handleFavoriteToggle}
                 disabled={favoritePending}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  border: "1px solid #f0f0f0",
-                  background: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
-                  cursor: favoritePending ? "not-allowed" : "pointer",
-                  opacity: favoritePending ? 0.6 : 1,
-                  transition: "transform 0.2s ease",
-                }}
+                className={`fav-btn ${favoritePending ? "disabled" : ""}`}
+                aria-pressed={isFavorite}
+                aria-label={isFavorite ? "Remove favorite" : "Add favorite"}
               >
                 {isFavorite ? (
-                  <HeartFilled style={{ color: "#f5222d", fontSize: 20 }} />
+                  <HeartFilled className="fav-icon filled" />
                 ) : (
-                  <HeartOutlined style={{ color: "#555", fontSize: 20 }} />
+                  <HeartOutlined className="fav-icon" />
                 )}
               </button>
             </div>
 
-            {/* Optional: rating like LEGO.com */}
+            {/* Optional: rating like LEGO.com (dynamic) */}
             <div className="rating">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  size={18}
-                  fill={i < 4 ? "#FFD700" : "none"}
-                  stroke="#FFD700"
-                />
-              ))}
-              <span className="review-count">4.0 (7 reviews)</span>
+              {(() => {
+                const avg = reviews.length ? reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length : 0;
+                const rounded = Math.round(avg);
+                return (
+                  <>
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={18}
+                        fill={i < rounded ? "#FFD700" : "none"}
+                        stroke="#FFD700"
+                      />
+                    ))}
+                    <span className="review-count">{avg.toFixed(1)} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
+                  </>
+                );
+              })()}
             </div>
 
-            <p className="price">${product.price.toFixed(2)}</p>
+            <p className="price">{formatVND(product.price)}</p>
             <p className="stock">
               {product.stock > 0 ? "Available now" : "Out of stock"}
             </p>
@@ -294,37 +290,26 @@ export default function ProductDetail() {
               Add to Bag
             </button>
             {/* === Product Details beside Add to Bag === */}
+
+            {/* Compact theme block shown above other meta */}
+            <div className="theme-block">
+              <Palette size={16} className="icon" />
+              <div>
+                <span className="label">Theme</span>
+                <span className="value">
+                  {product.themeId?.name} — {product.themeId?.description}
+                </span>
+              </div>
+            </div>
+
             <div className="product-meta inline">
               <div className="meta-grid">
-                <div className="meta-item">
-                  <Palette size={16} className="icon" />
-                  <div>
-                    <span className="label">Theme</span>
-                    <span className="value">
-                      {product.themeId?.name} — {product.themeId?.description}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="meta-item">
-                  <User size={16} className="icon" />
-                  <div>
-                    <span className="label">Age</span>
-                    <span className="value">
-                      {product.ageRangeId?.rangeLabel} (
-                      {product.ageRangeId?.minAge}–{product.ageRangeId?.maxAge}{" "}
-                      years)
-                    </span>
-                  </div>
-                </div>
-
                 <div className="meta-item">
                   <Settings size={16} className="icon" />
                   <div>
                     <span className="label">Difficulty</span>
                     <span className="value">
-                      {product.difficultyId?.label} (Level{" "}
-                      {product.difficultyId?.level})
+                      {product.difficultyId?.label} (Level {product.difficultyId?.level})
                     </span>
                   </div>
                 </div>
@@ -350,12 +335,21 @@ export default function ProductDetail() {
                   <div>
                     <span className="label">Updated</span>
                     <span className="value">
-                      {new Date(product.updatedAt || "").toLocaleDateString(
-                        "en-GB"
-                      )}
+                      {new Date(product.updatedAt || "").toLocaleDateString("en-GB")}
                     </span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Age moved down into its own compact row */}
+            <div className="age-block">
+              <User size={16} className="icon" />
+              <div>
+                <span className="label">Age</span>
+                <span className="value">
+                  {product.ageRangeId?.rangeLabel} ({product.ageRangeId?.minAge}–{product.ageRangeId?.maxAge} years)
+                </span>
               </div>
             </div>
 
@@ -385,51 +379,93 @@ export default function ProductDetail() {
             <strong>{product.name}</strong>
           </div>
 
+          {/* Search and filter controls for customers */}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+            <input
+              type="search"
+              placeholder="Search reviews..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #ddd', width: 240 }}
+              aria-label="Search reviews"
+            />
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ color: '#666', fontSize: 13 }}>Filter by rating:</span>
+              {[5,4,3,2,1].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRatingFilter(prev => prev === r ? null : r)}
+                  style={{
+                    padding: '6px 8px',
+                    borderRadius: 6,
+                    border: ratingFilter === r ? '1px solid #333' : '1px solid #ddd',
+                    background: ratingFilter === r ? '#f5f5f5' : '#fff',
+                    cursor: 'pointer'
+                  }}
+                  aria-pressed={ratingFilter === r}
+                >
+                  {r} ⭐
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Reviews list */}
           <div style={{ marginTop: 20 }}>
             {reviewsLoading ? <p>Loading reviews...</p> : (
               reviews.length === 0 ? <p>No reviews yet.</p> : (
-                reviews.map((r) => (
-                  <div key={r._id} style={{ borderBottom: '1px solid #eee', padding: 12 }}>
-                    <div style={{ fontWeight: 600 }}>{r.userId?.name || 'User'} — {r.rating} ⭐</div>
-                    <div style={{ color: '#555' }}>{r.comment}</div>
-                    {r.images && r.images.length > 0 && (
-                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        {r.images.map((img: string, i: number) => <img key={i} src={img} alt={`rev-${i}`} style={{ width: 80, height: 80, objectFit: 'cover' }} />)}
-                      </div>
-                    )}
-                    <div style={{ marginTop: 8, fontSize: 13, color: '#777', display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <button
-                          onClick={() => handleVote(r._id, 'up')}
-                          style={{ border: '1px solid #ddd', background: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer' }}
-                          aria-label="Helpful up"
-                        >
-                          👍
-                        </button>
-                        <span>{r.helpful?.up || 0}</span>
-                      </div>
+                (() => {
+                  const filtered = reviews.filter(r => {
+                    if (ratingFilter && r.rating !== ratingFilter) return false;
+                    if (searchText && typeof r.comment === 'string') {
+                      return r.comment.toLowerCase().includes(searchText.toLowerCase());
+                    }
+                    return true;
+                  });
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <button
-                          onClick={() => handleVote(r._id, 'down')}
-                          style={{ border: '1px solid #ddd', background: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer' }}
-                          aria-label="Helpful down"
-                        >
-                          👎
-                        </button>
-                        <span>{r.helpful?.down || 0}</span>
+                  if (filtered.length === 0) return <p>No reviews match your search.</p>;
+
+                  return filtered.map((r) => (
+                    <div key={r._id} style={{ borderBottom: '1px solid #eee', padding: 12 }}>
+                      <div style={{ fontWeight: 600 }}>{r.userId?.name || 'User'} — {r.rating} ⭐</div>
+                      <div style={{ color: '#555' }}>{r.comment}</div>
+                      {r.images && r.images.length > 0 && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          {r.images.map((img: string, i: number) => <img key={i} src={img} alt={`rev-${i}`} style={{ width: 80, height: 80, objectFit: 'cover' }} />)}
+                        </div>
+                      )}
+                      <div style={{ marginTop: 8, fontSize: 13, color: '#777', display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <button
+                            onClick={() => handleVote(r._id, 'up')}
+                            style={{ border: '1px solid #ddd', background: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer' }}
+                            aria-label="Helpful up"
+                          >
+                            👍
+                          </button>
+                          <span>{r.helpful?.up || 0}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <button
+                            onClick={() => handleVote(r._id, 'down')}
+                            style={{ border: '1px solid #ddd', background: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer' }}
+                            aria-label="Helpful down"
+                          >
+                            👎
+                          </button>
+                          <span>{r.helpful?.down || 0}</span>
+                        </div>
                       </div>
+                      {/* message replies of admin and replies is map */}
+                      {r.replies && (
+                        <div style={{ marginTop: 8, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
+                          <strong>Admin Reply:</strong> {r.replies.map((reply: any, i: number) => (<div key={i} style={{ marginTop: 4 }}>{reply.message} <span style={{ fontSize: 12, color: '#999' }}>({new Date(reply.createdAt).toLocaleDateString()})</span></div>))}
+                        </div>
+                      )}
                     </div>
-                    {/* message replies of admin and replies is map */}
-                    {r.replies && (
-                      <div style={{ marginTop: 8, padding: 8, background: '#f9f9f9', borderRadius: 4 }}>
-                        <strong>Admin Reply:</strong> {r.replies.map((reply: any, i: number) => (<div key={i} style={{ marginTop: 4 }}>{reply.message} <span style={{ fontSize: 12, color: '#999' }}>({new Date(reply.createdAt).toLocaleDateString()})</span></div>))}
-                      </div>
-                    )}
-                  </div>
-                ))
+                  ));
+                })()
               )
             )}
           </div>

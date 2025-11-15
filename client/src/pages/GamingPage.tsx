@@ -13,19 +13,19 @@ export default function GamingPage() {
           <div className="product-card">
             <img src="/lego7.jpg" alt="LEGO Mario" />
             <h4>LEGO® Super Mario</h4>
-            <p className="price">$59.99</p>
+            <p className="price">59.99 Đ</p>
           </div>
 
           <div className="product-card">
             <img src="/lego8.jpg" alt="LEGO Minecraft" />
             <h4>LEGO® Minecraft</h4>
-            <p className="price">$64.99</p>
+            <p className="price">64.99 Đ</p>
           </div>
 
           <div className="product-card">
             <img src="/lego9.jpg" alt="LEGO Sonic" />
             <h4>LEGO® Sonic the Hedgehog</h4>
-            <p className="price">$72.99</p>
+            <p className="price">72.99 Đ</p>
           </div>
         </div>
       </section>

@@ -50,7 +50,8 @@ ThemeSchema.virtual("characters", {
 });
 
 // Index for faster queries
-ThemeSchema.index({ name: 1 });
+// `name` already has `unique: true` at the field level which creates an index,
+// so avoid declaring the same single-field index again to prevent duplicate index warnings.
 ThemeSchema.index({ createdAt: -1 });
 
 // Include virtuals when converting to JSON
